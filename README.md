@@ -64,3 +64,15 @@ composer create-project laravel/laravel theater-reservation
 cd theater-reservation
 composer require laravel/breeze --dev
 php artisan breeze:install
+
+## Role-based demo accounts
+
+Run `php artisan db:seed` to create the local demo accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@example.com` | `password` |
+| Staff | `staff@example.com` | `password` |
+
+Signing in as an admin or staff member opens that role's dashboard. Newly
+registered users keep the default customer role and dashboard.

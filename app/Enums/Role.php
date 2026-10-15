@@ -1,3 +1,10 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum Role: string
+{
+    case Customer = 'customer';
+    case Admin = 'admin';
+    case Staff = 'staff';
+}
