@@ -4,14 +4,12 @@ use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-test('administrators see the admin dashboard', function () {
+test('administrators are redirected from the customer dashboard to the admin panel', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
 
     $this->actingAs($admin)
         ->get(route('dashboard'))
-        ->assertOk()
-        ->assertSee('Welcome to Admin Page')
-        ->assertDontSee('Welcome to Staff Dashboard');
+        ->assertRedirect(route('admin.dashboard'));
 });
 
 test('staff members see the staff dashboard', function () {
@@ -56,7 +54,8 @@ test('the demo admin sees the admin dashboard after signing in', function () {
             'password' => 'password',
         ])
         ->assertOk()
-        ->assertSee('Welcome to Admin Page');
+        ->assertSee('Coming soon')
+        ->assertSee('Admin navigation');
 });
 
 test('the demo staff member sees the staff dashboard after signing in', function () {

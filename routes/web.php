@@ -9,8 +9,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
+    if (auth()->user()->role === Role::Admin) {
+        return redirect()->route('admin.dashboard');
+    }
+
     return match (auth()->user()->role) {
-        Role::Admin => view('dashboard.admin'),
         Role::Staff => view('dashboard.staff'),
         Role::Customer => view('dashboard'),
     };
@@ -23,3 +26,4 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/admin.php';
