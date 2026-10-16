@@ -1,3 +1,11 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum HoldStatus: string
+{
+    case Active = 'active';
+    case Converted = 'converted';
+    case Released = 'released';
+    case Expired = 'expired';
+}
