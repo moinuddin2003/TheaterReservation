@@ -11,6 +11,8 @@ use App\Models\Payment;
 use App\Models\Refund;
 use App\Models\Setting;
 use App\Models\Showtime;
+use App\Models\StripeEvent;
+use App\Models\TicketScan;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -57,9 +59,12 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('aggregate', 'status');
         $topMovies = DB::table('booking_items')
+            ->join('bookings', 'bookings.id', '=', 'booking_items.booking_id')
             ->join('showtimes', 'showtimes.id', '=', 'booking_items.showtime_id')
             ->join('movies', 'movies.id', '=', 'showtimes.movie_id')
             ->where('booking_items.status', 'active')
+            ->where('bookings.status', 'confirmed')
+            ->where('bookings.created_at', '>=', $localNow->subDays(6)->startOfDay()->utc())
             ->select('movies.id', 'movies.title')
             ->selectRaw('COUNT(*) as tickets_sold')
             ->groupBy('movies.id', 'movies.title')
@@ -68,7 +73,14 @@ class DashboardController extends Controller
             ->get();
         $todayShowtimes = Showtime::query()
             ->with(['movie', 'screen.seats'])
-            ->withCount(['bookingItems as sold_seats_count' => fn ($query) => $query->where('status', 'active')])
+            ->withCount([
+                'bookingItems as sold_seats_count' => fn ($query) => $query
+                    ->where('status', 'active')
+                    ->whereHas('booking', fn ($bookings) => $bookings->where('status', 'confirmed')),
+                'seatHolds as held_seats_count' => fn ($query) => $query
+                    ->where('status', 'active')
+                    ->where('expires_at', '>', now()),
+            ])
             ->where('status', ShowtimeStatus::Scheduled->value)
             ->where('starts_at', '>=', $todayStartUtc)
             ->where('starts_at', '<', $tomorrowStartUtc)
@@ -77,9 +89,10 @@ class DashboardController extends Controller
             ->get();
         $todayShowtimes->each(function (Showtime $showtime): void {
             $capacity = $showtime->screen->seats->count();
+            $occupied = $showtime->sold_seats_count + $showtime->held_seats_count;
             $showtime->setAttribute(
                 'occupancy_percent',
-                $capacity === 0 ? 0 : min(100, (int) round(($showtime->sold_seats_count / $capacity) * 100)),
+                $capacity === 0 ? 0 : min(100, (int) round(($occupied / $capacity) * 100)),
             );
         });
 
@@ -102,10 +115,16 @@ class DashboardController extends Controller
                     'icon' => 'dollar-sign',
                 ],
                 [
-                    'label' => 'Upcoming showtimes',
+                    'label' => 'Tickets scanned today',
+                    'value' => number_format(TicketScan::query()->whereBetween('scanned_at', [$todayStartUtc, $tomorrowStartUtc])->count()),
+                    'note' => 'All scan outcomes',
+                    'icon' => 'scan-line',
+                ],
+                [
+                    'label' => 'Showtimes next 24h',
                     'value' => number_format(Showtime::query()
                         ->where('status', ShowtimeStatus::Scheduled->value)
-                        ->where('starts_at', '>=', now('UTC'))
+                        ->whereBetween('starts_at', [now('UTC'), now('UTC')->addDay()])
                         ->count()),
                     'note' => 'Scheduled screenings',
                     'icon' => 'calendar-clock',
@@ -132,6 +151,7 @@ class DashboardController extends Controller
                     ->where('created_at', '>=', now('UTC')->subDay())
                     ->count(),
                 'failed_refunds' => Refund::query()->where('status', RefundStatus::Failed->value)->count(),
+                'failed_webhooks' => StripeEvent::query()->where('status', 'failed')->count(),
             ],
         ]);
     }

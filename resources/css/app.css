@@ -54,6 +54,14 @@
     .admin-shell textarea {
         @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg;
     }
+
+    .admin-loading-indicator {
+        @apply hidden h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent;
+    }
+
+    form[data-submitting='true'] .admin-loading-indicator {
+        @apply inline-flex;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

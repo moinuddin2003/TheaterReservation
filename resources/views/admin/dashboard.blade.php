@@ -2,22 +2,16 @@
     <x-admin.page-header
         title="Good to see you, {{ auth()->user()->name }}"
         subtitle="Your CineBook control room at a glance."
-    />
+    >
+        <x-slot:actions>
+            <x-admin.button href="{{ route('admin.showtimes.create') }}">Schedule showtime</x-admin.button>
+        </x-slot:actions>
+    </x-admin.page-header>
+    <x-admin.toast />
 
-    <div class="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         @foreach ($stats as $stat)
-            <x-admin.card class="group transition-colors duration-150 hover:border-cine-accent/25">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-xs font-medium text-cine-secondary">{{ $stat['label'] }}</p>
-                        <p class="mt-3 text-2xl font-bold tracking-tight text-cine-primary">{{ $stat['value'] }}</p>
-                        <p class="mt-2 text-xs text-cine-tertiary">{{ $stat['note'] }}</p>
-                    </div>
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
-                        <x-admin.icon :name="$stat['icon']" class="h-5 w-5" />
-                    </span>
-                </div>
-            </x-admin.card>
+            <x-admin.stat-card :label="$stat['label']" :value="$stat['value']" :note="$stat['note']" :icon="$stat['icon']" />
         @endforeach
     </div>
 
@@ -29,13 +23,7 @@
                     <p class="mt-1 text-xs text-cine-tertiary">Successful payments, displayed in cinema time.</p>
                 </div>
             </div>
-            <div class="flex h-48 items-end gap-1.5 border-b border-cine-border/10">
-                @foreach ($revenueChart as $point)
-                    <div class="group flex h-full min-w-0 flex-1 flex-col justify-end" title="{{ $point['day'] }}: ${{ number_format($point['amount_cents'] / 100, 2) }}">
-                        <div class="w-full rounded-t bg-cine-accent/80" style="height: {{ $point['height_percent'] }}%"></div>
-                    </div>
-                @endforeach
-            </div>
+            <x-admin.line-chart :points="$revenueChart" label="Revenue over the last 30 days" />
             <div class="mt-2 flex justify-between text-[10px] text-cine-tertiary">
                 <span>{{ $revenueChart->first()['day'] ?? '' }}</span>
                 <span>{{ $revenueChart->last()['day'] ?? '' }}</span>
@@ -44,15 +32,15 @@
 
         <x-admin.card>
             <h2 class="text-sm font-semibold text-cine-primary">Bookings by status</h2>
-            <div class="mt-4 space-y-3">
-                @forelse ($bookingStatusCounts as $status => $count)
-                    <div class="flex items-center justify-between gap-3 text-sm">
-                        <span class="capitalize text-cine-secondary">{{ str_replace('_', ' ', $status) }}</span>
-                        <span class="font-semibold text-cine-primary">{{ number_format($count) }}</span>
-                    </div>
-                @empty
+            <div class="mt-4">
+                @if ($bookingStatusCounts->isNotEmpty())
+                    <x-admin.donut-chart
+                        :values="$bookingStatusCounts->map(fn ($count, $status) => ['label' => str_replace('_', ' ', $status), 'value' => (int) $count])->values()->all()"
+                        label="Bookings by status"
+                    />
+                @else
                     <p class="py-8 text-center text-sm text-cine-tertiary">No bookings yet.</p>
-                @endforelse
+                @endif
             </div>
         </x-admin.card>
     </div>
@@ -108,6 +96,9 @@
                 </p>
                 <p class="flex items-center justify-between text-cine-secondary">
                     <span>Failed refunds</span><strong class="text-cine-primary">{{ $alerts['failed_refunds'] }}</strong>
+                </p>
+                <p class="flex items-center justify-between text-cine-secondary">
+                    <span>Failed webhook events</span><strong class="text-cine-primary">{{ $alerts['failed_webhooks'] }}</strong>
                 </p>
             </div>
         </x-admin.card>
