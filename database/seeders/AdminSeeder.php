@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use RuntimeException;
 
 class AdminSeeder extends Seeder
 {
@@ -13,18 +12,25 @@ class AdminSeeder extends Seeder
     {
         $email = env('ADMIN_EMAIL');
         $password = env('ADMIN_PASSWORD');
-        if (app()->isProduction() && (! $email || ! $password)) {
-            throw new RuntimeException('ADMIN_EMAIL and ADMIN_PASSWORD must be set before seeding an administrator in production.');
+
+        if (filled($email) && filled($password)) {
+            User::query()->firstOrCreate(
+                ['email' => $email],
+                [
+                    'name' => 'CineBook Administrator',
+                    'password' => $password,
+                    'role' => Role::Admin,
+                    'email_verified_at' => now(),
+                ],
+            );
+
+            return;
         }
 
-        $email ??= 'admin@example.com';
-        $password ??= 'password';
-        $user = User::query()->firstOrNew(['email' => $email]);
-        $user->fill([
-            'name' => 'CineBook Administrator',
-            'password' => $password,
-            'role' => Role::Admin,
-        ]);
-        $user->forceFill(['email_verified_at' => now()])->save();
+        if (User::query()->where('role', Role::Admin)->exists()) {
+            return;
+        }
+
+        $this->command?->warn('No administrator exists. Set ADMIN_EMAIL and ADMIN_PASSWORD in your .env file to create one.');
     }
 }

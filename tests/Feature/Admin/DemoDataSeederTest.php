@@ -10,8 +10,45 @@ use App\Models\Showtime;
 use App\Models\StripeEvent;
 use App\Models\Ticket;
 use App\Models\TicketScan;
+use App\Models\User;
 use Database\Seeders\DemoDataSeeder;
 use Illuminate\Support\Facades\DB;
+
+test('demo data seeder reuses existing admin and staff accounts unchanged', function () {
+    $admin = User::factory()->create([
+        'name' => 'Existing Admin',
+        'email' => 'admin@example.com',
+        'password' => 'admin-existing-password',
+        'role' => 'admin',
+    ]);
+    $staff = User::factory()->create([
+        'name' => 'Existing Staff',
+        'email' => 'staff@example.com',
+        'password' => 'staff-existing-password',
+        'role' => 'staff',
+    ]);
+    $adminDetails = $admin->only(['name', 'email', 'password', 'role']);
+    $staffDetails = $staff->only(['name', 'email', 'password', 'role']);
+
+    $this->artisan('db:seed', ['--class' => DemoDataSeeder::class])
+        ->assertExitCode(0);
+
+    expect($admin->fresh()->only(['name', 'email', 'password', 'role']))->toEqual($adminDetails)
+        ->and($staff->fresh()->only(['name', 'email', 'password', 'role']))->toEqual($staffDetails)
+        ->and(Movie::query()->count())->toBe(24)
+        ->and(Booking::query()->count())->toBe(150)
+        ->and(User::query()->where('email', 'like', 'demo.customer%@example.com')->count())->toBe(22)
+        ->and(User::query()->where('email', 'like', 'demo.staff%@example.com')->count())->toBe(3);
+
+    $this->artisan('db:seed', ['--class' => DemoDataSeeder::class])
+        ->expectsOutput('Demo data already seeded')
+        ->assertExitCode(0);
+
+    expect(User::query()->where('email', 'admin@example.com')->count())->toBe(1)
+        ->and(User::query()->where('email', 'staff@example.com')->count())->toBe(1)
+        ->and(Movie::query()->count())->toBe(24)
+        ->and(Booking::query()->count())->toBe(150);
+});
 
 test('demo data seeder creates the fixtures once and skips subsequent runs', function () {
     $this->seed(DemoDataSeeder::class);

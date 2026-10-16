@@ -34,9 +34,15 @@ test('customers keep the default dashboard', function () {
 });
 
 test('the demo accounts are seeded with their expected roles', function () {
+    $admin = User::factory()->create([
+        'email' => 'admin@example.com',
+        'password' => 'password',
+        'role' => Role::Admin,
+    ]);
+
     $this->seed();
 
-    $admin = User::where('email', 'admin@example.com')->firstOrFail();
+    $admin->refresh();
     $staff = User::where('email', 'staff@example.com')->firstOrFail();
 
     expect($admin->role)->toBe(Role::Admin)
@@ -45,8 +51,12 @@ test('the demo accounts are seeded with their expected roles', function () {
         ->and(Hash::check('password', $staff->password))->toBeTrue();
 });
 
-test('the demo admin sees the admin dashboard after signing in', function () {
-    $this->seed(AdminSeeder::class);
+test('an administrator sees the admin dashboard after signing in', function () {
+    User::factory()->create([
+        'email' => 'admin@example.com',
+        'password' => 'password',
+        'role' => Role::Admin,
+    ]);
 
     $this->followingRedirects()
         ->post('/login', [

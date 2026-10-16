@@ -7,8 +7,8 @@ The admin panel reads and writes the existing MySQL schema with Eloquent. It has
 Configure the database connection in `.env`, then set the administrator credentials:
 
 ```dotenv
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=replace-with-a-strong-password
+ADMIN_EMAIL=your-admin@example.com
+ADMIN_PASSWORD=your-strong-password
 ```
 
 Stripe operations are restricted to test mode. Configure `STRIPE_SECRET` with an `sk_test_` key and `STRIPE_WEBHOOK_SECRET` before testing checkout or webhook flows. Never use live Stripe credentials for these admin test workflows.
@@ -23,7 +23,7 @@ php artisan db:seed
 php artisan storage:link
 ```
 
-`DatabaseSeeder` creates or updates the admin account and settings, then runs `DemoDataSeeder`. Demo data is skipped in production and whenever movies already exist; it is generated in one transaction. To receive queued mail and refund jobs locally, run `php artisan queue:work`. To expire seat holds on schedule, run `php artisan schedule:work`.
+`DatabaseSeeder` creates the configured admin only if no user already has `ADMIN_EMAIL`; it never changes an existing account's password or role. If either credential is unset, an existing admin is left untouched and seeding continues silently. If there is no admin, seeding prints a warning to set both `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` and continues without creating one. `DatabaseSeeder` then seeds settings and runs `DemoDataSeeder`. Demo data is skipped in production and whenever movies already exist; it is generated in one transaction. To receive queued mail and refund jobs locally, run `php artisan queue:work`. To expire seat holds on schedule, run `php artisan schedule:work`.
 
 ## Schema limitations
 

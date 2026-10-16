@@ -28,7 +28,6 @@ use Faker\Factory;
 use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DemoDataSeeder extends Seeder
@@ -69,7 +68,16 @@ class DemoDataSeeder extends Seeder
         $names = ['Action', 'Adventure', 'Animation', 'Comedy', 'Drama', 'Science Fiction'];
         $genres = [];
         foreach ($names as $name) {
-            $genres[] = Genre::query()->create(['name' => $name, 'slug' => Str::slug($name)]);
+            $slug = Str::slug($name);
+            $genre = Genre::query()
+                ->where('slug', $slug)
+                ->orWhere('name', $name)
+                ->first();
+
+            $genres[] = $genre ?? Genre::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $name],
+            );
         }
 
         return $genres;
@@ -95,19 +103,21 @@ class DemoDataSeeder extends Seeder
                 4, 5, 6 => MovieStatus::ComingSoon,
                 default => MovieStatus::Archived,
             };
-            $movie = Movie::query()->create([
-                'title' => $title,
-                'slug' => Str::slug($title),
-                'synopsis' => $faker->paragraphs(3, true),
-                'duration_minutes' => $faker->numberBetween(88, 165),
-                'rating' => ['G', 'PG', 'PG-13', 'R'][$index % 4],
-                'release_date' => $now->subDays($faker->numberBetween(0, 240))->toDateString(),
-                'poster_path' => null,
-                'trailer_url' => null,
-                'status' => $status,
-                'created_at' => $now->subMonths(3),
-                'updated_at' => $now,
-            ]);
+            $movie = Movie::query()->firstOrCreate(
+                ['slug' => Str::slug($title)],
+                [
+                    'title' => $title,
+                    'synopsis' => $faker->paragraphs(3, true),
+                    'duration_minutes' => $faker->numberBetween(88, 165),
+                    'rating' => ['G', 'PG', 'PG-13', 'R'][$index % 4],
+                    'release_date' => $now->subDays($faker->numberBetween(0, 240))->toDateString(),
+                    'poster_path' => null,
+                    'trailer_url' => null,
+                    'status' => $status,
+                    'created_at' => $now->subMonths(3),
+                    'updated_at' => $now,
+                ],
+            );
             $assignedGenres = [
                 $genres[$index % count($genres)]->id,
                 $genres[($index + 2) % count($genres)]->id,
@@ -122,23 +132,30 @@ class DemoDataSeeder extends Seeder
     /** @return array{Cinema, list<Screen>, array<int, list<Seat>>} */
     private function seedCinema(CarbonImmutable $now): array
     {
+        $cinemaName = 'CineBook Grand';
+        $cinemaNameSuffix = 1;
+        while (DB::table('cinemas')->where('name', $cinemaName)->exists()) {
+            $cinemaName = 'CineBook Grand '.($cinemaNameSuffix++);
+        }
+
         $cinema = Cinema::query()->create([
-            'name' => 'CineBook Grand',
+            'name' => $cinemaName,
             'address' => '125 Grand Avenue, New York, NY 10013',
             'phone' => '(212) 555-0148',
         ]);
         $layouts = [[7, 16], [8, 12], [10, 10], [6, 14]];
         $screens = [];
         $seatsByScreen = [];
-        $seatRows = [];
         foreach ($layouts as $index => [$rows, $perRow]) {
-            $screen = Screen::query()->create([
-                'cinema_id' => $cinema->id,
-                'name' => 'Screen '.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
-                'rows_count' => $rows,
-                'seats_per_row' => $perRow,
-                'is_active' => true,
-            ]);
+            $screenName = 'Screen '.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT);
+            $screen = Screen::query()->firstOrCreate(
+                ['cinema_id' => $cinema->id, 'name' => $screenName],
+                [
+                    'rows_count' => $rows,
+                    'seats_per_row' => $perRow,
+                    'is_active' => true,
+                ],
+            );
             $screens[] = $screen;
             $seatsByScreen[$screen->id] = [];
             for ($row = 0; $row < $rows; $row++) {
@@ -147,23 +164,27 @@ class DemoDataSeeder extends Seeder
                     $type = $seatNumber === 1
                         ? SeatType::Accessible->value
                         : ($row >= max(0, $rows - 2) ? SeatType::Premium->value : SeatType::Standard->value);
-                    $seatRows[] = [
-                        'screen_id' => $screen->id,
-                        'row_label' => chr(65 + $row),
-                        'seat_number' => $seatNumber,
-                        'label' => $label,
-                        'type' => $type,
-                        'is_disabled' => false,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
+                    Seat::query()->firstOrCreate(
+                        [
+                            'screen_id' => $screen->id,
+                            'row_label' => chr(65 + $row),
+                            'seat_number' => $seatNumber,
+                        ],
+                        [
+                            'label' => $label,
+                            'type' => $type,
+                            'is_disabled' => false,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ],
+                    );
                 }
             }
         }
-        foreach (array_chunk($seatRows, self::CHUNK_SIZE) as $chunk) {
-            DB::table('seats')->insert($chunk);
-        }
-        foreach (Seat::query()->orderBy('id')->get() as $seat) {
+        foreach (Seat::query()
+            ->whereIn('screen_id', array_map(fn (Screen $screen): int => $screen->id, $screens))
+            ->orderBy('id')
+            ->get() as $seat) {
             $seatsByScreen[$seat->screen_id][] = $seat;
         }
 
@@ -173,23 +194,60 @@ class DemoDataSeeder extends Seeder
     /** @return list<User> */
     private function seedUsers(Generator $faker, CarbonImmutable $now): array
     {
-        $password = Hash::make('password');
-        $users = [];
-        for ($index = 1; $index <= 25; $index++) {
-            $users[] = User::query()->create([
-                'name' => $index === 1 ? 'CineBook Staff' : $faker->name(),
-                'email' => $index === 1
-                    ? 'staff@example.com'
-                    : 'cinebook.demo.'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).'@example.test',
-                'password' => $password,
-                'role' => $index <= 3 ? Role::Staff : Role::Customer,
-                'email_verified_at' => $now->subDays($faker->numberBetween(1, 365)),
-                'created_at' => $now->subDays($faker->numberBetween(1, 365)),
+        User::query()->firstOrCreate(
+            ['email' => 'staff@example.com'],
+            [
+                'name' => 'CineBook Staff',
+                'password' => 'password',
+                'role' => Role::Staff,
+                'email_verified_at' => $now,
+                'created_at' => $now,
                 'updated_at' => $now,
-            ]);
+            ],
+        );
+
+        $staffCount = 0;
+        for ($index = 1; $staffCount < 3; $index++) {
+            $user = User::query()->firstOrCreate(
+                ['email' => 'demo.staff'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).'@example.com'],
+                [
+                    'name' => $faker->name(),
+                    'password' => 'password',
+                    'role' => Role::Staff,
+                    'email_verified_at' => $now->subDays($faker->numberBetween(1, 365)),
+                    'created_at' => $now->subDays($faker->numberBetween(1, 365)),
+                    'updated_at' => $now,
+                ],
+            );
+
+            if ($user->role === Role::Staff) {
+                $staffCount++;
+            }
         }
 
-        return $users;
+        $customerCount = 0;
+        for ($index = 1; $customerCount < 22; $index++) {
+            $user = User::query()->firstOrCreate(
+                ['email' => 'demo.customer'.str_pad((string) $index, 2, '0', STR_PAD_LEFT).'@example.com'],
+                [
+                    'name' => $faker->name(),
+                    'password' => 'password',
+                    'role' => Role::Customer,
+                    'email_verified_at' => $now->subDays($faker->numberBetween(1, 365)),
+                    'created_at' => $now->subDays($faker->numberBetween(1, 365)),
+                    'updated_at' => $now,
+                ],
+            );
+
+            if ($user->role === Role::Customer) {
+                $customerCount++;
+            }
+        }
+
+        return User::query()
+            ->whereIn('role', [Role::Staff->value, Role::Customer->value])
+            ->get()
+            ->all();
     }
 
     /** @param list<Movie> $movies
@@ -255,11 +313,18 @@ class DemoDataSeeder extends Seeder
         $paymentsToInsert = [];
         $ticketsToInsert = [];
         $refundsToInsert = [];
-        $scansToInsert = [];
         $soldSeatIds = [];
-        $nextBookingItemOffset = 0;
         $ticketCandidates = [];
-        $bookingIndex = 0;
+        $bookingIds = [];
+        $ticketBookingItemKeys = [];
+        $references = [];
+        $gatewaySessionIds = [];
+        $paymentIntentIds = [];
+        $paymentIdempotencyKeys = [];
+        $ticketNumbers = [];
+        $ticketTokens = [];
+        $refundIds = [];
+        $refundIdempotencyKeys = [];
         $specialShowtime = collect($showtimes)->first(fn (Showtime $showtime) => $showtime->screen_id === $screens[0]->id && $showtime->starts_at->isFuture());
         $otherShowtimes = array_values(array_filter($showtimes, fn (Showtime $showtime) => $showtime->id !== $specialShowtime?->id));
 
@@ -301,7 +366,12 @@ class DemoDataSeeder extends Seeder
             }
 
             $booking = Booking::query()->create([
-                'reference' => 'CB-'.strtoupper(Str::random(12)),
+                'reference' => $this->uniqueValue(
+                    'bookings',
+                    'reference',
+                    fn (): string => 'CB-'.strtoupper(Str::random(12)),
+                    $references,
+                ),
                 'user_id' => $customer->id,
                 'showtime_id' => $showtime->id,
                 'status' => $status,
@@ -316,6 +386,7 @@ class DemoDataSeeder extends Seeder
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ]);
+            $bookingIds[] = $booking->id;
             $bookingItems = [];
             foreach ($chosenSeats as $seat) {
                 $price = $showtime->base_price_cents + ($seat->type === SeatType::Premium ? 500 : 0);
@@ -361,9 +432,26 @@ class DemoDataSeeder extends Seeder
             $payment = Payment::query()->create([
                 'booking_id' => $booking->id,
                 'gateway' => 'stripe',
-                'gateway_session_id' => 'cs_test_demo_'.Str::lower(Str::random(20)),
-                'gateway_payment_intent_id' => $paymentStatus === PaymentStatus::Succeeded ? 'pi_test_demo_'.Str::lower(Str::random(20)) : null,
-                'idempotency_key' => (string) Str::uuid(),
+                'gateway_session_id' => $this->uniqueValue(
+                    'payments',
+                    'gateway_session_id',
+                    fn (): string => 'cs_test_demo_'.Str::lower(Str::random(20)),
+                    $gatewaySessionIds,
+                ),
+                'gateway_payment_intent_id' => $paymentStatus === PaymentStatus::Succeeded
+                    ? $this->uniqueValue(
+                        'payments',
+                        'gateway_payment_intent_id',
+                        fn (): string => 'pi_test_demo_'.Str::lower(Str::random(20)),
+                        $paymentIntentIds,
+                    )
+                    : null,
+                'idempotency_key' => $this->uniqueValue(
+                    'payments',
+                    'idempotency_key',
+                    fn (): string => (string) Str::uuid(),
+                    $paymentIdempotencyKeys,
+                ),
                 'amount_cents' => $totalCents,
                 'currency' => 'USD',
                 'status' => $paymentStatus,
@@ -378,11 +466,21 @@ class DemoDataSeeder extends Seeder
                     continue;
                 }
                 $ticket = [
-                    'booking_item_id' => $nextBookingItemOffset + $itemIndex + 1,
+                    'booking_item_id' => null,
                     'booking_id' => $booking->id,
                     'showtime_id' => $showtime->id,
-                    'ticket_number' => 'CBT-'.strtoupper(Str::random(12)),
-                    'token' => app(TokenGenerator::class)->generate(),
+                    'ticket_number' => $this->uniqueValue(
+                        'tickets',
+                        'ticket_number',
+                        fn (): string => 'CBT-'.strtoupper(Str::random(12)),
+                        $ticketNumbers,
+                    ),
+                    'token' => $this->uniqueValue(
+                        'tickets',
+                        'token',
+                        fn (): string => app(TokenGenerator::class)->generate(),
+                        $ticketTokens,
+                    ),
                     'status' => $status === BookingStatus::Cancelled ? TicketStatus::Voided->value : TicketStatus::Valid->value,
                     'used_at' => null,
                     'used_by' => null,
@@ -391,11 +489,11 @@ class DemoDataSeeder extends Seeder
                     'updated_at' => $createdAt,
                 ];
                 $ticketsToInsert[] = $ticket;
+                $ticketBookingItemKeys[] = $booking->id.':'.$item['seat_id'];
                 if ($showtime->starts_at->toDateString() <= $now->toDateString() && $ticket['status'] === TicketStatus::Valid->value) {
                     $ticketCandidates[] = $ticket;
                 }
             }
-            $nextBookingItemOffset += count($bookingItems);
 
             if ($paymentStatus === PaymentStatus::Succeeded && $bookingIndex > 30 && count($refundsToInsert) < 12 && $bookingIndex % 7 === 0) {
                 $refundStatus = match (count($refundsToInsert) % 4) {
@@ -410,8 +508,20 @@ class DemoDataSeeder extends Seeder
                     'currency' => 'USD',
                     'status' => $refundStatus->value,
                     'reason' => $refundStatus === RefundStatus::Pending ? 'customer_request' : 'admin_adjustment',
-                    'gateway_refund_id' => $refundStatus === RefundStatus::Succeeded ? 're_test_demo_'.Str::lower(Str::random(16)) : null,
-                    'idempotency_key' => (string) Str::uuid(),
+                    'gateway_refund_id' => $refundStatus === RefundStatus::Succeeded
+                        ? $this->uniqueValue(
+                            'refunds',
+                            'gateway_refund_id',
+                            fn (): string => 're_test_demo_'.Str::lower(Str::random(16)),
+                            $refundIds,
+                        )
+                        : null,
+                    'idempotency_key' => $this->uniqueValue(
+                        'refunds',
+                        'idempotency_key',
+                        fn (): string => (string) Str::uuid(),
+                        $refundIdempotencyKeys,
+                    ),
                     'failure_message' => $refundStatus === RefundStatus::Failed ? 'Transient test gateway failure.' : null,
                     'initiated_by' => $adminId,
                     'processed_at' => $refundStatus === RefundStatus::Succeeded ? $createdAt->addDay() : null,
@@ -422,6 +532,15 @@ class DemoDataSeeder extends Seeder
         }
 
         $this->insertChunks('booking_items', $itemsToInsert);
+        $bookingItemIds = DB::table('booking_items')
+            ->whereIn('booking_id', $bookingIds)
+            ->get(['id', 'booking_id', 'seat_id'])
+            ->keyBy(fn (object $item): string => $item->booking_id.':'.$item->seat_id);
+        foreach ($ticketsToInsert as $index => &$ticket) {
+            $ticket['booking_item_id'] = $bookingItemIds[$ticketBookingItemKeys[$index]]->id;
+        }
+        unset($ticket);
+
         $this->insertChunks('seat_holds', $holdsToInsert);
         $this->insertChunks('tickets', $ticketsToInsert);
 
@@ -466,10 +585,16 @@ class DemoDataSeeder extends Seeder
     private function seedStripeEvents(Generator $faker, CarbonImmutable $now): void
     {
         $rows = [];
+        $stripeEventIds = [];
         for ($index = 1; $index <= 40; $index++) {
             $status = $index === 40 ? 'failed' : ($index % 11 === 0 ? 'received' : 'processed');
             $rows[] = [
-                'stripe_event_id' => 'evt_test_demo_'.str_pad((string) $index, 8, '0', STR_PAD_LEFT),
+                'stripe_event_id' => $this->uniqueValue(
+                    'stripe_events',
+                    'stripe_event_id',
+                    fn (): string => 'evt_test_demo_'.str_pad((string) $index, 8, '0', STR_PAD_LEFT).'-'.Str::lower(Str::random(8)),
+                    $stripeEventIds,
+                ),
                 'type' => ['payment_intent.succeeded', 'checkout.session.completed', 'payment_intent.payment_failed'][$index % 3],
                 'status' => $status,
                 'error_message' => $status === 'failed' ? 'Transient webhook handler failure; replay is available.' : null,
@@ -502,6 +627,21 @@ class DemoDataSeeder extends Seeder
             ];
         }
         $this->insertChunks('audit_logs', $rows);
+    }
+
+    /**
+     * @param  callable(): string  $valueGenerator
+     * @param  array<string, true>  $generatedValues
+     */
+    private function uniqueValue(string $table, string $column, callable $valueGenerator, array &$generatedValues): string
+    {
+        do {
+            $value = $valueGenerator();
+        } while (isset($generatedValues[$value]) || DB::table($table)->where($column, $value)->exists());
+
+        $generatedValues[$value] = true;
+
+        return $value;
     }
 
     /** @param list<array<string, mixed>> $rows */
