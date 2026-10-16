@@ -20,7 +20,7 @@ class SaveShowtimeAction
         return DB::transaction(function () use ($data, $showtime): Showtime {
             $showtime = $showtime ? Showtime::query()->lockForUpdate()->findOrFail($showtime->id) : new Showtime;
             $movie = Movie::query()->findOrFail($data['movie_id']);
-            $start = Carbon::parse($data['starts_at']);
+            $start = Carbon::parse($data['starts_at'], 'UTC')->utc();
             $end = $start->copy()->addMinutes((int) $movie->duration_minutes + 20);
 
             if ($showtime->status === ShowtimeStatus::Cancelled) {

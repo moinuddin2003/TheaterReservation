@@ -10,20 +10,25 @@ use App\Actions\Admin\ProcessRefundAction;
 use App\Actions\Admin\ReplayStripeEventAction;
 use App\Actions\Admin\ResendBookingEmailAction;
 use App\Actions\Admin\RetryRefundAction;
+use App\Actions\Admin\SetUserActiveAction;
 use App\Actions\Admin\UpdateSettingsAction;
 use App\Actions\Admin\VoidTicketAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelBookingRequest;
 use App\Http\Requests\CancelShowtimeRequest;
 use App\Http\Requests\IssueRefundRequest;
+use App\Http\Requests\SetUserActiveRequest;
 use App\Http\Requests\StoreStaffUserRequest;
 use App\Http\Requests\UpdateSettingsRequest;
+use App\Http\Requests\VoidTicketRequest;
 use App\Models\Booking;
 use App\Models\Refund;
 use App\Models\Showtime;
 use App\Models\StripeEvent;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Stripe\Exception\ApiErrorException;
 
 class AdminWorkflowController extends Controller
 {
@@ -49,16 +54,32 @@ class AdminWorkflowController extends Controller
 
     public function processRefund(Refund $refund, ProcessRefundAction $action): RedirectResponse
     {
-        $action->execute($refund);
+        try {
+            $processed = $action->execute($refund);
+        } catch (ApiErrorException|\RuntimeException $exception) {
+            return back()->withErrors(['refund' => 'Refund gateway failed: '.($refund->fresh()->failure_message ?: $exception->getMessage())]);
+        }
 
-        return back()->with('status', 'Refund processed.');
+        if ($processed->status->value === 'failed') {
+            return back()->withErrors(['refund' => 'Refund gateway failed: '.($processed->failure_message ?: 'Unknown gateway error.')]);
+        }
+
+        return back()->with('status', 'Refund processed successfully.');
     }
 
     public function retryRefund(Refund $refund, RetryRefundAction $action): RedirectResponse
     {
-        $action->execute($refund);
+        try {
+            $retried = $action->execute($refund);
+        } catch (ApiErrorException|\RuntimeException $exception) {
+            return back()->withErrors(['refund' => 'Refund retry failed: '.($refund->fresh()->failure_message ?: $exception->getMessage())]);
+        }
 
-        return back()->with('status', 'Refund retry completed.');
+        if ($retried->status->value === 'failed') {
+            return back()->withErrors(['refund' => 'Refund retry failed: '.($retried->failure_message ?: 'Unknown gateway error.')]);
+        }
+
+        return back()->with('status', 'Refund retry completed successfully.');
     }
 
     public function cancelShowtime(
@@ -71,9 +92,9 @@ class AdminWorkflowController extends Controller
         return back()->with('status', 'Showtime cancelled.');
     }
 
-    public function voidTicket(Ticket $ticket, VoidTicketAction $action): RedirectResponse
+    public function voidTicket(VoidTicketRequest $request, Ticket $ticket, VoidTicketAction $action): RedirectResponse
     {
-        $action->execute($ticket);
+        $action->execute($ticket, $request->validated('reason'));
 
         return back()->with('status', 'Ticket voided.');
     }
@@ -98,6 +119,13 @@ class AdminWorkflowController extends Controller
         $action->execute($data['name'], $data['email'], $data['password']);
 
         return back()->with('status', 'Staff account created.');
+    }
+
+    public function setUserActive(SetUserActiveRequest $request, User $user, SetUserActiveAction $action): RedirectResponse
+    {
+        $action->execute($user, $request->boolean('active'), $request->user());
+
+        return back()->with('status', $request->boolean('active') ? 'User account reactivated.' : 'User account deactivated.');
     }
 
     public function updateSettings(UpdateSettingsRequest $request, UpdateSettingsAction $action): RedirectResponse

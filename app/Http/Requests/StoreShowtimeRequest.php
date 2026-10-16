@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\ShowtimeStatus;
 use App\Models\Movie;
+use App\Models\Setting;
 use App\Models\Showtime;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,9 +29,16 @@ class StoreShowtimeRequest extends FormRequest
         $movie = Movie::query()->find($this->input('movie_id'));
         $startsAt = $this->input('starts_at');
         if ($movie && is_string($startsAt) && strtotime($startsAt) !== false) {
+            $timezone = (string) Setting::query()->whereKey('timezone')->value('value');
+            if (! in_array($timezone, timezone_identifiers_list(), true)) {
+                $timezone = config('app.timezone', 'UTC');
+            }
+            $localStart = Carbon::parse($startsAt, $timezone);
             $this->merge([
-                'ends_at' => Carbon::parse($startsAt)
+                'starts_at' => $localStart->copy()->utc()->toDateTimeString(),
+                'ends_at' => $localStart
                     ->addMinutes((int) $movie->duration_minutes + 20)
+                    ->utc()
                     ->toDateTimeString(),
             ]);
         }

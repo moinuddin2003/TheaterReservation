@@ -63,11 +63,11 @@
         @else
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($movies as $movie)
-                    <article x-data="{ movieDetailsOpen: false }" class="flex gap-4 rounded-2xl border border-cine-border/10 bg-cine-surface p-4 shadow-cine-card">
+                    <article x-data="{ movieDetailsOpen: false }" class="flex min-w-0 gap-4 rounded-2xl border border-cine-border/10 bg-cine-surface p-4 shadow-cine-card">
                         <x-admin.poster :src="$movie->poster_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($movie->poster_path) : null" :title="$movie->title" />
                         <div class="min-w-0 flex-1">
                             <div class="flex items-start justify-between gap-2">
-                                <h2 class="truncate text-base font-semibold text-cine-primary"><a href="{{ route('admin.movies.show', $movie) }}" class="hover:text-cine-accent">{{ $movie->title }}</a></h2>
+                                <h2 class="min-w-0 flex-1 truncate text-base font-semibold text-cine-primary"><a href="{{ route('admin.movies.show', $movie) }}" class="hover:text-cine-accent">{{ $movie->title }}</a></h2>
                                 <x-admin.status-badge :status="$movie->status" />
                             </div>
                             <p class="mt-2 line-clamp-2 text-xs text-cine-secondary">{{ $movie->genres->pluck('name')->join(' · ') ?: 'No genres' }}</p>

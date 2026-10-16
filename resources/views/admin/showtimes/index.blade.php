@@ -25,6 +25,14 @@
                 @foreach (['scheduled', 'cancelled', 'completed'] as $status)<option value="{{ $status }}" @selected(request('status') === $status)>{{ str($status)->title() }}</option>@endforeach
             </select>
         </label>
+        <label class="text-xs font-semibold text-cine-secondary">Sort
+            <select name="sort" class="mt-1.5 min-h-10 rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary">
+                @foreach (['starts_at' => 'Start time', 'base_price_cents' => 'Price', 'status' => 'Status'] as $key => $label)<option value="{{ $key }}" @selected(request('sort', 'starts_at') === $key)>{{ $label }}</option>@endforeach
+            </select>
+        </label>
+        <label class="text-xs font-semibold text-cine-secondary">Direction
+            <select name="direction" class="mt-1.5 min-h-10 rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary"><option value="asc" @selected(request('direction', 'asc') === 'asc')>Ascending</option><option value="desc" @selected(request('direction') === 'desc')>Descending</option></select>
+        </label>
     </x-admin.filters-bar>
 
     <div class="overflow-x-auto rounded-2xl border border-cine-border/10 bg-cine-surface shadow-cine-card">
@@ -36,7 +44,7 @@
                     @php($occupied = min($capacity, $showtime->sold_seats_count + $showtime->held_seats_count))
                     @php($closed = $showtime->starts_at->subMinutes($salesCloseMinutes)->isPast())
                     <tr class="hover:bg-cine-elevated/30">
-                        <td class="whitespace-nowrap px-4 py-3"><a href="{{ route('admin.showtimes.show', $showtime) }}" class="font-semibold text-cine-primary hover:text-cine-accent">{{ $showtime->starts_at->format('M j · g:i A') }}</a></td>
+                        <td class="whitespace-nowrap px-4 py-3"><a href="{{ route('admin.showtimes.show', $showtime) }}" class="font-semibold text-cine-primary hover:text-cine-accent">{{ $showtime->starts_at->timezone($timezone)->format('M j · g:i A') }}</a></td>
                         <td class="px-4 py-3 text-cine-primary">{{ $showtime->movie->title }}</td>
                         <td class="px-4 py-3 text-cine-secondary">{{ $showtime->screen->name }}</td>
                         <td class="min-w-40 px-4 py-3">

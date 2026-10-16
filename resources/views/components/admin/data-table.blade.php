@@ -20,6 +20,14 @@
                             <td class="whitespace-nowrap px-4 py-3.5 text-cine-primary">
                                 @if (isset($column['slot']))
                                     {{ $column['slot']($row) }}
+                                @elseif (($column['type'] ?? null) === 'link')
+                                    <a class="font-semibold text-cine-accent hover:text-cine-primary" href="{{ route($column['route'], $row) }}">{{ $column['link_label'] ?? 'Details' }}</a>
+                                @elseif (($column['type'] ?? null) === 'relation-link')
+                                    @if (data_get($row, $column['relation']))
+                                        <a class="font-semibold text-cine-accent hover:text-cine-primary" href="{{ route($column['route'], data_get($row, $column['relation'])) }}">{{ data_get($row, $column['label_key'] ?? $column['relation'].'.ticket_number') }}</a>
+                                    @else
+                                        —
+                                    @endif
                                 @else
                                     {{ data_get($row, $column['key']) ?? '—' }}
                                 @endif

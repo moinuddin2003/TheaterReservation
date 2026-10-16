@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMovieRequest;
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\Setting;
 use App\Models\Showtime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -110,7 +111,12 @@ class MovieController extends Controller
             ->where('payments.status', 'succeeded')
             ->sum('payments.amount_cents');
 
-        return view('admin.movies.show', compact('movie', 'upcomingShowtimes', 'ticketsSold', 'salesCents'));
+        $timezone = (string) Setting::query()->whereKey('timezone')->value('value');
+        if (! in_array($timezone, timezone_identifiers_list(), true)) {
+            $timezone = config('app.timezone', 'UTC');
+        }
+
+        return view('admin.movies.show', compact('movie', 'upcomingShowtimes', 'ticketsSold', 'salesCents', 'timezone'));
     }
 
     public function edit(Movie $movie): View

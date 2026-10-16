@@ -104,4 +104,11 @@ document.addEventListener('submit', (event) => {
     });
 });
 
+document.addEventListener('input', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.name !== 'q' || input.form?.method.toLowerCase() !== 'get') return;
+    window.clearTimeout(input.searchTimer);
+    input.searchTimer = window.setTimeout(() => input.form.requestSubmit(), 350);
+});
+
 Alpine.start();

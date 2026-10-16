@@ -6,6 +6,7 @@
     'reason' => false,
     'reasonName' => 'reason',
     'id' => null,
+    'hidden' => [],
 ])
 
 @php($confirmId = $id ?? 'confirm-'.\Illuminate\Support\Str::uuid())
@@ -22,6 +23,9 @@
                 @if (strtoupper($method) !== 'POST')
                     @method($method)
                 @endif
+                @foreach ($hidden as $name => $value)
+                    <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+                @endforeach
                 @if ($reason)
                     <x-admin.textarea :name="$reasonName" label="Reason" required rows="3" />
                 @endif

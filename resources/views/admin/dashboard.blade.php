@@ -88,7 +88,7 @@
     </div>
 
     <div class="mb-6 grid gap-6 xl:grid-cols-3">
-        <x-admin.card>
+        <x-admin.card class="min-w-0">
             <h2 class="mb-3 text-sm font-semibold text-cine-primary">Alerts</h2>
             <div class="space-y-3 text-sm">
                 <p class="flex items-center justify-between text-cine-secondary">
@@ -103,7 +103,7 @@
             </div>
         </x-admin.card>
 
-        <x-admin.card class="xl:col-span-2">
+        <x-admin.card class="min-w-0 xl:col-span-2">
             <h2 class="mb-4 text-sm font-semibold text-cine-primary">Recent bookings</h2>
             <div class="space-y-3">
                 @forelse ($recentBookings as $booking)

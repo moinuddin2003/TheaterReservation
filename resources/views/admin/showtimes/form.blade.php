@@ -14,7 +14,7 @@
                 <option value="">Choose screen</option>
                 @foreach ($screens as $screen)<option value="{{ $screen->id }}" @selected(old('screen_id', $showtime->screen_id) == $screen->id)>{{ $screen->name }}</option>@endforeach
             </x-admin.select>
-            <x-admin.time name="starts_at" label="Start date and time" :value="$showtime->starts_at?->format('Y-m-d\\TH:i')" required />
+            <x-admin.time name="starts_at" label="Start date and time ({{ $timezone }})" :value="$showtime->starts_at?->timezone($timezone)->format('Y-m-d\\TH:i')" required />
             <x-admin.money-input name="base_price_cents" label="Ticket price" :cents="$showtime->base_price_cents ?? 1500" required />
             <p class="text-xs text-cine-tertiary">Screenings on the same screen cannot overlap. Runtime and a 20-minute turnover are included in the check.</p>
             <div class="flex justify-end gap-3"><x-admin.button variant="secondary" href="{{ route('admin.showtimes.index') }}">Cancel</x-admin.button><x-admin.button type="submit" x-bind:disabled="saving">{{ $showtime->exists ? 'Save changes' : 'Create showtime' }}</x-admin.button></div>

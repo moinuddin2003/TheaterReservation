@@ -18,6 +18,8 @@ class UpdateSettingsRequest extends FormRequest
             'values.cinema_name' => ['sometimes', 'required', 'string', 'max:120'],
             'values.support_email' => ['sometimes', 'required', 'email', 'max:255'],
             'values.timezone' => ['sometimes', 'required', 'timezone'],
+            'values.currency' => ['sometimes', 'required', 'in:USD'],
+            'values.refund_percent' => ['sometimes', 'required', 'integer', 'in:100'],
             'values.seat_hold_minutes' => ['sometimes', 'required', 'integer', 'in:10'],
             'values.max_seats_per_booking' => ['sometimes', 'required', 'integer', 'in:6'],
             'values.sales_close_minutes' => ['sometimes', 'required', 'integer', 'in:15'],

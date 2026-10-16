@@ -6,7 +6,6 @@ use App\Models\Setting;
 use App\Services\AuditLogger;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class UpdateSettingsAction
@@ -15,6 +14,8 @@ class UpdateSettingsAction
         'cinema_name' => 'string',
         'support_email' => 'email',
         'timezone' => 'timezone',
+        'currency' => 'currency',
+        'refund_percent' => 'refund_percent',
         'seat_hold_minutes' => 'hold_minutes',
         'max_seats_per_booking' => 'max_seats',
         'sales_close_minutes' => 'sales_close_minutes',
@@ -55,6 +56,8 @@ class UpdateSettingsAction
             'string' => $value !== '' && mb_strlen($value) <= ($key === 'cinema_name' ? 120 : 255),
             'email' => filter_var($value, FILTER_VALIDATE_EMAIL) !== false && mb_strlen($value) <= 255,
             'timezone' => in_array($value, timezone_identifiers_list(), true),
+            'currency' => $value === 'USD',
+            'refund_percent' => $value === '100',
             'hold_minutes' => $value === '10',
             'max_seats' => $value === '6',
             'sales_close_minutes' => $value === '15',

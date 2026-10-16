@@ -3,39 +3,49 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use App\Models\StripeEvent;
-use App\Support\AdminTablePage;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class StripeEventController extends Controller
 {
     public function index(Request $request): View
     {
-        return AdminTablePage::render(
-            $request,
-            'Stripe Events',
-            'Read-only log of webhook events received from Stripe.',
-            'System',
-            'webhook',
-            StripeEvent::query(),
-            ['stripe_event_id', 'type', 'error_message'],
-            ['created_at', 'type', 'status'],
-            [
-                ['label' => 'Event ID', 'key' => 'stripe_event_id'],
-                ['label' => 'Type', 'key' => 'type'],
-                ['label' => 'Status', 'key' => 'status', 'type' => 'status'],
-                ['label' => 'Processed', 'key' => 'processed_at'],
-                ['label' => 'Error', 'key' => 'error_message'],
-            ],
-            [
-                ['name' => 'status', 'label' => 'status', 'options' => [
-                    'received' => 'Received',
-                    'processed' => 'Processed',
-                    'failed' => 'Failed',
-                ]],
-            ],
-            ['status' => 'status'],
-        );
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::in(['received', 'processed', 'failed'])],
+            'sort' => ['nullable', Rule::in(['created_at', 'type', 'status'])],
+            'direction' => ['nullable', Rule::in(['asc', 'desc'])],
+        ]);
+        $events = StripeEvent::query()
+            ->when($filters['q'] ?? null, fn ($query, $search) => $query->where(fn ($nested) => $nested
+                ->where('stripe_event_id', 'like', '%'.$search.'%')
+                ->orWhere('type', 'like', '%'.$search.'%')
+                ->orWhere('error_message', 'like', '%'.$search.'%')))
+            ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('type', $type))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->orderBy($filters['sort'] ?? 'created_at', $filters['direction'] ?? 'desc')
+            ->paginate(15)->withQueryString();
+
+        return view('admin.stripe-events.index', [
+            'events' => $events,
+            'types' => StripeEvent::query()->distinct()->orderBy('type')->pluck('type'),
+            'timezone' => $this->timezone(),
+        ]);
+    }
+
+    public function show(StripeEvent $event): View
+    {
+        return view('admin.stripe-events.show', ['event' => $event, 'timezone' => $this->timezone()]);
+    }
+
+    private function timezone(): string
+    {
+        $timezone = (string) Setting::query()->whereKey('timezone')->value('value');
+
+        return in_array($timezone, timezone_identifiers_list(), true) ? $timezone : config('app.timezone', 'UTC');
     }
 }

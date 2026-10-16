@@ -4,7 +4,7 @@
     <form method="GET" action="{{ $action }}" x-data="adminSearch" class="flex flex-wrap items-end gap-3 rounded-2xl border border-cine-border/10 bg-cine-surface p-4">
         <label class="min-w-48 flex-1 text-xs font-semibold text-cine-secondary">
             Search
-            <input name="q" value="{{ request('q') }}" @input.debounce.350ms="$el.form.requestSubmit()" placeholder="Search records…" class="mt-1.5 min-h-10 w-full rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary placeholder:text-cine-tertiary">
+            <input name="q" value="{{ request('q') }}" placeholder="Search records…" class="mt-1.5 min-h-10 w-full rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary placeholder:text-cine-tertiary">
         </label>
         {{ $slot }}
         <x-admin.button type="submit">Apply</x-admin.button>

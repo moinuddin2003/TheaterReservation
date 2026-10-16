@@ -55,13 +55,20 @@ Route::prefix('admin')
         Route::put('/showtimes/{showtime}', [ShowtimeController::class, 'update'])->name('showtimes.update');
         Route::post('/showtimes/{showtime}/cancel', [ShowtimeController::class, 'cancel'])->name('showtimes.cancel');
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
+        Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::get('/stripe-events', [StripeEventController::class, 'index'])->name('stripe-events.index');
+        Route::get('/stripe-events/{event}', [StripeEventController::class, 'show'])->name('stripe-events.show');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
         Route::post('/bookings/{booking}/cancel', [AdminWorkflowController::class, 'cancelBooking'])->name('bookings.cancel');
         Route::post('/bookings/{booking}/refunds', [AdminWorkflowController::class, 'issueRefund'])->name('bookings.refunds.store');
@@ -70,6 +77,7 @@ Route::prefix('admin')
         Route::post('/refunds/{refund}/retry', [AdminWorkflowController::class, 'retryRefund'])->name('refunds.retry');
         Route::post('/tickets/{ticket}/void', [AdminWorkflowController::class, 'voidTicket'])->name('tickets.void');
         Route::post('/users/staff', [AdminWorkflowController::class, 'createStaff'])->name('users.staff.store');
+        Route::patch('/users/{user}/active', [AdminWorkflowController::class, 'setUserActive'])->name('users.active');
         Route::patch('/settings', [AdminWorkflowController::class, 'updateSettings'])->name('settings.update');
         Route::post('/stripe-events/{event}/replay', [AdminWorkflowController::class, 'replayStripeEvent'])->name('stripe-events.replay');
     });

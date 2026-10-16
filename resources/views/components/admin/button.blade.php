@@ -13,11 +13,11 @@
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->class(['inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none', $styles]) }}>
+    <a href="{{ $href }}" {{ $attributes->class(['inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg', $styles]) }}>
         {{ $slot }}
     </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class(['inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50', $styles]) }}>
+    <button type="{{ $type }}" {{ $attributes->class(['inline-flex min-h-10 items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors duration-150 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg disabled:cursor-not-allowed disabled:opacity-50', $styles]) }}>
         {{ $slot }}
     </button>
 @endif

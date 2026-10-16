@@ -20,6 +20,9 @@
                 @endforeach
             </select>
         </label>
+        <label class="text-xs font-semibold text-cine-secondary">Direction
+            <select name="direction" class="mt-1.5 min-h-10 rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary"><option value="asc" @selected(request('direction', 'asc') === 'asc')>Ascending</option><option value="desc" @selected(request('direction') === 'desc')>Descending</option></select>
+        </label>
     </x-admin.filters-bar>
 
     <div class="mt-5 overflow-hidden rounded-2xl border border-cine-border/10 bg-cine-surface">

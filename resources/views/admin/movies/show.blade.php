@@ -35,7 +35,7 @@
     <x-admin.card class="mt-5" title="Upcoming showtimes">
         @forelse ($upcomingShowtimes as $showtime)
             <a href="{{ route('admin.showtimes.show', $showtime) }}" class="flex items-center justify-between gap-4 border-b border-cine-border/10 py-3 last:border-0">
-                <span class="text-sm font-medium text-cine-primary">{{ $showtime->starts_at->format('M j · g:i A') }} · {{ $showtime->screen->name }}</span>
+                <span class="text-sm font-medium text-cine-primary">{{ $showtime->starts_at->timezone($timezone)->format('M j · g:i A') }} · {{ $showtime->screen->name }}</span>
                 <span class="text-xs text-cine-secondary">{{ $showtime->tickets_sold_count }} seats booked</span>
             </a>
         @empty

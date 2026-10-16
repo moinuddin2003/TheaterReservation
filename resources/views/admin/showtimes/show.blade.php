@@ -1,5 +1,5 @@
 <x-admin.layout :title="$showtime->movie->title" breadcrumb="Cinema">
-    <x-admin.page-header :title="$showtime->movie->title" subtitle="{{ $showtime->starts_at->format('l, M j, Y · g:i A') }} · {{ $showtime->screen->name }}">
+    <x-admin.page-header :title="$showtime->movie->title" subtitle="{{ $showtime->starts_at->timezone($timezone)->format('l, M j, Y · g:i A') }} · {{ $showtime->screen->name }}">
         <x-slot:actions>
             <x-admin.button variant="secondary" href="{{ route('admin.showtimes.index') }}">Back to schedule</x-admin.button>
             @if ($showtime->status->value === 'scheduled' && $showtime->starts_at->isFuture())<x-admin.button variant="secondary" href="{{ route('admin.showtimes.edit', $showtime) }}">Edit</x-admin.button>@endif
@@ -9,7 +9,7 @@
     @php($capacity = $showtime->screen->seats->count())
     @php($booked = $seats->where('occupancy_state', 'booked')->count())
     @php($held = $seats->where('occupancy_state', 'held')->count())
-    @php($salesClosed = $showtime->starts_at->subMinutes(15)->isPast())
+    @php($salesClosed = $showtime->starts_at->subMinutes($salesCloseMinutes)->isPast())
     @php($soldOut = $capacity > 0 && $booked + $held >= $capacity)
     @php($ended = $showtime->ends_at->isPast())
 
