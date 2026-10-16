@@ -32,8 +32,19 @@ Route::post('/stripe/webhook', function (Request $request) {
 
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    $movieSlug = config('cinema.featured_movie');
+    $movie = config('cinema.movies.'.$movieSlug);
+
+    return view('movies.index', ['movie' => $movie]);
+})->name('movies.index');
+
+Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
+    $movie = config('cinema.movies.'.$movieSlug);
+
+    abort_if(! is_array($movie), 404);
+
+    return view('movies.seats', ['movie' => $movie]);
+})->name('movies.seats');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -46,6 +57,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-
-
