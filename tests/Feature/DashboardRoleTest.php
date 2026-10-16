@@ -54,8 +54,10 @@ test('the demo admin sees the admin dashboard after signing in', function () {
             'password' => 'password',
         ])
         ->assertOk()
-        ->assertSee('Coming soon')
-        ->assertSee('Admin navigation');
+        ->assertSee("Today's bookings")
+        ->assertSee('Revenue today')
+        ->assertSee('Top movies')
+        ->assertDontSee('Coming soon');
 });
 
 test('the demo staff member sees the staff dashboard after signing in', function () {

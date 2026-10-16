@@ -2,11 +2,14 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/stripe/webhook', StripeWebhookController::class)->name('stripe.webhook');
 
 Route::get('/dashboard', function () {
     if (auth()->user()->role === Role::Admin) {

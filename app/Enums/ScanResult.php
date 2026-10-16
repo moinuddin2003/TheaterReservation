@@ -1,3 +1,10 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum ScanResult: string
+{
+    case Valid = 'valid';
+    case Duplicate = 'duplicate';
+    case Invalid = 'invalid';
+}

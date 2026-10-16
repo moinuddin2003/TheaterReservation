@@ -1,3 +1,13 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Services\Payments;
+
+final readonly class PaymentResult
+{
+    public function __construct(
+        public bool $successful,
+        public ?string $id = null,
+        public ?string $url = null,
+        public ?string $error = null,
+    ) {}
+}

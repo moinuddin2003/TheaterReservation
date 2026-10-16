@@ -32,8 +32,37 @@ test('an administrator can open every admin placeholder page', function (string 
 test('customers and staff are forbidden from the admin panel', function (Role $role) {
     $user = User::factory()->create(['role' => $role]);
 
+    $this->actingAs($user);
+    foreach ([
+        'admin.dashboard',
+        'admin.movies.index',
+        'admin.genres.index',
+        'admin.cinema.index',
+        'admin.showtimes.index',
+        'admin.bookings.index',
+        'admin.payments.index',
+        'admin.refunds.index',
+        'admin.tickets.index',
+        'admin.users.index',
+        'admin.settings.edit',
+        'admin.stripe-events.index',
+        'admin.audit-logs.index',
+    ] as $route) {
+        $this->get(route($route))->assertForbidden();
+    }
+})->with([
+    'customer' => [Role::Customer],
+    'staff' => [Role::Staff],
+]);
+
+test('customers and staff cannot submit administrative mutations', function (Role $role) {
+    $user = User::factory()->create(['role' => $role]);
+
     $this->actingAs($user)
-        ->get(route('admin.dashboard'))
+        ->patch(route('admin.settings.update'), ['values' => ['cinema_name' => 'Unauthorized']])
+        ->assertForbidden();
+
+    $this->post(route('admin.users.staff.store'), [])
         ->assertForbidden();
 })->with([
     'customer' => [Role::Customer],

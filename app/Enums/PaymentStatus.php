@@ -1,3 +1,10 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum PaymentStatus: string
+{
+    case Pending = 'pending';
+    case Succeeded = 'succeeded';
+    case Failed = 'failed';
+}

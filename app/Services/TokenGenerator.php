@@ -1,3 +1,13 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Services;
+
+use Illuminate\Support\Str;
+
+class TokenGenerator
+{
+    public function generate(): string
+    {
+        return Str::lower(Str::random(40));
+    }
+}

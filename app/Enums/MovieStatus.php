@@ -1,3 +1,11 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum MovieStatus: string
+{
+    case NowShowing = 'now_showing';
+    case ComingSoon = 'coming_soon';
+    case Ended = 'ended';
+    case Archived = 'archived';
+}

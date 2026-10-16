@@ -1,3 +1,10 @@
-﻿<?php
+<?php
 
-// Structural placeholder. Implementation follows the CineBook blueprint.
+namespace App\Enums;
+
+enum SeatType: string
+{
+    case Standard = 'standard';
+    case Premium = 'premium';
+    case Accessible = 'accessible';
+}
