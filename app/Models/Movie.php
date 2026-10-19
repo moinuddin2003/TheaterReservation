@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'title',
@@ -106,5 +107,42 @@ class Movie extends Model
     public function isNowShowing(): bool
     {
         return $this->status === MovieStatus::NowShowing;
+    }
+
+    /**
+     * Public URL for the movie's poster, or null when none is set.
+     */
+    public function posterUrl(): ?string
+    {
+        return $this->artworkUrl($this->poster_path);
+    }
+
+    /**
+     * Public URL for the movie's wide backdrop, or null when none is set.
+     */
+    public function backdropUrl(): ?string
+    {
+        return $this->artworkUrl($this->backdrop_path);
+    }
+
+    /**
+     * Resolve a stored artwork path to a public URL.
+     *
+     * Absolute URLs are returned as-is, leading-slash paths are treated as
+     * files in `public/`, and everything else lives on the public disk.
+     */
+    private function artworkUrl(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return str_starts_with($path, '/')
+            ? asset($path)
+            : Storage::disk('public')->url($path);
     }
 }
