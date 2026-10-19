@@ -57,6 +57,8 @@ class MovieRequest extends FormRequest
             'release_date' => ['nullable', 'date'],
             'poster_path' => ['nullable', 'string', 'max:255'],
             'backdrop_path' => ['nullable', 'string', 'max:255'],
+            'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'backdrop' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'trailer_url' => ['nullable', 'url', 'max:255'],
             'status' => ['required', Rule::enum(MovieStatus::class)],
             'genres' => ['nullable', 'array'],
@@ -72,6 +74,12 @@ class MovieRequest extends FormRequest
         return [
             'slug.regex' => 'The slug may only contain lowercase letters, numbers and single hyphens.',
             'genres.*.exists' => 'One of the selected genres no longer exists.',
+            'poster.image' => 'The poster must be an image file.',
+            'poster.mimes' => 'The poster must be a JPG, PNG or WebP image.',
+            'poster.max' => 'The poster may not be larger than 4 MB.',
+            'backdrop.image' => 'The backdrop must be an image file.',
+            'backdrop.mimes' => 'The backdrop must be a JPG, PNG or WebP image.',
+            'backdrop.max' => 'The backdrop may not be larger than 8 MB.',
         ];
     }
 }
