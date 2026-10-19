@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
     'rating',
     'release_date',
     'poster_path',
+    'backdrop_path',
     'trailer_url',
 ])]
 #[RouteKey('slug')]

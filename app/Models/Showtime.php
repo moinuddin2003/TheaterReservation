@@ -88,6 +88,29 @@ class Showtime extends Model
     }
 
     /**
+     * The moment a showtime ends: start + movie runtime + screen turnaround.
+     */
+    public static function endsAtFor(string|Carbon $startsAt, Movie $movie): Carbon
+    {
+        $minutes = $movie->duration_minutes
+            + (int) config('cinebook.screen_turnaround_minutes', 15);
+
+        return Carbon::parse($startsAt)->addMinutes($minutes);
+    }
+
+    /**
+     * Showtimes whose runtime window overlaps the given start/end.
+     *
+     * @param  Builder<Showtime>  $query
+     * @return Builder<Showtime>
+     */
+    public function scopeOverlapping(Builder $query, Carbon $startsAt, Carbon $endsAt): Builder
+    {
+        return $query->where('starts_at', '<', $endsAt)
+            ->where('ends_at', '>', $startsAt);
+    }
+
+    /**
      * @param  Builder<Showtime>  $query
      * @return Builder<Showtime>
      */

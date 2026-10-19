@@ -41,6 +41,9 @@ return [
     */
 
     'sales_cutoff_minutes' => 15,
+
+    // Cleanup gap added after a movie's runtime when scheduling showtimes.
+    'screen_turnaround_minutes' => 15,
     'scan_window_before_minutes' => 60,
     'scan_window_after_minutes' => 30,
 
