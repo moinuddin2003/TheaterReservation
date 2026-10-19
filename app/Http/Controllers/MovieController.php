@@ -44,7 +44,7 @@ class MovieController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        return view('movies.index', [
+        return view('movies.catalog', [
             'movies' => $movies,
             'genres' => Genre::query()->orderBy('name')->get(),
             'filters' => [
@@ -69,7 +69,7 @@ class MovieController extends Controller
             ->orderBy('starts_at')
             ->get();
 
-        return view('movies.show', [
+        return view('movies.index', [
             'movie' => $movie,
             'showtimesByDate' => $showtimes->groupBy(fn ($showtime) => $showtime->starts_at->toDateString()),
             'availability' => $this->availabilityFor($showtimes),
