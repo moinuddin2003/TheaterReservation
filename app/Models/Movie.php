@@ -120,6 +120,10 @@ class Movie extends Model
             return $this->poster_path;
         }
 
+        if (Str::startsWith($this->poster_path, ['/images/', 'images/'])) {
+            return asset(ltrim($this->poster_path, '/'));
+        }
+
         return Storage::disk('public')->url($this->poster_path);
     }
 }

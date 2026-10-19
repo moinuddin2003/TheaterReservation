@@ -208,7 +208,7 @@
         @if ($movies->hasPages() || $movies->count())
             <div class="flex flex-col gap-3 border-t border-cine-border/10 px-4 py-3 text-xs text-cine-tertiary sm:flex-row sm:items-center sm:justify-between">
                 <p>Showing {{ $movies->firstItem() }}–{{ $movies->lastItem() }} of {{ $movies->total() }} movies</p>
-                <div>{{ $movies->onEachSide(1)->links() }}</div>
+                <div>{{ $movies->onEachSide(1)->links('vendor.pagination.admin') }}</div>
             </div>
         @endif
     </x-admin.card>

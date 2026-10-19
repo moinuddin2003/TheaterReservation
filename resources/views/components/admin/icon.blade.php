@@ -74,6 +74,12 @@
         @case('chevron-down')
             <path d="m6 9 6 6 6-6" />
             @break
+        @case('chevron-left')
+            <path d="m15 18-6-6 6-6" />
+            @break
+        @case('chevron-right')
+            <path d="m9 18 6-6-6-6" />
+            @break
         @case('log-out')
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
             @break

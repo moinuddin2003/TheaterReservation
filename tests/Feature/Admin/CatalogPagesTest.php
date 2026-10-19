@@ -118,12 +118,31 @@ test('the movie library shows ten movies per page and avoids zero-addition copy'
 
     $response->assertOk()
         ->assertSee('No new movies this week')
+        ->assertSee('Showing 1–10 of 11 movies')
         ->assertDontSee('0 addition this week');
+    $response->assertDontSee('Showing 1 to 10 of 11 results');
     $response->assertViewHas('movies', fn ($movies) => $movies->count() === 10 && $movies->total() === 11);
 
     $secondPage = $this->get(route('admin.movies.index', ['page' => 2]));
     $secondPage->assertOk()
         ->assertViewHas('movies', fn ($movies) => $movies->count() === 1 && $movies->total() === 11);
+});
+
+test('seeded public movie posters resolve to their public image URLs', function () {
+    $posterPath = '/images/movies/interstellar-poster.jpg';
+    $movie = Movie::factory()->create([
+        'title' => 'Seeded Poster Test',
+        'poster_path' => $posterPath,
+    ]);
+
+    expect(file_exists(public_path(ltrim($posterPath, '/'))))->toBeTrue()
+        ->and($movie->posterUrl())->toBe(asset(ltrim($posterPath, '/')));
+
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $this->actingAs($admin)
+        ->get(route('admin.movies.index'))
+        ->assertOk()
+        ->assertSee('src="'.asset(ltrim($posterPath, '/')).'"', false);
 });
 
 test('an administrator can filter movies by genre and status and switch to grid view', function () {
