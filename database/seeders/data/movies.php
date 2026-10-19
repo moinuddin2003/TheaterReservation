@@ -8,8 +8,10 @@ use App\Enums\MovieStatus;
 |--------------------------------------------------------------------------
 |
 | Fictional sample movies. Each entry is the single place to edit a movie's
-| details. Swap the `poster` and `trailer` values for real URLs whenever you
-| like - no code changes needed. `genres` refers to genre slugs.
+| details. Swap the `poster`, `backdrop` and `trailer` values for real URLs
+| whenever you like - no code changes needed. `backdrop` is the wide hero image
+| (home banner / movie detail); if omitted, a wide placeholder is generated.
+| `genres` refers to genre slugs.
 |
 */
 
@@ -24,6 +26,7 @@ return [
         'status' => MovieStatus::NowShowing,
         'genres' => ['drama'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=The+Last+Projectionist',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=The+Last+Projectionist',
     ],
     [
         'title' => 'Neon Horizon',
@@ -35,6 +38,7 @@ return [
         'status' => MovieStatus::NowShowing,
         'genres' => ['sci-fi', 'action'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Neon+Horizon',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Neon+Horizon',
     ],
     [
         'title' => 'Whiskers and Wonders',
@@ -46,6 +50,7 @@ return [
         'status' => MovieStatus::NowShowing,
         'genres' => ['family', 'comedy'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Whiskers+and+Wonders',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Whiskers+and+Wonders',
     ],
     [
         'title' => 'Midnight Cargo',
@@ -57,6 +62,7 @@ return [
         'status' => MovieStatus::NowShowing,
         'genres' => ['action'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Midnight+Cargo',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Midnight+Cargo',
     ],
     [
         'title' => 'The Quiet Orchard',
@@ -68,6 +74,7 @@ return [
         'status' => MovieStatus::NowShowing,
         'genres' => ['drama'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=The+Quiet+Orchard',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=The+Quiet+Orchard',
     ],
     [
         'title' => 'Galaxy Rovers',
@@ -79,6 +86,7 @@ return [
         'status' => MovieStatus::ComingSoon,
         'genres' => ['sci-fi', 'family'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Galaxy+Rovers',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Galaxy+Rovers',
     ],
     [
         'title' => 'Laugh Track',
@@ -90,6 +98,7 @@ return [
         'status' => MovieStatus::ComingSoon,
         'genres' => ['comedy'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Laugh+Track',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Laugh+Track',
     ],
     [
         'title' => 'Crimson Divide',
@@ -101,5 +110,6 @@ return [
         'status' => MovieStatus::ComingSoon,
         'genres' => ['drama', 'action'],
         'poster' => 'https://placehold.co/600x900/1e293b/ffffff?text=Crimson+Divide',
+        'backdrop' => 'https://placehold.co/1600x900/0b1622/ffffff?text=Crimson+Divide',
     ],
 ];
