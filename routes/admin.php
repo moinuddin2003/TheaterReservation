@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\GenreController;
+use App\Http\Controllers\Admin\MovieController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,3 +15,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::resource('genres', GenreController::class)->except('show');
+Route::resource('movies', MovieController::class)->except('show');
