@@ -20,7 +20,12 @@ Route::prefix('admin')
     ->middleware(['auth', 'role:admin'])
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/movies/create', [MovieController::class, 'create'])->name('movies.create');
         Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
+        Route::post('/movies', [MovieController::class, 'store'])->name('movies.store');
+        Route::get('/movies/{movie}/edit', [MovieController::class, 'edit'])->name('movies.edit');
+        Route::put('/movies/{movie}', [MovieController::class, 'update'])->name('movies.update');
+        Route::delete('/movies/{movie}', [MovieController::class, 'destroy'])->name('movies.destroy');
         Route::get('/genres', [GenreController::class, 'index'])->name('genres.index');
         Route::get('/cinema', [CinemaController::class, 'index'])->name('cinema.index');
         Route::get('/showtimes', [ShowtimeController::class, 'index'])->name('showtimes.index');

@@ -36,4 +36,29 @@ Alpine.data('adminShell', () => ({
     },
 }));
 
+Alpine.data('movieActions', () => ({
+    open(menu, trigger) {
+        if (menu.matches(':popover-open')) {
+            menu.hidePopover();
+            return;
+        }
+
+        menu.showPopover();
+
+        const triggerRect = trigger.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
+        const gap = 8;
+        const top = triggerRect.bottom + menuRect.height + gap <= window.innerHeight - gap
+            ? triggerRect.bottom + gap
+            : Math.max(gap, triggerRect.top - menuRect.height - gap);
+        const left = Math.max(
+            gap,
+            Math.min(triggerRect.right - menuRect.width, window.innerWidth - menuRect.width - gap),
+        );
+
+        menu.style.top = `${top}px`;
+        menu.style.left = `${left}px`;
+    },
+}));
+
 Alpine.start();

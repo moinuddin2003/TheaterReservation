@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'title',
@@ -105,5 +107,18 @@ class Movie extends Model
     public function isNowShowing(): bool
     {
         return $this->status === MovieStatus::NowShowing;
+    }
+
+    public function posterUrl(): ?string
+    {
+        if (! filled($this->poster_path)) {
+            return null;
+        }
+
+        if (Str::startsWith($this->poster_path, ['http://', 'https://'])) {
+            return $this->poster_path;
+        }
+
+        return Storage::disk('public')->url($this->poster_path);
     }
 }

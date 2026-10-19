@@ -17,6 +17,15 @@
         @case('calendar-clock')
             <path d="M8 2v4M16 2v4M3 10h11M5 4h14a2 2 0 0 1 2 2v6" /><rect x="3" y="4" width="18" height="17" rx="2" /><circle cx="18" cy="18" r="3" /><path d="M18 16.5V18l1 1" />
             @break
+        @case('calendar')
+            <rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+            @break
+        @case('play')
+            <circle cx="12" cy="12" r="10" /><path d="m10 8 6 4-6 4z" />
+            @break
+        @case('film-reel')
+            <circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="6" r="1.5" /><circle cx="17.2" cy="9" r="1.5" /><circle cx="17.2" cy="15" r="1.5" /><circle cx="12" cy="18" r="1.5" /><circle cx="6.8" cy="15" r="1.5" /><circle cx="6.8" cy="9" r="1.5" />
+            @break
         @case('ticket')
             <path d="M2 9a3 3 0 0 0 0 6v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a3 3 0 0 1 0-6V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M13 5v2M13 11v2M13 17v2" />
             @break
@@ -56,6 +65,12 @@
         @case('menu')
             <path d="M4 6h16M4 12h16M4 18h16" />
             @break
+        @case('arrow-left')
+            <path d="m12 19-7-7 7-7M5 12h14" />
+            @break
+        @case('more-vertical')
+            <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+            @break
         @case('chevron-down')
             <path d="m6 9 6 6 6-6" />
             @break
@@ -67,6 +82,9 @@
             @break
         @case('clock')
             <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+            @break
+        @case('archive')
+            <rect x="3" y="4" width="18" height="5" rx="1" /><path d="M5 9v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4" />
             @break
         @case('dollar-sign')
             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />

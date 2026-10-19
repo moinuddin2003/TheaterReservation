@@ -56,6 +56,7 @@ class MovieRequest extends FormRequest
             'rating' => ['nullable', 'string', 'max:10'],
             'release_date' => ['nullable', 'date'],
             'poster_path' => ['nullable', 'string', 'max:255'],
+            'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'trailer_url' => ['nullable', 'url', 'max:255'],
             'status' => ['required', Rule::enum(MovieStatus::class)],
             'genres' => ['nullable', 'array'],
