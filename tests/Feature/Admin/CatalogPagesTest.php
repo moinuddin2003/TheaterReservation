@@ -31,6 +31,73 @@ test('an administrator can view catalog movies and their genres', function () {
         ->assertSee('1');
 });
 
+test('an administrator can create, edit, and delete genres', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.genres.index'))
+        ->assertOk()
+        ->assertSee('Create genre')
+        ->assertSee('Add genre');
+
+    $this->post(route('admin.genres.store'), [
+        'name' => 'Science Fiction',
+        'slug' => '',
+    ])->assertRedirect(route('admin.genres.index'))
+        ->assertSessionHas('status');
+
+    $genre = Genre::query()->where('name', 'Science Fiction')->firstOrFail();
+    expect($genre->slug)->toBe('science-fiction');
+
+    $this->get(route('admin.genres.edit', $genre))
+        ->assertRedirect(route('admin.genres.index', ['edit' => $genre->id]));
+
+    $this->get(route('admin.genres.index', ['edit' => $genre->id]))
+        ->assertOk()
+        ->assertSee('Edit genre')
+        ->assertSee('Science Fiction');
+
+    $this->put(route('admin.genres.update', $genre), [
+        'name' => 'Sci-Fi',
+        'slug' => '',
+    ])->assertRedirect(route('admin.genres.index'))
+        ->assertSessionHas('status');
+
+    expect($genre->fresh()->slug)->toBe('sci-fi');
+
+    $this->get(route('admin.genres.index', ['delete' => $genre->id]))
+        ->assertOk()
+        ->assertSee('Delete confirmation')
+        ->assertSee('Confirm deletion');
+
+    $this->delete(route('admin.genres.destroy', $genre))
+        ->assertRedirect(route('admin.genres.index'))
+        ->assertSessionHas('status');
+
+    $this->assertDatabaseMissing('genres', ['id' => $genre->id]);
+});
+
+test('a genre assigned to movies cannot be deleted and shows the affected movies', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $genre = Genre::factory()->create(['name' => 'Action']);
+    $movie = Movie::factory()->create(['title' => 'The Last Horizon']);
+    $movie->genres()->attach($genre);
+
+    $this->actingAs($admin)
+        ->get(route('admin.genres.index', ['delete' => $genre->id]))
+        ->assertOk()
+        ->assertSee('Delete confirmation · In use')
+        ->assertSee('The Last Horizon')
+        ->assertSee('Keep genre')
+        ->assertDontSee('Confirm deletion');
+
+    $this->delete(route('admin.genres.destroy', $genre))
+        ->assertRedirect(route('admin.genres.index', ['delete' => $genre->id]))
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('genres', ['id' => $genre->id]);
+});
+
 test('the movie catalog search filter narrows the results', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     Movie::factory()->create(['title' => 'Orbit Seven']);
@@ -187,6 +254,9 @@ test('movie edit and delete actions are available in list and grid views', funct
         ->assertSee('Edit movie')
         ->assertSee('Delete movie')
         ->assertSee('popover="auto"', false)
+        ->assertSee('role="alertdialog"', false)
+        ->assertSee('Confirm delete')
+        ->assertDontSee('onsubmit="return confirm', false)
         ->assertDontSee('> Edit </button>', false);
 
     $this->get(route('admin.movies.index', ['view' => 'grid']))

@@ -61,4 +61,29 @@ Alpine.data('movieActions', () => ({
     },
 }));
 
+Alpine.data('deleteConfirmationToast', () => ({
+    open: false,
+    formId: null,
+    title: '',
+    ask({ formId, title }) {
+        this.formId = formId;
+        this.title = title;
+        this.open = true;
+    },
+    dismiss() {
+        this.open = false;
+        this.formId = null;
+        this.title = '';
+    },
+    confirm() {
+        const form = document.getElementById(this.formId);
+        if (!(form instanceof HTMLFormElement)) {
+            throw new Error(`Movie delete form "${this.formId}" was not found.`);
+        }
+
+        form.requestSubmit();
+        this.dismiss();
+    },
+}));
+
 Alpine.start();

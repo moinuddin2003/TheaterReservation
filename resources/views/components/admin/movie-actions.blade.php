@@ -23,14 +23,16 @@
             Edit movie
         </a>
         <form
+            id="delete-movie-{{ $movie->id }}"
+            data-movie-title="{{ $movie->title }}"
             method="POST"
             action="{{ route('admin.movies.destroy', $movie) }}"
-            onsubmit="return confirm('Delete this movie? This cannot be undone.')"
         >
             @csrf
             @method('DELETE')
             <button
                 type="submit"
+                @click.prevent="$dispatch('confirm-delete', { formId: $el.form.id, title: $el.form.dataset.movieTitle })"
                 class="block w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-cine-danger transition hover:bg-cine-danger/10"
             >
                 Delete movie

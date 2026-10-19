@@ -27,6 +27,10 @@ Route::prefix('admin')
         Route::put('/movies/{movie}', [MovieController::class, 'update'])->name('movies.update');
         Route::delete('/movies/{movie}', [MovieController::class, 'destroy'])->name('movies.destroy');
         Route::get('/genres', [GenreController::class, 'index'])->name('genres.index');
+        Route::get('/genres/{genre}/edit', [GenreController::class, 'edit'])->name('genres.edit');
+        Route::post('/genres', [GenreController::class, 'store'])->name('genres.store');
+        Route::put('/genres/{genre}', [GenreController::class, 'update'])->name('genres.update');
+        Route::delete('/genres/{genre}', [GenreController::class, 'destroy'])->name('genres.destroy');
         Route::get('/cinema', [CinemaController::class, 'index'])->name('cinema.index');
         Route::get('/showtimes', [ShowtimeController::class, 'index'])->name('showtimes.index');
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
