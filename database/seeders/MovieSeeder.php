@@ -26,6 +26,7 @@ class MovieSeeder extends Seeder
                 'rating' => $data['rating'],
                 'release_date' => $data['release_date'],
                 'poster_path' => $data['poster'] ?? $this->placeholderPoster($data['title']),
+                'backdrop_path' => $data['backdrop'] ?? $this->placeholderBackdrop($data['title']),
                 'trailer_url' => $data['trailer'] ?? config('cinebook.sample_trailer_url'),
             ]);
 
@@ -44,5 +45,13 @@ class MovieSeeder extends Seeder
     private function placeholderPoster(string $title): string
     {
         return 'https://placehold.co/600x900/1e293b/ffffff?text='.urlencode($title);
+    }
+
+    /**
+     * Build a placeholder backdrop URL for a title.
+     */
+    private function placeholderBackdrop(string $title): string
+    {
+        return 'https://placehold.co/1600x900/0b1622/ffffff?text='.urlencode($title);
     }
 }

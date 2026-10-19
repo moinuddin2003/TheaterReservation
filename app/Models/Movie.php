@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'rating',
     'release_date',
     'poster_path',
+    'backdrop_path',
     'trailer_url',
 ])]
 #[RouteKey('slug')]
