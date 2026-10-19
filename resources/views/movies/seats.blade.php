@@ -18,7 +18,7 @@
                 <p class="eyebrow">{{ $movie['title'] }} <span aria-hidden="true">/</span> {{ $firstDate['screen'] }}</p>
                 <h1>A great night starts with a great seat</h1>
             </div>
-            <a class="back-link" href="{{ route('movies.index') }}"><span aria-hidden="true">←</span> Back to showtimes</a>
+            <a class="back-link" href="{{ route('movies.show', ['movieSlug' => $movie['slug']]) }}"><span aria-hidden="true">←</span> Back to showtimes</a>
         </div>
 
         <div class="seat-date-tabs" role="tablist" aria-label="Choose a date">

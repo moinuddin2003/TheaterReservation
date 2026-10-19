@@ -3,7 +3,7 @@
 @section('title', $movie['title'].' — '.config('cinema.brand'))
 
 @section('content')
-    @php($prices = $movie['seat_map']['prices'])
+    @php($prices = $movie['seat_map']['prices'] ?? null)
 
     <div class="page-shell movie-page">
         <p class="eyebrow">MOVIES <span aria-hidden="true">/</span> {{ $movie['title'] }}</p>
@@ -22,6 +22,7 @@
             </div>
         </section>
 
+        @if ($prices && count($movie['showtimes']))
         <section class="showtimes-section" id="showtimes" aria-labelledby="showtimes-title">
             <div class="section-heading">
                 <div>
@@ -57,5 +58,11 @@
             </div>
             <p class="sales-note">Sales close 15 minutes before each show. Select a time to preview seat selection.</p>
         </section>
+        @else
+            <section class="showtimes-section">
+                <p class="release-note">Showtimes will be announced soon.</p>
+                <a class="button button--quiet" href="{{ route('movies.index') }}">Browse all movies</a>
+            </section>
+        @endif
     </div>
 @endsection

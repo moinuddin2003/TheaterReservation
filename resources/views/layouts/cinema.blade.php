@@ -14,21 +14,33 @@
 <body class="cinema-app">
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="brand" href="{{ route('movies.index') }}" aria-label="{{ config('cinema.brand') }} home">
+            <a class="brand" href="{{ route('home') }}" aria-label="{{ config('cinema.brand') }} home">
                 <span class="brand__mark" aria-hidden="true"></span>
                 <span>{{ config('cinema.brand') }}</span>
             </a>
 
             <nav class="site-nav" aria-label="Main navigation">
-                <a class="site-nav__link {{ request()->routeIs('movies.index') ? 'is-active' : '' }}"
+                <a class="site-nav__link {{ request()->routeIs('home') ? 'is-active' : '' }}"
+                    href="{{ route('home') }}">Home</a>
+                <a class="site-nav__link {{ request()->routeIs('movies.*') ? 'is-active' : '' }}"
                     href="{{ route('movies.index') }}">Movies</a>
-                <a class="site-nav__link" href="{{ route('movies.index') }}#showtimes">My bookings</a>
+                @auth
+                    <a class="site-nav__link" href="{{ route('dashboard') }}">My bookings</a>
+                @else
+                    <a class="site-nav__link" href="{{ route('login') }}">My bookings</a>
+                @endauth
             </nav>
 
             <div class="site-header__actions">
                 <span class="location-label"><span aria-hidden="true">⌖</span> {{ config('cinema.venue') }}</span>
                 <x-theme-toggle />
-                <span class="profile-label"><span class="profile-avatar">G</span> Guest</span>
+                @auth
+                    <span class="profile-label">                    <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                    {{ auth()->user()->name }}
+                </span>
+                @else
+                    <a class="profile-label" href="{{ route('login') }}">Sign in</a>
+                @endauth
             </div>
         </div>
     </header>
@@ -39,7 +51,7 @@
 
     <footer class="site-footer">
         <div class="site-footer__inner">
-            <a class="brand brand--footer" href="{{ route('movies.index') }}">
+            <a class="brand brand--footer" href="{{ route('home') }}">
                 <span class="brand__mark" aria-hidden="true"></span>
                 <span>{{ config('cinema.brand') }}</span>
             </a>
