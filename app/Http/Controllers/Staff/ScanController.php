@@ -37,12 +37,17 @@ class ScanController extends Controller
             ]);
         }
 
-        return view('staff.scan', ['scan' => $scan, 'now' => $now]);
+        return view('staff.scan', [
+            'scan' => $scan,
+            'now' => $now,
+            'error' => $request->session()->get('scan_error'),
+        ]);
     }
 
     /**
-     * Checks the token and returns to the scan screen. An admission is
-     * shown once (flashed), so reloading the page never repeats it.
+     * Checks the token and returns to the scan screen. An admission, or the
+     * error for an unknown token, is shown once (flashed), so reloading the
+     * page never repeats it.
      */
     public function store(Request $request, MockTicketScanner $scanner): RedirectResponse
     {
@@ -55,6 +60,8 @@ class ScanController extends Controller
 
         if ($result) {
             $request->session()->flash('scan_result', $result);
+        } else {
+            $request->session()->flash('scan_error', 'Ticket not recognised. Check the token and try again.');
         }
 
         return redirect()->route('staff.scan', ['show' => $request->input('show')]);

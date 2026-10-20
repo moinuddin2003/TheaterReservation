@@ -82,7 +82,7 @@
 }
 
 .staff-page__eyebrow {
-    margin: 0 0 12px;
+    margin: 0 0 24px;
     color: var(--muted);
     text-transform: uppercase;
 }
@@ -91,7 +91,8 @@
     margin: 0;
     color: var(--text);
     font-size: 36px;
-    line-height: 1.2;
+    font-weight: 700;
+    line-height: 1.15;
 }
 
 @media (max-width: 900px) {

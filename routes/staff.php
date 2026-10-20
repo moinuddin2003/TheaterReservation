@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Staff\RosterController;
 use App\Http\Controllers\Staff\ScanController;
 use App\Http\Controllers\Staff\TodayController;
 use Illuminate\Support\Facades\Route;
@@ -9,4 +10,6 @@ Route::prefix('staff')->name('staff.')->group(function () {
 
     Route::get('/scan', [ScanController::class, 'index'])->name('scan');
     Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
+
+    Route::get('/roster', RosterController::class)->name('roster');
 });
