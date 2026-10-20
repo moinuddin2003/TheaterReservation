@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShowtimeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,8 @@ Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
 
     return view('movies.seats', ['movie' => $movie]);
 })->name('movies.seats');
+
+Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
