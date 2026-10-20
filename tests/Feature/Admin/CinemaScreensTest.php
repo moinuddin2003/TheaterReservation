@@ -67,6 +67,67 @@ test('cinemas with screens are protected from deletion', function () {
     $this->assertDatabaseHas('cinemas', ['id' => $screen->cinema_id]);
 });
 
+test('cinema and screen validation errors are shown beside the matching fields', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $cinema = Cinema::factory()->create();
+
+    $this->actingAs($admin)
+        ->from(route('admin.cinema.index'))
+        ->post(route('admin.cinema.store'), [
+            'name' => str_repeat('C', 121),
+        ]);
+
+    $this->get(route('admin.cinema.index'))
+        ->assertOk()
+        ->assertSee('The cinema name may not be longer than 120 characters.')
+        ->assertSee('aria-describedby="cinema-name-error"', false)
+        ->assertSee('novalidate', false);
+
+    $this->from(route('admin.screens.create'))
+        ->post(route('admin.screens.store'), [
+            'cinema_id' => $cinema->id,
+            'name' => 'Invalid Screen',
+            'rows_count' => 27,
+            'seats_per_row' => 0,
+        ]);
+
+    $this->get(route('admin.screens.create'))
+        ->assertOk()
+        ->assertSee('A screen may have at most 26 rows (A–Z).')
+        ->assertSee('Each row must have at least one seat.')
+        ->assertSee('aria-describedby="screen-rows-error"', false)
+        ->assertSee('novalidate', false);
+
+    $screen = Screen::factory()->create(['rows_count' => 1, 'seats_per_row' => 1]);
+    $seat = Seat::factory()->create([
+        'screen_id' => $screen->id,
+        'label' => 'A1',
+        'row_label' => 'A',
+        'seat_number' => 1,
+    ]);
+
+    $this->post(route('admin.screens.seats.generate', $screen), [
+        'premium_rows' => 'A',
+    ]);
+
+    $this->get(route('admin.screens.show', $screen))
+        ->assertOk()
+        ->assertSee('Choose premium rows from the list.')
+        ->assertSee('aria-describedby="premium-rows-error"', false)
+        ->assertSee('novalidate', false);
+
+    $this->put(route('admin.screens.seats.update', [$screen, $seat]), [
+        'type' => 'invalid',
+        'is_disabled' => '0',
+    ]);
+
+    $this->get(route('admin.screens.show', $screen))
+        ->assertOk()
+        ->assertSee('Choose a valid seat type.')
+        ->assertSee('aria-describedby="seat-type-error"', false)
+        ->assertSee('open: true');
+});
+
 test('an administrator can create a screen, generate seats, and edit seat settings', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     $cinema = Cinema::factory()->create(['name' => 'Riverside Cinema']);

@@ -77,6 +77,73 @@ test('an administrator can create, edit, and delete genres', function () {
     $this->assertDatabaseMissing('genres', ['id' => $genre->id]);
 });
 
+test('movie and genre validation errors are shown beside the matching fields', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $existingMovie = Movie::factory()->create(['title' => 'Existing Movie']);
+    $existingGenre = Genre::factory()->create(['name' => 'Existing Genre', 'slug' => 'existing-genre']);
+
+    $this->actingAs($admin)
+        ->from(route('admin.movies.create'))
+        ->post(route('admin.movies.store'), [
+            'title' => $existingMovie->title,
+            'synopsis' => 'A synopsis.',
+            'duration_minutes' => 100,
+            'status' => MovieStatus::ComingSoon->value,
+        ]);
+
+    $this->get(route('admin.movies.create'))
+        ->assertOk()
+        ->assertSee('A movie with this title already exists.')
+        ->assertSee('aria-describedby="title-error"', false)
+        ->assertSee('novalidate', false);
+
+    $this->post(route('admin.genres.store'), [
+        'name' => $existingGenre->name,
+        'slug' => $existingGenre->slug,
+    ]);
+    $this->get(route('admin.genres.index'))
+        ->assertOk()
+        ->assertSee('A genre with this name already exists.')
+        ->assertSee('This slug is already being used by another genre.')
+        ->assertSee('aria-describedby="create-name-error"', false)
+        ->assertSee('novalidate', false)
+        ->assertDontSee('aria-describedby="edit-name-error"', false);
+
+    $this->post(route('admin.movies.store'), [
+        'title' => 'Valid Catalog Movie',
+        'synopsis' => 'A synopsis.',
+        'duration_minutes' => 100,
+        'status' => MovieStatus::ComingSoon->value,
+        'genres' => 'invalid',
+    ]);
+
+    $this->get(route('admin.movies.create'))
+        ->assertOk()
+        ->assertSee('Choose valid genres for this movie.')
+        ->assertSee('aria-describedby="genres-error"', false);
+});
+
+test('editing a genre shows its validation errors only in the edit form', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $genre = Genre::factory()->create(['name' => 'Adventure', 'slug' => 'adventure']);
+    $otherGenre = Genre::factory()->create(['name' => 'Drama', 'slug' => 'drama']);
+
+    $this->actingAs($admin)
+        ->from(route('admin.genres.index', ['edit' => $genre->id]))
+        ->put(route('admin.genres.update', $genre), [
+            'name' => $otherGenre->name,
+            'slug' => $otherGenre->slug,
+        ]);
+
+    $this->get(route('admin.genres.index', ['edit' => $genre->id]))
+        ->assertOk()
+        ->assertSee('A genre with this name already exists.')
+        ->assertSee('This slug is already being used by another genre.')
+        ->assertSee('aria-describedby="edit-name-error"', false)
+        ->assertSee('novalidate', false)
+        ->assertDontSee('aria-describedby="create-name-error"', false);
+});
+
 test('a genre assigned to movies cannot be deleted and shows the affected movies', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     $genre = Genre::factory()->create(['name' => 'Action']);

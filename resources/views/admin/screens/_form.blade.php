@@ -14,43 +14,43 @@
 @else
     <div class="max-w-3xl">
         <x-admin.card>
-            <form method="POST" action="{{ $screen ? route('admin.screens.update', $screen) : route('admin.screens.store') }}" class="space-y-5">
+            <form method="POST" action="{{ $screen ? route('admin.screens.update', $screen) : route('admin.screens.store') }}" class="space-y-5" novalidate>
                 @csrf
                 @if ($screen)
                     @method('PUT')
                 @endif
                 <div>
                     <label for="cinema_id" class="{{ $labelClass }}">Cinema</label>
-                    <select id="cinema_id" name="cinema_id" required class="{{ $fieldClass }}">
+                    <select id="cinema_id" name="cinema_id" required class="{{ $fieldClass }}" @error('cinema_id') aria-invalid="true" aria-describedby="cinema-id-error" @enderror>
                         <option value="">Select cinema</option>
                         @foreach ($cinemas as $cinema)
                             <option value="{{ $cinema->id }}" @selected((string) old('cinema_id', $screen?->cinema_id ?? request('cinema_id')) === (string) $cinema->id)>{{ $cinema->name }}</option>
                         @endforeach
                     </select>
-                    @error('cinema_id')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    <x-admin.field-error field="cinema_id" id="cinema-id-error" />
                 </div>
                 <div>
                     <label for="name" class="{{ $labelClass }}">Screen name</label>
-                    <input id="name" name="name" value="{{ old('name', $screen?->name) }}" required maxlength="60" placeholder="e.g. Screen 1" class="{{ $fieldClass }}">
-                    @error('name')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    <input id="name" name="name" value="{{ old('name', $screen?->name) }}" required maxlength="60" placeholder="e.g. Screen 1" class="{{ $fieldClass }}" @error('name') aria-invalid="true" aria-describedby="screen-name-error" @enderror>
+                    <x-admin.field-error field="name" id="screen-name-error" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="rows_count" class="{{ $labelClass }}">Rows</label>
-                        <input id="rows_count" name="rows_count" type="number" min="1" max="26" value="{{ old('rows_count', $screen?->rows_count ?? 8) }}" required class="{{ $fieldClass }}">
-                        @error('rows_count')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <input id="rows_count" name="rows_count" type="number" min="1" max="26" value="{{ old('rows_count', $screen?->rows_count ?? 8) }}" required class="{{ $fieldClass }}" @error('rows_count') aria-invalid="true" aria-describedby="screen-rows-error" @enderror>
+                        <x-admin.field-error field="rows_count" id="screen-rows-error" />
                     </div>
                     <div>
                         <label for="seats_per_row" class="{{ $labelClass }}">Seats per row</label>
-                        <input id="seats_per_row" name="seats_per_row" type="number" min="1" max="50" value="{{ old('seats_per_row', $screen?->seats_per_row ?? 12) }}" required class="{{ $fieldClass }}">
-                        @error('seats_per_row')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <input id="seats_per_row" name="seats_per_row" type="number" min="1" max="50" value="{{ old('seats_per_row', $screen?->seats_per_row ?? 12) }}" required class="{{ $fieldClass }}" @error('seats_per_row') aria-invalid="true" aria-describedby="screen-seats-error" @enderror>
+                        <x-admin.field-error field="seats_per_row" id="screen-seats-error" />
                     </div>
                 </div>
                 <label class="flex items-center gap-3 rounded-xl border border-cine-border/10 bg-cine-bg/50 p-4">
-                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $screen?->is_active ?? true)) class="rounded border-cine-border/20 bg-cine-bg text-cine-accent focus:ring-cine-accent">
+                    <input type="checkbox" name="is_active" value="1" @checked(old('is_active', $screen?->is_active ?? true)) class="rounded border-cine-border/20 bg-cine-bg text-cine-accent focus:ring-cine-accent" @error('is_active') aria-invalid="true" aria-describedby="screen-active-error" @enderror>
                     <span><span class="block text-sm font-semibold text-cine-primary">Screen is active</span><span class="mt-0.5 block text-xs text-cine-secondary">Inactive screens are not available for scheduling.</span></span>
                 </label>
-                @error('is_active')<p class="text-xs text-cine-danger">{{ $message }}</p>@enderror
+                <x-admin.field-error field="is_active" id="screen-active-error" />
 
                 <div class="flex flex-wrap gap-2 border-t border-cine-border/10 pt-5">
                     <x-admin.button type="submit">{{ $screen ? 'Save changes' : 'Create screen' }}</x-admin.button>

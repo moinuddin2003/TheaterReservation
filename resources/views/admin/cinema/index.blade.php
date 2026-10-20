@@ -149,25 +149,25 @@
         </div>
 
         <x-admin.card class="xl:mt-[68px]" :title="$editingCinema ? 'Edit cinema' : 'Add a cinema'" :subtitle="$editingCinema ? 'Update location information.' : 'Set up a location before adding screens.'">
-            <form method="POST" action="{{ $editingCinema ? route('admin.cinema.update', $editingCinema) : route('admin.cinema.store') }}" class="space-y-4">
+            <form method="POST" action="{{ $editingCinema ? route('admin.cinema.update', $editingCinema) : route('admin.cinema.store') }}" class="space-y-4" novalidate>
                 @csrf
                 @if ($editingCinema)
                     @method('PUT')
                 @endif
                 <div>
                     <label for="cinema-name" class="{{ $labelClass }}">Cinema name</label>
-                    <input id="cinema-name" name="name" value="{{ old('name', $editingCinema?->name) }}" required maxlength="120" placeholder="e.g. CineBook Downtown" class="{{ $fieldClass }}">
-                    @error('name')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    <input id="cinema-name" name="name" value="{{ old('name', $editingCinema?->name) }}" required maxlength="120" placeholder="e.g. CineBook Downtown" class="{{ $fieldClass }}" @error('name') aria-invalid="true" aria-describedby="cinema-name-error" @enderror>
+                    <x-admin.field-error field="name" id="cinema-name-error" />
                 </div>
                 <div>
                     <label for="cinema-address" class="{{ $labelClass }}">Address</label>
-                    <textarea id="cinema-address" name="address" rows="3" maxlength="255" placeholder="Street, city, postal code" class="{{ $fieldClass }}">{{ old('address', $editingCinema?->address) }}</textarea>
-                    @error('address')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    <textarea id="cinema-address" name="address" rows="3" maxlength="255" placeholder="Street, city, postal code" class="{{ $fieldClass }}" @error('address') aria-invalid="true" aria-describedby="cinema-address-error" @enderror>{{ old('address', $editingCinema?->address) }}</textarea>
+                    <x-admin.field-error field="address" id="cinema-address-error" />
                 </div>
                 <div>
                     <label for="cinema-phone" class="{{ $labelClass }}">Phone number</label>
-                    <input id="cinema-phone" name="phone" value="{{ old('phone', $editingCinema?->phone) }}" maxlength="30" placeholder="+1 555 0100" class="{{ $fieldClass }}">
-                    @error('phone')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    <input id="cinema-phone" name="phone" value="{{ old('phone', $editingCinema?->phone) }}" maxlength="30" placeholder="+1 555 0100" class="{{ $fieldClass }}" @error('phone') aria-invalid="true" aria-describedby="cinema-phone-error" @enderror>
+                    <x-admin.field-error field="phone" id="cinema-phone-error" />
                 </div>
                 <div class="flex flex-wrap gap-2 pt-1">
                     <x-admin.button type="submit">{{ $editingCinema ? 'Save changes' : 'Add cinema' }}</x-admin.button>

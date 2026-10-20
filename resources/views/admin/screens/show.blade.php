@@ -75,7 +75,7 @@
 
         <div class="space-y-5">
             <x-admin.card title="{{ $screen->seats_count > 0 ? 'Regenerate seat grid' : 'Generate seat grid' }}" subtitle="A new grid follows the row and seat dimensions saved on this screen.">
-                <form method="POST" action="{{ route('admin.screens.seats.generate', $screen) }}" class="space-y-4">
+                <form method="POST" action="{{ route('admin.screens.seats.generate', $screen) }}" class="space-y-4" novalidate>
                     @csrf
                     <fieldset>
                         <legend class="mb-2 text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Premium rows</legend>
@@ -83,13 +83,12 @@
                             @for ($rowIndex = 0; $rowIndex < $screen->rows_count; $rowIndex++)
                                 @php($rowName = chr(65 + $rowIndex))
                                 <label class="flex cursor-pointer items-center justify-center gap-1 rounded-lg border border-cine-border/10 bg-cine-bg/50 px-1 py-2 text-[10px] text-cine-secondary hover:border-cine-warning/40">
-                                    <input type="checkbox" name="premium_rows[]" value="{{ $rowName }}" @checked(in_array($rowName, old('premium_rows', []), true)) class="h-3 w-3 rounded border-cine-border/20 bg-cine-bg text-cine-warning focus:ring-cine-warning">
+                                    <input type="checkbox" name="premium_rows[]" value="{{ $rowName }}" @checked(in_array($rowName, (array) old('premium_rows', []), true)) class="h-3 w-3 rounded border-cine-border/20 bg-cine-bg text-cine-warning focus:ring-cine-warning" @if ($errors->has('premium_rows') || $errors->has('premium_rows.*')) aria-invalid="true" aria-describedby="premium-rows-error" @endif>
                                     {{ $rowName }}
                                 </label>
                             @endfor
                         </div>
-                        @error('premium_rows')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
-                        @error('premium_rows.*')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="premium_rows.*" id="premium-rows-error" />
                     </fieldset>
                     @if ($screen->showtimes_count > 0)
                         <p class="rounded-xl border border-cine-warning/20 bg-cine-warning/10 p-3 text-xs leading-5 text-cine-warning">Seat grids cannot be regenerated while this screen has showtimes.</p>
@@ -121,7 +120,7 @@
     </div>
 
     <div
-        x-data="{ open: false, action: '', label: '', type: 'standard', disabled: false }"
+        x-data="{ open: @js($errors->has('type') || $errors->has('is_disabled')), action: '', label: '', type: @js(old('type', 'standard')), disabled: @js((bool) old('is_disabled', false)) }"
         @edit-seat.window="open = true; action = $event.detail.action; label = $event.detail.label; type = $event.detail.type; disabled = $event.detail.disabled"
         @keydown.escape.window="open = false"
         x-show="open"
@@ -137,21 +136,23 @@
                 <div><p class="text-[10px] font-bold uppercase tracking-wider text-cine-accent">Seat settings</p><h3 class="mt-1 text-lg font-bold text-cine-primary" x-text="label"></h3></div>
                 <button type="button" @click="open = false" class="rounded-lg px-2 py-1 text-cine-secondary hover:bg-cine-elevated" aria-label="Close">×</button>
             </div>
-            <form method="POST" :action="action" class="space-y-4">
+            <form method="POST" :action="action" class="space-y-4" novalidate>
                 @csrf
                 @method('PUT')
                 <div>
                     <label for="seat-type" class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Seat type</label>
-                    <select id="seat-type" name="type" x-model="type" class="min-h-10 w-full rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                    <select id="seat-type" name="type" x-model="type" class="min-h-10 w-full rounded-xl border border-cine-border/10 bg-cine-bg px-3 text-sm text-cine-primary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20" @error('type') aria-invalid="true" aria-describedby="seat-type-error" @enderror>
                         @foreach ($seatTypes as $seatType)
                             <option value="{{ $seatType->value }}">{{ str($seatType->value)->title() }}</option>
                         @endforeach
                     </select>
+                    <x-admin.field-error field="type" id="seat-type-error" />
                 </div>
                 <label class="flex items-center gap-3 rounded-xl border border-cine-border/10 bg-cine-bg/50 p-3">
-                    <input type="checkbox" name="is_disabled" value="1" x-model="disabled" class="rounded border-cine-border/20 bg-cine-bg text-cine-accent focus:ring-cine-accent">
+                    <input type="checkbox" name="is_disabled" value="1" x-model="disabled" class="rounded border-cine-border/20 bg-cine-bg text-cine-accent focus:ring-cine-accent" @error('is_disabled') aria-invalid="true" aria-describedby="seat-disabled-error" @enderror>
                     <span><span class="block text-sm font-semibold text-cine-primary">Disable this seat</span><span class="mt-0.5 block text-xs text-cine-secondary">Disabled seats are unavailable for booking.</span></span>
                 </label>
+                <x-admin.field-error field="is_disabled" id="seat-disabled-error" />
                 <div class="flex justify-end gap-2">
                     <x-admin.button type="button" variant="secondary" @click="open = false">Cancel</x-admin.button>
                     <x-admin.button type="submit">Save seat</x-admin.button>

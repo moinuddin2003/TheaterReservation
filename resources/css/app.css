@@ -2004,6 +2004,10 @@ body.cinema-app {
     .admin-shell textarea {
         @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg;
     }
+
+    .admin-shell [aria-invalid='true'] {
+        border-color: rgb(var(--cine-danger) / 0.65);
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,7 @@
 @php($editing = $movie !== null)
 @php($posterUrl = $movie?->posterUrl())
 @php($backdropUrl = $movie?->backdropUrl())
-@php($selectedGenres = old('genres', $movie?->genres->pluck('id')->all() ?? []))
+@php($selectedGenres = (array) old('genres', $movie?->genres->pluck('id')->all() ?? []))
 @php($fieldClass = 'min-h-11 w-full rounded-lg border border-cine-border/10 bg-cine-bg px-3 py-2 text-sm text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20')
 @php($labelClass = 'mb-2 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary')
 
@@ -34,6 +34,7 @@
         enctype="multipart/form-data"
         action="{{ $editing ? route('admin.movies.update', $movie) : route('admin.movies.store') }}"
         class="space-y-5"
+        novalidate
     >
         @csrf
         @if ($editing)
@@ -54,8 +55,9 @@
                             autocomplete="off"
                             class="{{ $fieldClass }}"
                             placeholder="The Last Horizon"
+                            @error('title') aria-invalid="true" aria-describedby="title-error" @enderror
                         >
-                        @error('title')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="title" id="title-error" />
                     </div>
 
                     <div>
@@ -67,9 +69,10 @@
                             maxlength="220"
                             class="{{ $fieldClass }}"
                             placeholder="the-last-horizon"
+                            @error('slug') aria-invalid="true" aria-describedby="slug-error" @enderror
                         >
                         <p class="mt-1 text-[11px] text-cine-tertiary">Unique URL: /movies/{{ old('slug', $movie?->slug ?: 'the-last-horizon') }}</p>
-                        @error('slug')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="slug" id="slug-error" />
                     </div>
 
                     <div>
@@ -81,8 +84,9 @@
                             required
                             class="{{ $fieldClass }} resize-y"
                             placeholder="Write a short description of the movie..."
+                            @error('synopsis') aria-invalid="true" aria-describedby="synopsis-error" @enderror
                         >{{ old('synopsis', $movie?->synopsis) }}</textarea>
-                        @error('synopsis')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="synopsis" id="synopsis-error" />
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -98,8 +102,9 @@
                                 value="{{ old('duration_minutes', $movie?->duration_minutes) }}"
                                 class="{{ $fieldClass }}"
                                 placeholder="124"
+                                @error('duration_minutes') aria-invalid="true" aria-describedby="duration-error" @enderror
                             >
-                            @error('duration_minutes')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                            <x-admin.field-error field="duration_minutes" id="duration-error" />
                         </div>
                         <div>
                             <label for="rating" class="{{ $labelClass }}">Rating</label>
@@ -110,8 +115,9 @@
                                 maxlength="10"
                                 class="{{ $fieldClass }}"
                                 placeholder="PG-13"
+                                @error('rating') aria-invalid="true" aria-describedby="rating-error" @enderror
                             >
-                            @error('rating')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                            <x-admin.field-error field="rating" id="rating-error" />
                         </div>
                     </div>
 
@@ -124,19 +130,20 @@
                                 type="date"
                                 value="{{ old('release_date', $movie?->release_date?->format('Y-m-d')) }}"
                                 class="{{ $fieldClass }}"
+                                @error('release_date') aria-invalid="true" aria-describedby="release-date-error" @enderror
                             >
-                            @error('release_date')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                            <x-admin.field-error field="release_date" id="release-date-error" />
                         </div>
                         <div>
                             <label for="status" class="{{ $labelClass }}">Status <span class="text-cine-danger">*</span></label>
-                            <select id="status" name="status" required class="{{ $fieldClass }}">
+                            <select id="status" name="status" required class="{{ $fieldClass }}" @error('status') aria-invalid="true" aria-describedby="status-error" @enderror>
                                 @foreach ($statuses as $status)
                                     <option value="{{ $status->value }}" @selected(old('status', $movie?->status->value ?? \App\Enums\MovieStatus::ComingSoon->value) === $status->value)>
                                         {{ str($status->value)->replace('_', ' ')->title() }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('status')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                            <x-admin.field-error field="status" id="status-error" />
                         </div>
                     </div>
 
@@ -150,8 +157,9 @@
                             maxlength="255"
                             class="{{ $fieldClass }}"
                             placeholder="https://trailers.example.com/the-last-horizon"
+                            @error('trailer_url') aria-invalid="true" aria-describedby="trailer-url-error" @enderror
                         >
-                        @error('trailer_url')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="trailer_url" id="trailer-url-error" />
                     </div>
 
                     <fieldset>
@@ -168,14 +176,14 @@
                                             value="{{ $genre->id }}"
                                             @checked(in_array($genre->id, $selectedGenres))
                                             class="rounded border-cine-border/20 bg-cine-bg text-cine-accent focus:ring-cine-accent"
+                                            @if ($errors->has('genres') || $errors->has('genres.*')) aria-invalid="true" aria-describedby="genres-error" @endif
                                         >
                                         <span class="truncate">{{ $genre->name }}</span>
                                     </label>
                                 @endforeach
                             </div>
                         @endif
-                        @error('genres')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
-                        @error('genres.*')<p class="mt-1 text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="genres.*" id="genres-error" />
                     </fieldset>
                 </div>
             </x-admin.card>
@@ -206,6 +214,7 @@
                             type="file"
                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                             class="sr-only"
+                            @error('poster') aria-invalid="true" aria-describedby="poster-error" @enderror
                         >
                         <p class="text-[11px] leading-5 text-cine-tertiary">
                             JPG, PNG, or WebP · Maximum 4 MB.
@@ -213,7 +222,7 @@
                                 Leave empty to keep the current poster.
                             @endif
                         </p>
-                        @error('poster')<p class="text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="poster" id="poster-error" />
                     </div>
                 </x-admin.card>
 
@@ -242,6 +251,7 @@
                             type="file"
                             accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                             class="sr-only"
+                            @error('backdrop') aria-invalid="true" aria-describedby="backdrop-error" @enderror
                         >
                         <p class="text-[11px] leading-5 text-cine-tertiary">
                             JPG, PNG, or WebP · Maximum 8 MB.
@@ -249,7 +259,7 @@
                                 Leave empty to keep the current backdrop.
                             @endif
                         </p>
-                        @error('backdrop')<p class="text-xs text-cine-danger">{{ $message }}</p>@enderror
+                        <x-admin.field-error field="backdrop" id="backdrop-error" />
                     </div>
                 </x-admin.card>
 

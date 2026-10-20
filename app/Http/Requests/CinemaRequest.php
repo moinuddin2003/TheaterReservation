@@ -35,4 +35,17 @@ class CinemaRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:30'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Enter a name for this cinema.',
+            'name.max' => 'The cinema name may not be longer than 120 characters.',
+            'address.max' => 'The cinema address may not be longer than 255 characters.',
+            'phone.max' => 'The phone number may not be longer than 30 characters.',
+        ];
+    }
 }
