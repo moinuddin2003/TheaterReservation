@@ -8,6 +8,8 @@
 return [
     'venue' => 'Downtown',
     'now' => '2026-10-15 18:55',
+    // The time of a mock scan (shown on the admitted result screen).
+    'scan_at' => '2026-10-15 18:58:00',
     'user' => ['name' => 'Sam Rivera'],
     'shows' => [
         ['id' => 1, 'movie' => 'The Last Horizon', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 14:30', 'sold' => 38, 'scanned' => 38],
@@ -16,6 +18,10 @@ return [
         ['id' => 4, 'movie' => 'The Last Horizon', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 19:30', 'sold' => 45, 'scanned' => 18],
         ['id' => 5, 'movie' => 'Signal Zero · preview', 'screen' => 'Screen 2 IMAX', 'starts_at' => '2026-10-15 20:30', 'sold' => 41, 'scanned' => 0],
         ['id' => 6, 'movie' => 'Side by Side', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 22:00', 'sold' => 28, 'scanned' => 0],
+    ],
+    // Tickets that can be scanned, keyed by token. On the scan screen, type DEMO-ADMIT-G7 to see an admission.
+    'tickets' => [
+        'DEMO-ADMIT-G7' => ['show_id' => 4, 'seat' => 'G7', 'seat_type' => 'Premium', 'code' => 'T-0482-01'],
     ],
     // Scan attempts per show id, shown on the scan screen.
     'scan_attempts' => [

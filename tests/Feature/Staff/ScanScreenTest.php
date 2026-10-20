@@ -46,7 +46,42 @@ test('the scan screen explains when there is nothing left to scan', function () 
         ->assertDontSee('Scan a ticket');
 });
 
-test('submitting a token returns to the scan screen for the same show', function () {
+test('submitting an unknown token returns to the ready scan screen for the same show', function () {
     $this->post(route('staff.scan.store'), ['token' => 'abc', 'show' => 4])
         ->assertRedirect(route('staff.scan', ['show' => 4]));
+
+    $this->get(route('staff.scan', ['show' => 4]))
+        ->assertSee('Ready when they are.')
+        ->assertDontSee('ADMITTED');
+});
+
+test('scanning a known ticket shows the admitted result', function () {
+    $this->followingRedirects()
+        ->post(route('staff.scan.store'), ['token' => 'DEMO-ADMIT-G7', 'show' => 4])
+        ->assertOk()
+        ->assertSee('Welcome to the show.')
+        ->assertSee('ADMITTED')
+        ->assertSee('The Last Horizon · Screen 1')
+        ->assertSee('G7')
+        ->assertSee('Premium seat')
+        ->assertSee('Ticket T-0482-01 · Admitted at 18:58')
+        ->assertSee('Single-use ticket accepted. This admission can’t be undone.', false)
+        ->assertSee('Next ticket token · focused and ready')
+        ->assertSee('data-scan-input', false)
+        ->assertSee('19 / 45')
+        ->assertSee('Scanned / sold tickets')
+        ->assertSee('Entry 18:30–20:00')
+        ->assertSee('Current time 18:58')
+        ->assertSee('18:58:00');
+});
+
+test('the admitted result is shown once and reloading returns to the ready screen', function () {
+    $this->post(route('staff.scan.store'), ['token' => 'DEMO-ADMIT-G7', 'show' => 4]);
+
+    $this->get(route('staff.scan', ['show' => 4]))->assertSee('ADMITTED');
+
+    $this->get(route('staff.scan', ['show' => 4]))
+        ->assertSee('Ready when they are.')
+        ->assertSee('18 / 45')
+        ->assertDontSee('Welcome to the show.');
 });
