@@ -13,10 +13,10 @@ use Illuminate\Support\Collection;
 class ShowtimeController extends Controller
 {
     /**
-     * Bricks 1 to 3: the real showtime row, its screen's seats and each
-     * seat's state for this showtime.
+     * Bricks 1 to 4: the real showtime row, its screen's seats, each
+     * seat's state and its unit price for this showtime.
      *
-     * Prices and the Blade view come in later bricks.
+     * The Blade view comes in a later brick.
      */
     public function show(Showtime $showtime): JsonResponse
     {
@@ -31,15 +31,19 @@ class ShowtimeController extends Controller
         $held = $this->heldSeatIds($showtime);
         $sold = $this->soldSeatIds($showtime);
 
+        $standardPrice = (int) $showtime->base_price_cents;
+        $premiumPrice = $standardPrice + (int) config('cinebook.premium_surcharge_cents', 0);
+
         return response()->json([
             'showtime_id' => $showtime->id,
             'starts_at' => $showtime->starts_at->toDateTimeString(),
             'movie' => $showtime->movie->title,
             'screen' => $showtime->screen->name,
+            'currency' => strtoupper((string) config('cinebook.currency', 'usd')),
             'rows' => $seats->pluck('row_label')->unique()->count(),
             'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
             'seat_count' => $seats->count(),
-            'seats' => $this->seats($seats, $held, $sold),
+            'seats' => $this->seats($seats, $held, $sold, $standardPrice, $premiumPrice),
         ]);
     }
 
@@ -76,9 +80,9 @@ class ShowtimeController extends Controller
      * @param  Collection<int, Seat>  $seats
      * @param  Collection<int, int>  $held
      * @param  Collection<int, int>  $sold
-     * @return Collection<int, array{label: string, row: string, number: int, type: string, status: string}>
+     * @return Collection<int, array{label: string, row: string, number: int, type: string, status: string, price_cents: int}>
      */
-    private function seats(Collection $seats, Collection $held, Collection $sold): Collection
+    private function seats(Collection $seats, Collection $held, Collection $sold, int $standardPrice, int $premiumPrice): Collection
     {
         return $seats->map(fn (Seat $seat): array => [
             'label' => $seat->label,
@@ -91,6 +95,7 @@ class ShowtimeController extends Controller
                 $held->has($seat->id) => 'held',
                 default => 'available',
             },
+            'price_cents' => $seat->isPremium() ? $premiumPrice : $standardPrice,
         ])->values();
     }
 }
