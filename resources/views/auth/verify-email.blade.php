@@ -1,31 +1,25 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+<x-guest-layout title="Check your inbox" subtitle="One quick step before your next movie night.">
+    <div class="auth-mail-icon" aria-hidden="true">✉</div>
+    <div class="auth-notice auth-notice--card">
+        @if (session('status') === 'verification-link-sent')
+            <strong>Verification email sent</strong>
+            <span>A new verification link was sent to your email address.</span>
+        @else
+            <strong>We sent a verification link to</strong>
+            <span>{{ auth()->user()->email }}</span>
+            <span>Open the link to verify your email. You can browse movies now, but seat holds and checkout stay locked until verification.</span>
+        @endif
 
-    @if (session('status') == 'verification-link-sent')
-        <div class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
-            {{ __('A new verification link has been sent to the email address you provided during registration.') }}
-        </div>
-    @endif
-
-    <div class="mt-4 flex items-center justify-between">
         <form method="POST" action="{{ route('verification.send') }}">
             @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
+            <button class="button button--primary" type="submit">Resend verification email</button>
         </form>
-
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800">
-                {{ __('Log Out') }}
-            </button>
-        </form>
+        <p class="auth-help">Email sent · You can request another link at any time.</p>
     </div>
+
+    <p class="auth-switch"><a href="{{ route('movies.index') }}">Continue browsing →</a></p>
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button class="auth-text-button" type="submit">Sign out</button>
+    </form>
 </x-guest-layout>

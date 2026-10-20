@@ -51,6 +51,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const homeDateButtons = document.querySelectorAll('[data-home-date]');
+
+    homeDateButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            homeDateButtons.forEach((dateButton) => {
+                const isActive = dateButton === button;
+                dateButton.classList.toggle('is-active', isActive);
+                dateButton.setAttribute('aria-selected', String(isActive));
+            });
+
+            document.querySelectorAll('[data-home-schedule]').forEach((schedule) => {
+                schedule.hidden = schedule.dataset.homeSchedule !== button.dataset.homeDate;
+            });
+        });
+    });
+
+    const catalogCards = [...document.querySelectorAll('[data-movie-card]')];
+
+    if (catalogCards.length > 0) {
+        const searchInput = document.querySelector('[data-movie-search]');
+        const genreSelect = document.querySelector('[data-movie-genre]');
+        const statusTabs = [...document.querySelectorAll('[data-catalog-status]')];
+        const emptyMessage = document.querySelector('[data-catalog-empty]');
+        const summary = document.querySelector('[data-catalog-summary]');
+        const resultCount = document.querySelector('[data-catalog-count]');
+        const query = new URLSearchParams(window.location.search);
+        let selectedStatus = query.get('status') === 'coming-soon' ? 'coming-soon' : 'now-showing';
+
+        if (query.has('genre')) {
+            genreSelect.value = query.get('genre').toLowerCase();
+        }
+
+        const filterMovies = () => {
+            const searchTerm = searchInput.value.trim().toLowerCase();
+            const selectedGenre = genreSelect.value;
+            let visibleCount = 0;
+
+            catalogCards.forEach((card) => {
+                const matchesStatus = card.dataset.movieStatus === selectedStatus;
+                const matchesTitle = card.dataset.movieTitle.includes(searchTerm);
+                const matchesGenre = !selectedGenre || card.dataset.movieGenres.split(' ').includes(selectedGenre);
+                const isVisible = matchesStatus && matchesTitle && matchesGenre;
+
+                card.hidden = !isVisible;
+                visibleCount += Number(isVisible);
+            });
+
+            statusTabs.forEach((tab) => {
+                const isActive = tab.dataset.catalogStatus === selectedStatus;
+                tab.classList.toggle('is-active', isActive);
+                tab.setAttribute('aria-selected', String(isActive));
+            });
+
+            emptyMessage.hidden = visibleCount > 0;
+            resultCount.textContent = `Showing ${visibleCount} ${visibleCount === 1 ? 'movie' : 'movies'}`;
+            summary.textContent = `${visibleCount} ${selectedStatus === 'now-showing' ? 'movies now showing' : 'movies coming soon'}`;
+        };
+
+        statusTabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                selectedStatus = tab.dataset.catalogStatus;
+                filterMovies();
+            });
+        });
+
+        searchInput.addEventListener('input', filterMovies);
+        genreSelect.addEventListener('change', filterMovies);
+        filterMovies();
+
+    }
+
     const seatButtons = [...document.querySelectorAll('[data-seat]')];
 
     if (seatButtons.length > 0) {
