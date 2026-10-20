@@ -148,7 +148,7 @@
             @endif
         </div>
 
-        <x-admin.card class="xl:mt-[76px]" :title="$editingCinema ? 'Edit cinema' : 'Add a cinema'" :subtitle="$editingCinema ? 'Update location information.' : 'Set up a location before adding screens.'">
+        <x-admin.card class="xl:mt-[68px]" :title="$editingCinema ? 'Edit cinema' : 'Add a cinema'" :subtitle="$editingCinema ? 'Update location information.' : 'Set up a location before adding screens.'">
             <form method="POST" action="{{ $editingCinema ? route('admin.cinema.update', $editingCinema) : route('admin.cinema.store') }}" class="space-y-4">
                 @csrf
                 @if ($editingCinema)
