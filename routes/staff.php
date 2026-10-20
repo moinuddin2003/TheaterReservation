@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Staff\LookupController;
 use App\Http\Controllers\Staff\RosterController;
 use App\Http\Controllers\Staff\ScanController;
 use App\Http\Controllers\Staff\TodayController;
@@ -12,4 +13,6 @@ Route::prefix('staff')->name('staff.')->group(function () {
     Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
 
     Route::get('/roster', RosterController::class)->name('roster');
+
+    Route::get('/lookup', LookupController::class)->name('lookup');
 });
