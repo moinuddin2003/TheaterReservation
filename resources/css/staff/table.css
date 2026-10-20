@@ -1,0 +1,42 @@
+/* Staff data table (today's shows) */
+
+.staff-table-wrap {
+    overflow-x: auto;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface-raised);
+}
+
+.staff-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.staff-table th,
+.staff-table td {
+    height: 58px;
+    padding: 0 12px 0 0;
+    color: var(--muted);
+    font-weight: 400;
+    text-align: left;
+}
+
+.staff-table thead th {
+    text-transform: uppercase;
+}
+
+.staff-table thead th:first-child,
+.staff-table tbody th {
+    color: var(--text);
+}
+
+.staff-table__action {
+    color: var(--muted);
+}
+
+.staff-table__action:hover {
+    color: var(--accent);
+}
