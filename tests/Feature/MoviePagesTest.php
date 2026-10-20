@@ -4,6 +4,7 @@ it('shows the home page and movie catalog', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('The Last Horizon')
+        ->assertSee('src="'.asset('images/movies/the-last-horizon-cover.jpg').'" alt="The Last Horizon cover"', false)
         ->assertSee('Now showing');
 
     $this->get('/movies')

@@ -6,11 +6,8 @@ use App\Actions\CancelShowtimeAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelShowtimeRequest;
 use App\Http\Requests\ShowtimeRequest;
-use App\Models\Movie;
-use App\Models\Screen;
 use App\Models\Showtime;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ShowtimeController extends Controller
@@ -20,32 +17,14 @@ class ShowtimeController extends Controller
     /**
      * List showtimes with optional date, screen and movie filters.
      */
-    public function index(Request $request): View
+    public function index(): View
     {
-        $date = $request->query('date');
-        $date = is_string($date) && $date !== '' ? $date : null;
-        $screenId = $request->integer('screen_id') ?: null;
-        $movieId = $request->integer('movie_id') ?: null;
-
-        $showtimes = Showtime::query()
-            ->with(['movie', 'screen'])
-            ->withCount('bookings')
-            ->when($date, fn ($query, $date) => $query->onDate($date))
-            ->when($screenId, fn ($query, $id) => $query->where('screen_id', $id))
-            ->when($movieId, fn ($query, $id) => $query->where('movie_id', $id))
-            ->orderBy('starts_at')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('admin.showtimes.index', [
-            'showtimes' => $showtimes,
-            'movies' => Movie::query()->orderBy('title')->get(),
-            'screens' => Screen::query()->orderBy('name')->get(),
-            'filters' => [
-                'date' => $date,
-                'screen_id' => $screenId,
-                'movie_id' => $movieId,
-            ],
+        return view('admin.pages.placeholder', [
+            'pageTitle' => 'Showtimes',
+            'pageSubtitle' => 'Manage the screening schedule for your movies and cinemas.',
+            'breadcrumb' => 'Cinema',
+            'icon' => 'calendar-clock',
+            'emptyText' => 'Showtime management is coming soon.',
         ]);
     }
 

@@ -29,6 +29,16 @@ test('an administrator can open every admin placeholder page', function (string 
         ->assertSee('CineBook');
 })->with('admin panel routes');
 
+test('showtimes page displays its coming soon placeholder', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.showtimes.index'))
+        ->assertOk()
+        ->assertSee('Coming soon')
+        ->assertSee('Showtime management is coming soon.');
+});
+
 test('customers and staff are forbidden from the admin panel', function (Role $role) {
     $user = User::factory()->create(['role' => $role]);
 

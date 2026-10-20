@@ -18,7 +18,12 @@ class ScreenController extends Controller
     {
         $screens = Screen::query()
             ->with('cinema')
-            ->withCount(['seats', 'showtimes'])
+            ->withCount([
+                'seats',
+                'showtimes',
+                'seats as disabled_seats_count' => fn ($query) => $query->where('is_disabled', true),
+                'seats as premium_seats_count' => fn ($query) => $query->where('type', 'premium'),
+            ])
             ->orderBy('name')
             ->get();
 
@@ -54,7 +59,12 @@ class ScreenController extends Controller
      */
     public function show(Screen $screen): View
     {
-        $screen->load('cinema')->loadCount('showtimes');
+        $screen->load('cinema')->loadCount([
+            'showtimes',
+            'seats',
+            'seats as disabled_seats_count' => fn ($query) => $query->where('is_disabled', true),
+            'seats as premium_seats_count' => fn ($query) => $query->where('type', 'premium'),
+        ]);
 
         $seats = $screen->seats()
             ->orderBy('row_label')
@@ -65,6 +75,7 @@ class ScreenController extends Controller
         return view('admin.screens.show', [
             'screen' => $screen,
             'seatRows' => $seats,
+            'seatTypes' => \App\Enums\SeatType::cases(),
         ]);
     }
 

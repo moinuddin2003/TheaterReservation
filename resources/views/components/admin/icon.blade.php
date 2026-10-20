@@ -14,6 +14,18 @@
         @case('armchair')
             <path d="M19 9V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4" /><path d="M3 11v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 0-4 0v1H7v-1a2 2 0 0 0-4 0Z" /><path d="M5 16v5M19 16v5M8 16v2h8v-2" />
             @break
+        @case('building')
+            <rect x="4" y="2" width="16" height="20" rx="2" /><path d="M9 22v-4h6v4M8 6h1M15 6h1M8 10h1M15 10h1M8 14h1M15 14h1" />
+            @break
+        @case('monitor')
+            <rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" />
+            @break
+        @case('star')
+            <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
+            @break
+        @case('check-circle')
+            <path d="M20 11.1V12a8 8 0 1 1-4.7-7.3" /><path d="m9 11 3 3L22 4" />
+            @break
         @case('calendar-clock')
             <path d="M8 2v4M16 2v4M3 10h11M5 4h14a2 2 0 0 1 2 2v6" /><rect x="3" y="4" width="18" height="17" rx="2" /><circle cx="18" cy="18" r="3" /><path d="M18 16.5V18l1 1" />
             @break
