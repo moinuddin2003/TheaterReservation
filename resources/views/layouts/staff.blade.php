@@ -17,6 +17,8 @@
     <main class="staff-page">
         @yield('content')
     </main>
+
+    @stack('scripts')
 </body>
 
 </html>

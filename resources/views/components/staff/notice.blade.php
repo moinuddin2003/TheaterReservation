@@ -1,4 +1,6 @@
+@props(['title' => 'Admission desk'])
+
 <aside class="staff-notice">
-    <p><strong>ⓘ Admission desk</strong></p>
+    <p><strong>ⓘ {{ $title }}</strong></p>
     <p>{{ $slot }}</p>
 </aside>

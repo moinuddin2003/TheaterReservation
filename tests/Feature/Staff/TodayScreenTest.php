@@ -49,3 +49,7 @@ test('the nearest show card is left out once all entry windows have closed', fun
 test('the staff screens are reachable without logging in for now', function () {
     $this->get('/staff')->assertOk();
 });
+
+test('the nearest show card links to the scan screen for that show', function () {
+    $this->get(route('staff.today'))->assertSee(route('staff.scan', ['show' => 4]), false);
+});

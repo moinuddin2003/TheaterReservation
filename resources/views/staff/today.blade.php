@@ -3,10 +3,7 @@
 @section('title', "Today's shows")
 
 @section('content')
-    <header class="staff-page__head">
-        <p class="staff-page__eyebrow">Entry desk · {{ $now->format('D, M j, Y') }}</p>
-        <h1>Today at {{ $venue }}</h1>
-    </header>
+    <x-staff.page-head :title="'Today at '.$venue" :date="$now" />
 
     <div class="staff-stats">
         <x-staff.stat-card label="Scheduled shows" :value="$overview['summary']['scheduled']" />

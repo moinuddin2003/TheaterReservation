@@ -17,13 +17,8 @@ class TodayController extends Controller
     {
         $now = new DateTimeImmutable(config('staff-mock.now'));
 
-        $shows = new TodayShowsService(
-            config('cinebook.scan_window_before_minutes'),
-            config('cinebook.scan_window_after_minutes'),
-        );
-
         return view('staff.today', [
-            'overview' => $shows->build(config('staff-mock.shows'), $now),
+            'overview' => TodayShowsService::fromConfig()->build(config('staff-mock.shows'), $now),
             'now' => $now,
             'venue' => config('staff-mock.venue'),
         ]);

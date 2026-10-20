@@ -18,6 +18,14 @@ class TodayShowsService
     ) {
     }
 
+    public static function fromConfig(): self
+    {
+        return new self(
+            config('cinebook.scan_window_before_minutes'),
+            config('cinebook.scan_window_after_minutes'),
+        );
+    }
+
     /**
      * @param  list<array{id: int, movie: string, screen: string, starts_at: string, sold: int, scanned: int}>  $shows
      * @return array{
@@ -62,6 +70,8 @@ class TodayShowsService
             'sold' => $show['sold'],
             'scanned' => $show['scanned'],
             'window' => $window->label(),
+            'opens_at' => $window->opensAt->format('H:i'),
+            'closes_at' => $window->closesAt->format('H:i'),
             'status' => $status,
             'action' => $status === EntryWindow::CLOSED ? 'roster' : 'scan',
         ];

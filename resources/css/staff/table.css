@@ -1,4 +1,4 @@
-/* Staff data table (today's shows) */
+/* Staff data tables (today's shows, scan attempts) */
 
 .staff-table-wrap {
     overflow-x: auto;
@@ -31,6 +31,14 @@
 .staff-table thead th:first-child,
 .staff-table tbody th {
     color: var(--text);
+}
+
+.staff-table--compact {
+    min-width: 480px;
+}
+
+.staff-table--attempts td:nth-child(2) {
+    text-transform: uppercase;
 }
 
 .staff-table__action {
