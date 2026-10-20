@@ -12,7 +12,7 @@
 </head>
 
 <body class="cinema-app staff-app">
-    <x-staff.nav :user="config('staff-mock.user.name')" :active="trim($__env->yieldContent('active', 'today'))" />
+    <x-staff.nav :user="auth()->user()->name" :active="trim($__env->yieldContent('active', 'today'))" />
 
     <main class="staff-page">
         @yield('content')

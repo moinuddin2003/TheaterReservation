@@ -6,7 +6,8 @@ use App\Http\Controllers\Staff\ScanController;
 use App\Http\Controllers\Staff\TodayController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('staff')->name('staff.')->group(function () {
+// Staff area: logged-in staff and admin only (guests are sent to login, customers get a 403).
+Route::middleware(['auth', 'role:staff,admin'])->prefix('staff')->name('staff.')->group(function () {
     Route::get('/', TodayController::class)->name('today');
 
     Route::get('/scan', [ScanController::class, 'index'])->name('scan');

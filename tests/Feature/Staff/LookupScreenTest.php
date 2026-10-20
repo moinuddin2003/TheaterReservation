@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\User;
+
+// The staff screens are only open to staff, so these tests run as one.
+beforeEach(fn () => $this->actingAs(User::factory()->staff()->make()));
+
 test('the lookup page asks for a reference before anything is searched', function () {
     $this->get(route('staff.lookup'))
         ->assertOk()
