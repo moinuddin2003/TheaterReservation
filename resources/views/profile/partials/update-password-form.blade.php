@@ -1,48 +1,57 @@
-<section>
+<div class="account-form-section">
     <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {{ __('Update Password') }}
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            {{ __('Ensure your account is using a long, random password to stay secure.') }}
-        </p>
+        <h2>Update password</h2>
+        <p>Choose a strong password to help protect your account.</p>
     </header>
 
-    <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('password.update') }}" class="account-form">
         @csrf
         @method('put')
 
-        <div>
-            <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-            <x-text-input id="update_password_current_password" name="current_password" type="password" class="mt-1 block w-full" autocomplete="current-password" />
-            <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
+        <div class="account-field">
+            <x-input-label for="update_password_current_password" value="Current password" />
+            <x-text-input
+                id="update_password_current_password"
+                name="current_password"
+                type="password"
+                class="account-input"
+                autocomplete="current-password"
+            />
+            <x-input-error :messages="$errors->updatePassword->get('current_password')" />
         </div>
 
-        <div>
-            <x-input-label for="update_password_password" :value="__('New Password')" />
-            <x-text-input id="update_password_password" name="password" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
+        <div class="account-form__row">
+            <div class="account-field">
+                <x-input-label for="update_password_password" value="New password" />
+                <x-text-input
+                    id="update_password_password"
+                    name="password"
+                    type="password"
+                    class="account-input"
+                    autocomplete="new-password"
+                />
+                <x-input-error :messages="$errors->updatePassword->get('password')" />
+            </div>
+
+            <div class="account-field">
+                <x-input-label for="update_password_password_confirmation" value="Confirm new password" />
+                <x-text-input
+                    id="update_password_password_confirmation"
+                    name="password_confirmation"
+                    type="password"
+                    class="account-input"
+                    autocomplete="new-password"
+                />
+                <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" />
+            </div>
         </div>
 
-        <div>
-            <x-input-label for="update_password_password_confirmation" :value="__('Confirm Password')" />
-            <x-text-input id="update_password_password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" autocomplete="new-password" />
-            <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
-
+        <p class="account-help">Use at least 8 characters, including a letter and a number.</p>
+        <div class="account-form__actions">
+            <button class="button button--quiet" type="submit">Update password</button>
             @if (session('status') === 'password-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600 dark:text-gray-400"
-                >{{ __('Saved.') }}</p>
+                <p class="account-success">Saved.</p>
             @endif
         </div>
     </form>
-</section>
+</div>
