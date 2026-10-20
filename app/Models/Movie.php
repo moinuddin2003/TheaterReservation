@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 #[Fillable([
     'title',
@@ -110,20 +109,40 @@ class Movie extends Model
         return $this->status === MovieStatus::NowShowing;
     }
 
+    /**
+     * Public URL for the movie's poster, or null when none is set.
+     */
     public function posterUrl(): ?string
     {
-        if (! filled($this->poster_path)) {
+        return $this->artworkUrl($this->poster_path);
+    }
+
+    /**
+     * Public URL for the movie's wide backdrop, or null when none is set.
+     */
+    public function backdropUrl(): ?string
+    {
+        return $this->artworkUrl($this->backdrop_path);
+    }
+
+    /**
+     * Resolve a stored artwork path to a public URL.
+     *
+     * Absolute URLs are returned as-is, leading-slash paths are treated as
+     * files in `public/`, and everything else lives on the public disk.
+     */
+    private function artworkUrl(?string $path): ?string
+    {
+        if (blank($path)) {
             return null;
         }
 
-        if (Str::startsWith($this->poster_path, ['http://', 'https://'])) {
-            return $this->poster_path;
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
         }
 
-        if (Str::startsWith($this->poster_path, ['/images/', 'images/'])) {
-            return asset(ltrim($this->poster_path, '/'));
-        }
-
-        return Storage::disk('public')->url($this->poster_path);
+        return str_starts_with($path, '/') || str_starts_with($path, 'images/')
+            ? asset($path)
+            : Storage::disk('public')->url($path);
     }
 }

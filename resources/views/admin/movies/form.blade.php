@@ -1,5 +1,6 @@
 @php($editing = $movie !== null)
 @php($posterUrl = $movie?->posterUrl())
+@php($backdropUrl = $movie?->backdropUrl())
 @php($selectedGenres = old('genres', $movie?->genres->pluck('id')->all() ?? []))
 @php($fieldClass = 'min-h-11 w-full rounded-lg border border-cine-border/10 bg-cine-bg px-3 py-2 text-sm text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20')
 @php($labelClass = 'mb-2 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary')
@@ -207,12 +208,48 @@
                             class="sr-only"
                         >
                         <p class="text-[11px] leading-5 text-cine-tertiary">
-                            JPG, PNG, or WebP · Maximum 5 MB.
+                            JPG, PNG, or WebP · Maximum 4 MB.
                             @if ($editing && $posterUrl)
                                 Leave empty to keep the current poster.
                             @endif
                         </p>
                         @error('poster')<p class="text-xs text-cine-danger">{{ $message }}</p>@enderror
+                    </div>
+                </x-admin.card>
+
+                <x-admin.card title="Backdrop">
+                    <div class="space-y-3">
+                        <div class="flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-cine-border/10 bg-cine-bg">
+                            <img
+                                id="backdrop-preview"
+                                src="{{ $backdropUrl }}"
+                                alt="{{ $movie?->title ? $movie->title.' backdrop' : 'Selected movie backdrop preview' }}"
+                                @class(['h-full w-full object-cover' => $backdropUrl, 'hidden' => ! $backdropUrl])
+                            >
+                            <span id="backdrop-placeholder" @class(['text-cine-tertiary', 'hidden' => $backdropUrl])>
+                                <x-admin.icon name="film" class="h-10 w-10" />
+                            </span>
+                        </div>
+                        <label
+                            for="backdrop"
+                            class="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-lg border border-cine-border/10 bg-cine-elevated px-3 text-xs font-semibold text-cine-secondary transition hover:border-cine-accent/30 hover:text-cine-primary"
+                        >
+                            {{ $editing && $backdropUrl ? 'Replace backdrop' : 'Choose backdrop' }}
+                        </label>
+                        <input
+                            id="backdrop"
+                            name="backdrop"
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                            class="sr-only"
+                        >
+                        <p class="text-[11px] leading-5 text-cine-tertiary">
+                            JPG, PNG, or WebP · Maximum 8 MB.
+                            @if ($editing && $backdropUrl)
+                                Leave empty to keep the current backdrop.
+                            @endif
+                        </p>
+                        @error('backdrop')<p class="text-xs text-cine-danger">{{ $message }}</p>@enderror
                     </div>
                 </x-admin.card>
 
@@ -233,15 +270,17 @@
         </div>
 
         <script>
-            document.getElementById('poster')?.addEventListener('change', (event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
+            ['poster', 'backdrop'].forEach((imageType) => {
+                document.getElementById(imageType)?.addEventListener('change', (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
 
-                const preview = document.getElementById('poster-preview');
-                const placeholder = document.getElementById('poster-placeholder');
-                preview.src = URL.createObjectURL(file);
-                preview.classList.remove('hidden');
-                placeholder.classList.add('hidden');
+                    const preview = document.getElementById(`${imageType}-preview`);
+                    const placeholder = document.getElementById(`${imageType}-placeholder`);
+                    preview.src = URL.createObjectURL(file);
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                });
             });
         </script>
     </form>

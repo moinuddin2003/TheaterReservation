@@ -137,6 +137,8 @@ test('seeded public movie posters resolve to their public image URLs', function 
 
     expect(file_exists(public_path(ltrim($posterPath, '/'))))->toBeTrue()
         ->and($movie->posterUrl())->toBe(asset(ltrim($posterPath, '/')));
+    $movie->poster_path = 'images/movies/interstellar-poster.jpg';
+    expect($movie->posterUrl())->toBe(asset('images/movies/interstellar-poster.jpg'));
 
     $admin = User::factory()->create(['role' => Role::Admin]);
     $this->actingAs($admin)
@@ -194,7 +196,8 @@ test('an administrator can create and edit a movie stored in the database', func
         ->assertOk()
         ->assertSee('Add movie')
         ->assertSee('Back to movies')
-        ->assertSee('type="file"', false);
+        ->assertSee('name="poster"', false)
+        ->assertSee('name="backdrop"', false);
 
     $this->post(route('admin.movies.store'), $movieData)
         ->assertRedirect(route('admin.movies.index'))
@@ -260,6 +263,38 @@ test('an administrator can upload a movie poster when creating and editing a mov
         ->assertSee('More actions for Poster Upload Test')
         ->assertSee('Delete movie')
         ->assertSee($movie->posterUrl());
+});
+
+test('an administrator can upload and replace a movie backdrop', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $movieData = [
+        'title' => 'Backdrop Upload Test',
+        'synopsis' => 'A movie with an uploaded backdrop.',
+        'duration_minutes' => 100,
+        'status' => MovieStatus::ComingSoon->value,
+        'backdrop' => UploadedFile::fake()->create('backdrop.jpg', 100, 'image/jpeg'),
+    ];
+
+    $this->actingAs($admin)
+        ->post(route('admin.movies.store'), $movieData)
+        ->assertRedirect(route('admin.movies.index'));
+
+    $movie = Movie::query()->where('title', 'Backdrop Upload Test')->firstOrFail();
+    expect($movie->backdrop_path)->toStartWith('movies/');
+    Storage::disk('public')->assertExists($movie->backdrop_path);
+
+    $oldBackdropPath = $movie->backdrop_path;
+    $this->put(route('admin.movies.update', $movie), [
+        ...$movieData,
+        'backdrop' => UploadedFile::fake()->create('new-backdrop.webp', 100, 'image/webp'),
+    ])->assertRedirect(route('admin.movies.index'));
+
+    $movie->refresh();
+    expect($movie->backdrop_path)->not->toBe($oldBackdropPath);
+    Storage::disk('public')->assertMissing($oldBackdropPath);
+    Storage::disk('public')->assertExists($movie->backdrop_path);
 });
 
 test('movie edit and delete actions are available in list and grid views', function () {
