@@ -51,24 +51,25 @@ test('the scan screen explains when there is nothing left to scan', function () 
         ->assertDontSee('Scan a ticket');
 });
 
-test('submitting an unknown token returns to the ready scan screen for the same show', function () {
+test('submitting an unknown token returns to the scan screen for the same show with the invalid result', function () {
     $this->post(route('staff.scan.store'), ['token' => 'abc', 'show' => 4])
         ->assertRedirect(route('staff.scan', ['show' => 4]));
 
     $this->get(route('staff.scan', ['show' => 4]))
-        ->assertSee('Ready when they are.')
+        ->assertSee('We couldn’t recognize this ticket.')
         ->assertDontSee('ADMITTED');
 });
 
-test('an unknown token shows an error once on the scan screen', function () {
+test('an unknown token shows the invalid ticket result once', function () {
     $this->followingRedirects()
         ->post(route('staff.scan.store'), ['token' => 'abc', 'show' => 4])
         ->assertOk()
-        ->assertSee('Ticket not recognised. Check the token and try again.')
-        ->assertSee('Scan a ticket');
+        ->assertSee('We couldn’t recognize this ticket.')
+        ->assertDontSee('ADMITTED');
 
     $this->get(route('staff.scan', ['show' => 4]))
-        ->assertDontSee('Ticket not recognised');
+        ->assertDontSee('We couldn’t recognize this ticket.')
+        ->assertSee('Scan a ticket');
 });
 
 test('scanning a known ticket shows the admitted result', function () {

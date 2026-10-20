@@ -8,6 +8,7 @@
         'too_early' => 'Too early',
         'expired' => 'Expired',
         'cancelled' => 'Cancelled / refunded',
+        'void' => 'Cancelled / refunded',
         'invalid' => 'Invalid',
     ];
 @endphp

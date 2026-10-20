@@ -1,4 +1,4 @@
-@props(['show'])
+@props(['show', 'lookup' => false])
 
 <form class="staff-panel scan-next" method="POST" action="{{ route('staff.scan.store') }}" autocomplete="off">
     @csrf
@@ -20,5 +20,11 @@
         >
     </x-staff.field>
 
-    <p class="scan-next__hint" id="scan-hint">USB keyboard scanner / manual token · Press Enter to submit.</p>
+    <p class="scan-next__hint" id="scan-hint">
+        @if ($lookup)
+            Submit with Enter · <x-staff.link to="staff.lookup" class="scan-next__link">Reference lookup available</x-staff.link>
+        @else
+            USB keyboard scanner / manual token · Press Enter to submit.
+        @endif
+    </p>
 </form>

@@ -11,7 +11,6 @@
             <div class="scan-layout__main">
                 <section class="staff-panel scan-panel" aria-label="Ticket scanner">
                     <x-staff.show-picker :shows="$scan['shows']" :selected="$scan['selected']" />
-                    <x-staff.scan-error :message="$error" />
                     <x-staff.scan-form :show="$scan['selected']" />
                     <p class="scan-panel__footnote">No camera needed · Single-use admission · No undo or reset</p>
                 </section>

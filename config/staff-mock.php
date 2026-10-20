@@ -19,9 +19,17 @@ return [
         ['id' => 5, 'movie' => 'Signal Zero · preview', 'screen' => 'Screen 2 IMAX', 'starts_at' => '2026-10-15 20:30', 'sold' => 41, 'scanned' => 0],
         ['id' => 6, 'movie' => 'Side by Side', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 22:00', 'sold' => 28, 'scanned' => 0],
     ],
-    // Tickets that can be scanned, keyed by token. On the scan screen, type DEMO-ADMIT-G7 to see an admission.
+    // Tickets that can be scanned, keyed by token. Type one on the scan screen (with show 19:30 selected):
+    //   DEMO-ADMIT-G7 admits · DEMO-USED-G7 already used · DEMO-WRONG-SHOW wrong showtime
+    //   DEMO-EARLY too early · DEMO-EXPIRED expired · DEMO-VOID-G7 void · any other text is invalid.
+    // "state" marks a used or void ticket; "scan_at" fixes the time that ticket is scanned at.
     'tickets' => [
         'DEMO-ADMIT-G7' => ['show_id' => 4, 'seat' => 'G7', 'seat_type' => 'Premium', 'code' => 'T-0482-01'],
+        'DEMO-USED-G7' => ['show_id' => 4, 'seat' => 'G7', 'seat_type' => 'Premium', 'code' => 'T-0482-01', 'state' => 'used', 'used_at' => '18:58', 'scan_at' => '2026-10-15 19:02'],
+        'DEMO-WRONG-SHOW' => ['show_id' => 3, 'seat' => 'C4', 'seat_type' => 'Standard', 'code' => 'T-0455-01', 'scan_at' => '2026-10-15 18:55'],
+        'DEMO-EARLY' => ['show_id' => 4, 'seat' => 'G8', 'seat_type' => 'Premium', 'code' => 'T-0482-02', 'scan_at' => '2026-10-15 18:10'],
+        'DEMO-EXPIRED' => ['show_id' => 4, 'seat' => 'G8', 'seat_type' => 'Premium', 'code' => 'T-0482-02', 'scan_at' => '2026-10-15 20:05'],
+        'DEMO-VOID-G7' => ['show_id' => 4, 'seat' => 'G7', 'seat_type' => 'Premium', 'code' => 'T-0482-01', 'state' => 'void', 'scan_at' => '2026-10-15 18:55'],
     ],
     // Scan attempts per show id, shown on the scan screen.
     'scan_attempts' => [
