@@ -17,6 +17,12 @@
         @case('building')
             <rect x="4" y="2" width="16" height="20" rx="2" /><path d="M9 22v-4h6v4M8 6h1M15 6h1M8 10h1M15 10h1M8 14h1M15 14h1" />
             @break
+        @case('cinema')
+            <path d="M3 21h18M5 21V8l7-5 7 5v13M8 21v-8h8v8M8 9h.01M12 9h.01M16 9h.01" />
+            @break
+        @case('filter')
+            <path d="M4 5h16l-6.5 7.5v5l-3 1.5v-6.5L4 5Z" />
+            @break
         @case('monitor')
             <rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8M12 17v4" />
             @break

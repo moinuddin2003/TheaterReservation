@@ -37,16 +37,38 @@ Alpine.data('adminShell', () => ({
 }));
 
 Alpine.data('movieActions', () => ({
+    menu: null,
+    trigger: null,
+    reposition: null,
+    closeListener: null,
     open(menu, trigger) {
         if (menu.matches(':popover-open')) {
             menu.hidePopover();
             return;
         }
 
-        menu.showPopover();
+        this.menu = menu;
+        this.trigger = trigger;
+        this.reposition = () => this.positionMenu();
+        this.closeListener = (event) => {
+            if (event.newState === 'closed') {
+                this.stopTracking();
+            }
+        };
 
-        const triggerRect = trigger.getBoundingClientRect();
-        const menuRect = menu.getBoundingClientRect();
+        menu.addEventListener('toggle', this.closeListener);
+        menu.showPopover();
+        this.positionMenu();
+        window.addEventListener('scroll', this.reposition, true);
+        window.addEventListener('resize', this.reposition);
+    },
+    positionMenu() {
+        if (!this.menu || !this.trigger || !this.menu.matches(':popover-open')) {
+            return;
+        }
+
+        const triggerRect = this.trigger.getBoundingClientRect();
+        const menuRect = this.menu.getBoundingClientRect();
         const gap = 8;
         const top = triggerRect.bottom + menuRect.height + gap <= window.innerHeight - gap
             ? triggerRect.bottom + gap
@@ -56,8 +78,23 @@ Alpine.data('movieActions', () => ({
             Math.min(triggerRect.right - menuRect.width, window.innerWidth - menuRect.width - gap),
         );
 
-        menu.style.top = `${top}px`;
-        menu.style.left = `${left}px`;
+        this.menu.style.top = `${top}px`;
+        this.menu.style.left = `${left}px`;
+    },
+    stopTracking() {
+        if (this.reposition) {
+            window.removeEventListener('scroll', this.reposition, true);
+            window.removeEventListener('resize', this.reposition);
+        }
+
+        if (this.menu && this.closeListener) {
+            this.menu.removeEventListener('toggle', this.closeListener);
+        }
+
+        this.menu = null;
+        this.trigger = null;
+        this.reposition = null;
+        this.closeListener = null;
     },
 }));
 

@@ -47,6 +47,12 @@ Route::prefix('admin')
         Route::post('/screens/{screen}/seats', [SeatController::class, 'generate'])->name('screens.seats.generate');
         Route::put('/screens/{screen}/seats/{seat}', [SeatController::class, 'update'])->name('screens.seats.update');
         Route::get('/showtimes', [ShowtimeController::class, 'index'])->name('showtimes.index');
+        Route::get('/showtimes/create', [ShowtimeController::class, 'create'])->name('showtimes.create');
+        Route::post('/showtimes', [ShowtimeController::class, 'store'])->name('showtimes.store');
+        Route::get('/showtimes/{showtime}/edit', [ShowtimeController::class, 'edit'])->name('showtimes.edit');
+        Route::put('/showtimes/{showtime}', [ShowtimeController::class, 'update'])->name('showtimes.update');
+        Route::get('/showtimes/{showtime}/cancel', [ShowtimeController::class, 'confirmCancel'])->name('showtimes.cancel.confirm');
+        Route::post('/showtimes/{showtime}/cancel', [ShowtimeController::class, 'cancel'])->name('showtimes.cancel');
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
