@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MovieController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -32,29 +34,9 @@ Route::post('/stripe/webhook', function (Request $request) {
     return response()->json(['received' => true]);
 });
 
-Route::get('/', function () {
-    $movies = config('cinema.movies');
-    $featuredMovie = $movies[config('cinema.featured_movie')];
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
-    return view('home', [
-        'featuredMovie' => $featuredMovie,
-        'nowShowing' => collect(config('cinema.catalog.now_showing'))->map(fn ($slug) => $movies[$slug]),
-        'comingSoon' => collect(config('cinema.catalog.coming_soon'))->map(fn ($slug) => $movies[$slug]),
-        'dates' => config('cinema.home.dates'),
-        'genres' => config('cinema.home.genres'),
-        'featuredShowtime' => config('cinema.home.featured_showtime'),
-    ]);
-})->name('home');
-
-Route::get('/movies', function () {
-    $movies = config('cinema.movies');
-
-    return view('movies.catalog', [
-        'nowShowing' => collect(config('cinema.catalog.now_showing'))->map(fn ($slug) => $movies[$slug]),
-        'comingSoon' => collect(config('cinema.catalog.coming_soon'))->map(fn ($slug) => $movies[$slug]),
-        'genres' => config('cinema.home.genres'),
-    ]);
-})->name('movies.index');
+Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 
 Route::get('/movies/{movieSlug}', function (string $movieSlug) {
     $movie = config('cinema.movies.'.$movieSlug);

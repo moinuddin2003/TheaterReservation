@@ -16,14 +16,15 @@ class HomeController extends Controller
      */
     public function index(): View
     {
-        $upcomingShowtimes = fn ($query) => $query
+        $showtimes = fn ($query) => $query  
             ->where('status', ShowtimeStatus::Scheduled)
-            ->where('starts_at', '>', now());
+            ->where('starts_at', '>=', now())
+            ->orderByDesc('starts_at');
 
         $nowShowing = Movie::query()
             ->nowShowing()
             ->with('genres')
-            ->withCount(['showtimes as upcoming_showtimes_count' => $upcomingShowtimes])
+            ->with(['showtimes' => $showtimes])
             ->orderByDesc('release_date')
             ->take(8)
             ->get();
@@ -31,7 +32,6 @@ class HomeController extends Controller
         $comingSoon = Movie::query()
             ->comingSoon()
             ->with('genres')
-            ->withCount(['showtimes as upcoming_showtimes_count' => $upcomingShowtimes])
             ->orderBy('release_date')
             ->take(8)
             ->get();
@@ -40,6 +40,9 @@ class HomeController extends Controller
             ->withCount(['movies as now_showing_count' => fn ($query) => $query->where('status', MovieStatus::NowShowing)])
             ->orderBy('name')
             ->get();
+
+        // $nowShowing = Movie::all();
+        // dd($nowShowing);
 
         return view('home', [
             'featured' => $nowShowing->first(),
