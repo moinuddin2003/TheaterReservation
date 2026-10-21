@@ -96,6 +96,11 @@
     cursor: pointer;
 }
 
+.scan-picker__field option {
+    background: var(--surface);
+    color: var(--text);
+}
+
 .scan-picker__field::after {
     content: '▾';
     position: absolute;
