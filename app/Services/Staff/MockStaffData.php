@@ -7,7 +7,7 @@ use DateTimeImmutable;
 
 /**
  * Staff screen data from the staff-mock*.php config files (see StaffData for the shapes).
- * Delete it, with those files, once STAFF_DATA_SOURCE is "database".
+ * Delete it, with those files, once the mock-based tests are moved to the database.
  */
 class MockStaffData implements StaffData
 {

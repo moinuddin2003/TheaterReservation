@@ -122,6 +122,8 @@ test('the scanner leaves the screen data alone because it already comes from the
 });
 
 test('the staff data source setting picks the scanner', function () {
+    config(['staff.data_source' => 'mock']);
+
     expect(app(TicketScanner::class))->toBeInstanceOf(App\Services\Staff\MockTicketScanner::class);
 
     config(['staff.data_source' => 'database']);

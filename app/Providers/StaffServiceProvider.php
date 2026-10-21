@@ -12,8 +12,8 @@ use App\Services\Staff\ScanRules;
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Chooses where the staff screens get their data: STAFF_DATA_SOURCE in .env
- * ("mock" or "database", see config/staff.php).
+ * Chooses where the staff screens get their data: "database" by default,
+ * "mock" only when config('staff.data_source') is changed (see config/staff.php).
  */
 class StaffServiceProvider extends ServiceProvider
 {

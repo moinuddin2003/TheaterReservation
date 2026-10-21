@@ -3,7 +3,10 @@
 use App\Models\User;
 
 // The staff screens are only open to staff, so these tests run as one.
-beforeEach(fn () => $this->actingAs(User::factory()->staff()->create()));
+beforeEach(function () {
+    config(['staff.data_source' => 'mock']);
+    $this->actingAs(User::factory()->staff()->create());
+});
 
 function scanToken(string $token, int $show = 4)
 {

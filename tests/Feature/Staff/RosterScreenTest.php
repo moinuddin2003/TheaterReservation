@@ -3,7 +3,10 @@
 use App\Models\User;
 
 // The staff screens are only open to staff, so these tests run as one.
-beforeEach(fn () => $this->actingAs(User::factory()->staff()->make()));
+beforeEach(function () {
+    config(['staff.data_source' => 'mock']);
+    $this->actingAs(User::factory()->staff()->make());
+});
 
 test('the roster shows the selected show, totals, the first page of bookings and the notice', function () {
     $this->get(route('staff.roster'))

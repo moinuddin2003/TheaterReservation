@@ -13,11 +13,6 @@
     text-overflow: ellipsis;
 }
 
-.roster-filters__show option {
-    background: var(--surface);
-    color: var(--text);
-}
-
 .roster-filters__show::after {
     content: '▾';
     position: absolute;

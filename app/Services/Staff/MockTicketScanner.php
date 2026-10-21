@@ -8,7 +8,7 @@ use DateTimeImmutable;
 
 /**
  * Stand-in for the real ticket scanning while the staff screens use mock data.
- * Delete it, together with the staff-mock tickets, once STAFF_DATA_SOURCE is "database".
+ * Delete it, together with the staff-mock tickets, once the mock-based tests are moved to the database.
  */
 class MockTicketScanner implements TicketScanner
 {

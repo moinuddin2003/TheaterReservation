@@ -7,7 +7,7 @@ use App\Services\Staff\MockStaffData;
 use Illuminate\Support\Carbon;
 use Tests\Support\StaffDbFixture;
 
-// Every staff screen again, now reading the database (STAFF_DATA_SOURCE=database).
+// Every staff screen again, now reading the database (the default data source).
 beforeEach(function () {
     config(['staff.data_source' => 'database']);
     Carbon::setTestNow('2026-10-15 18:55:00');
