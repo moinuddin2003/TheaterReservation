@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Contracts\Staff\StaffData;
+use App\Contracts\Staff\TicketScanner;
 use App\Enums\ScanResult;
 use App\Http\Controllers\Controller;
-use App\Services\Staff\MockTicketScanner;
 use App\Services\Staff\ScanRejectionView;
 use App\Services\Staff\ScanScreenService;
 use App\Services\Staff\TodayShowsService;
@@ -16,29 +17,27 @@ use Illuminate\Http\Request;
 class ScanController extends Controller
 {
     /**
-     * Mock data for now: swap the staff-mock config() reads and the
-     * MockTicketScanner for database queries and ScanTicketAction later.
-     * ScanRejectionView only needs the result facts, so it stays.
+     * Which data source is used (mock or database) is decided in StaffServiceProvider.
+     * ScanRejectionView only needs the result facts, so it works with both.
      */
-    public function index(Request $request, ScanScreenService $screen, ScanRejectionView $rejections): View
+    public function index(Request $request, StaffData $data, TicketScanner $scanner, ScanScreenService $screen, ScanRejectionView $rejections): View
     {
-        $scanner = MockTicketScanner::fromConfig();
         $result = $request->session()->get('scan_result');
-        $now = new DateTimeImmutable($result['at'] ?? config('staff-mock.now'));
-        $overview = TodayShowsService::fromConfig()->build(config('staff-mock.shows'), $now);
+        $now = isset($result['at']) ? new DateTimeImmutable($result['at']) : $data->now();
+        $overview = TodayShowsService::fromConfig()->build($data->shows($now), $now);
 
         $scan = $screen->build(
             $overview,
             $request->integer('show') ?: ($result['show_id'] ?? null),
-            config('staff-mock.scan_attempts'),
+            $data->recentAttempts($now),
         );
 
         if ($result) {
-            $data = ['scan' => $scanner->applyTo($scan, $result), 'now' => $now];
+            $view = ['scan' => $scanner->applyTo($scan, $result), 'now' => $now];
 
             return $result['status'] === ScanResult::Admitted->value
-                ? view('staff.scan-result', $data + ['result' => $result])
-                : view('staff.scan-rejected', $data + ['rejection' => $rejections->make($result)]);
+                ? view('staff.scan-result', $view + ['result' => $result])
+                : view('staff.scan-rejected', $view + ['rejection' => $rejections->make($result)]);
         }
 
         return view('staff.scan', [
@@ -51,17 +50,11 @@ class ScanController extends Controller
      * Checks the token and returns to the scan screen. The result (an admission
      * or a rejection) is shown once (flashed), so reloading the page never repeats it.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, TicketScanner $scanner): RedirectResponse
     {
         $showId = $request->integer('show') ?: null;
 
-        $result = MockTicketScanner::fromConfig()->scan(
-            (string) $request->input('token'),
-            config('staff-mock.tickets'),
-            config('staff-mock.shows'),
-            new DateTimeImmutable(config('staff-mock.scan_at')),
-            $showId,
-        );
+        $result = $scanner->scan((string) $request->input('token'), $showId, $request->user()->id, $request->ip());
 
         $request->session()->flash('scan_result', $result);
 

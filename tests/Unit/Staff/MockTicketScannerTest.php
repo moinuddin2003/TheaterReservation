@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Staff\MockTicketScanner;
+use App\Services\Staff\ScanRules;
 
 function staffMockTickets(): array
 {
@@ -12,9 +13,14 @@ function staffMockShows(): array
     return [['id' => 4, 'movie' => 'The Last Horizon', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 19:30']];
 }
 
+function staffMockScanner(): MockTicketScanner
+{
+    return new MockTicketScanner(new ScanRules(60, 30), staffMockTickets(), staffMockShows(), new DateTimeImmutable('2026-10-15 18:58:00'));
+}
+
 function staffMockScan(string $token): array
 {
-    return (new MockTicketScanner(60, 30))->scan($token, staffMockTickets(), staffMockShows(), new DateTimeImmutable('2026-10-15 18:58:00'));
+    return staffMockScanner()->scan($token, null, 1, null);
 }
 
 test('a known token is admitted with its show, seat and time', function () {
@@ -46,7 +52,7 @@ test('an admission adds one scanned guest and the newest attempt', function () {
         'attempts' => [['time' => '18:54:58', 'result' => 'admitted', 'seat' => 'F6', 'ticket' => 'T-0478-02']],
     ];
 
-    $updated = (new MockTicketScanner(60, 30))->applyTo($screen, staffMockScan('DEMO-TOKEN'));
+    $updated = staffMockScanner()->applyTo($screen, staffMockScan('DEMO-TOKEN'));
 
     expect($updated['selected']['scanned'])->toBe(19)
         ->and($updated['attempts'][0])->toMatchArray(['time' => '18:58:00', 'seat' => 'G7', 'ticket' => 'T-0482-01'])
@@ -57,7 +63,7 @@ test('an admission keeps the recent attempts at 10', function () {
     $attempts = array_fill(0, 10, ['time' => '18:50:00', 'result' => 'admitted', 'seat' => 'A1', 'ticket' => 'T-1']);
     $screen = ['shows' => [], 'selected' => ['id' => 4, 'scanned' => 18, 'sold' => 45], 'attempts' => $attempts];
 
-    $updated = (new MockTicketScanner(60, 30))->applyTo($screen, staffMockScan('DEMO-TOKEN'));
+    $updated = staffMockScanner()->applyTo($screen, staffMockScan('DEMO-TOKEN'));
 
     expect($updated['attempts'])->toHaveCount(10)
         ->and($updated['attempts'][0]['time'])->toBe('18:58:00');
@@ -66,5 +72,5 @@ test('an admission keeps the recent attempts at 10', function () {
 test('an admission for another show leaves the screen untouched', function () {
     $screen = ['shows' => [], 'selected' => ['id' => 5, 'scanned' => 0, 'sold' => 41], 'attempts' => []];
 
-    expect((new MockTicketScanner(60, 30))->applyTo($screen, staffMockScan('DEMO-TOKEN')))->toBe($screen);
+    expect(staffMockScanner()->applyTo($screen, staffMockScan('DEMO-TOKEN')))->toBe($screen);
 });

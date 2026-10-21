@@ -2,25 +2,21 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Contracts\Staff\StaffData;
 use App\Http\Controllers\Controller;
 use App\Services\Staff\TodayShowsService;
-use DateTimeImmutable;
 use Illuminate\Contracts\View\View;
 
 class TodayController extends Controller
 {
-    /**
-     * Mock data for now: swap the two staff-mock config() reads for a
-     * database query and now() when the staff pages use the models.
-     */
-    public function __invoke(): View
+    public function __invoke(StaffData $data): View
     {
-        $now = new DateTimeImmutable(config('staff-mock.now'));
+        $now = $data->now();
 
         return view('staff.today', [
-            'overview' => TodayShowsService::fromConfig()->build(config('staff-mock.shows'), $now),
+            'overview' => TodayShowsService::fromConfig()->build($data->shows($now), $now),
             'now' => $now,
-            'venue' => config('staff-mock.venue'),
+            'venue' => $data->venue(),
         ]);
     }
 }

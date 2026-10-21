@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Staff\MockTicketScanner;
+use App\Services\Staff\ScanRules;
 
 function rejectionShows(): array
 {
@@ -15,9 +16,14 @@ function rejectionTicket(array $extra = []): array
     return ['T' => array_merge(['show_id' => 4, 'seat' => 'G7', 'seat_type' => 'Premium', 'code' => 'T-0482-01'], $extra)];
 }
 
+function rejectionScanner(array $tickets, string $at = '18:55'): MockTicketScanner
+{
+    return new MockTicketScanner(new ScanRules(60, 30), $tickets, rejectionShows(), new DateTimeImmutable("2026-10-15 {$at}"));
+}
+
 function rejectionScan(array $ticket, string $at = '18:55', ?int $show = 4, string $token = 'T'): array
 {
-    return (new MockTicketScanner(60, 30))->scan($token, $ticket, rejectionShows(), new DateTimeImmutable("2026-10-15 {$at}"), $show);
+    return rejectionScanner($ticket, $at)->scan($token, $show, 1, null);
 }
 
 test('a ticket inside its entry window for the selected show is admitted', function () {
@@ -89,7 +95,7 @@ test('a rejection is listed as an attempt but does not count a scanned guest', f
     $screen = ['shows' => [], 'selected' => ['id' => 4, 'scanned' => 18, 'sold' => 45], 'attempts' => []];
     $result = rejectionScan(rejectionTicket(['state' => 'used', 'used_at' => '18:48']), '19:02');
 
-    $updated = (new MockTicketScanner(60, 30))->applyTo($screen, $result);
+    $updated = rejectionScanner([])->applyTo($screen, $result);
 
     expect($updated['selected']['scanned'])->toBe(18)
         ->and($updated['attempts'][0])->toMatchArray(['result' => 'already_used', 'seat' => 'G7', 'ticket' => 'T-0482-01', 'used_at' => '18:48']);

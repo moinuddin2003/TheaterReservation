@@ -2,28 +2,24 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Contracts\Staff\StaffData;
 use App\Http\Controllers\Controller;
 use App\Services\Staff\RosterService;
 use App\Services\Staff\TodayShowsService;
-use DateTimeImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 class RosterController extends Controller
 {
-    /**
-     * Mock data for now: swap the staff-mock / staff-bookings-mock config()
-     * reads for database queries when the staff pages use the models.
-     */
-    public function __invoke(Request $request, RosterService $roster): View
+    public function __invoke(Request $request, StaffData $data, RosterService $roster): View
     {
-        $now = new DateTimeImmutable(config('staff-mock.now'));
-        $overview = TodayShowsService::fromConfig()->build(config('staff-mock.shows'), $now);
+        $now = $data->now();
+        $overview = TodayShowsService::fromConfig()->build($data->shows($now), $now);
 
         return view('staff.roster', [
             'roster' => $roster->build(
                 $overview,
-                config('staff-bookings-mock.bookings'),
+                $data->rosterBookings($now),
                 $request->integer('show') ?: null,
                 $request->string('q')->trim()->toString(),
                 $request->integer('page', 1),

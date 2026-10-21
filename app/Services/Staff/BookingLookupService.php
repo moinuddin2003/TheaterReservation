@@ -6,12 +6,8 @@ use DateTimeImmutable;
 
 /**
  * Builds the data behind the staff "Booking reference lookup" screen.
- *
- * It only works on plain arrays, so the data source (mock config now,
- * database later) can change without touching this class.
- *
- * A booking passed in must have this shape (confirmed bookings only):
- *   ref, name, show_id, tickets: list<{seat, seat_type, code, used_at: ?DateTimeImmutable}>
+ * It only formats what StaffData::findBooking() returns, so the data
+ * source (mock config or database) can change without touching this class.
  */
 class BookingLookupService
 {
@@ -23,31 +19,18 @@ class BookingLookupService
 
     public const STATE_NOT_FOUND = 'not_found';
 
-    /**
-     * @param  list<array<string, mixed>>  $bookings  confirmed bookings, see the shape above
-     * @param  list<array<string, mixed>>  $shows  rows from TodayShowsService::build()
-     * @return array{state: string, reference: string, booking: array<string, mixed>|null}
-     */
-    public function build(string $reference, array $bookings, array $shows): array
+    public function __construct(
+        private readonly int $entryMinutesBefore,
+        private readonly int $entryMinutesAfter,
+    ) {
+    }
+
+    public static function fromConfig(): self
     {
-        $reference = $this->normalize($reference);
-
-        if ($reference === '') {
-            return ['state' => self::STATE_IDLE, 'reference' => '', 'booking' => null];
-        }
-
-        $booking = $this->findBooking($bookings, $reference);
-        $show = $booking ? $this->findShow($shows, $booking['show_id']) : null;
-
-        if (! $booking || ! $show) {
-            return ['state' => self::STATE_NOT_FOUND, 'reference' => $reference, 'booking' => null];
-        }
-
-        return [
-            'state' => self::STATE_FOUND,
-            'reference' => $reference,
-            'booking' => $this->toView($booking, $show),
-        ];
+        return new self(
+            config('cinebook.scan_window_before_minutes'),
+            config('cinebook.scan_window_after_minutes'),
+        );
     }
 
     /**
@@ -61,44 +44,33 @@ class BookingLookupService
     }
 
     /**
-     * @param  list<array<string, mixed>>  $bookings
-     * @return array<string, mixed>|null
+     * @param  string  $reference  the normalised reference ('' when nothing was searched)
+     * @param  array<string, mixed>|null  $booking  from StaffData::findBooking(), null when none matched
+     * @return array{state: string, reference: string, booking: array<string, mixed>|null}
      */
-    private function findBooking(array $bookings, string $reference): ?array
+    public function build(string $reference, ?array $booking): array
     {
-        foreach ($bookings as $booking) {
-            if (strtoupper($booking['ref']) === $reference) {
-                return $booking;
-            }
+        if ($reference === '') {
+            return ['state' => self::STATE_IDLE, 'reference' => '', 'booking' => null];
         }
 
-        return null;
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $shows
-     * @return array<string, mixed>|null
-     */
-    private function findShow(array $shows, int $showId): ?array
-    {
-        foreach ($shows as $show) {
-            if ($show['id'] === $showId) {
-                return $show;
-            }
+        if (! $booking) {
+            return ['state' => self::STATE_NOT_FOUND, 'reference' => $reference, 'booking' => null];
         }
 
-        return null;
+        return ['state' => self::STATE_FOUND, 'reference' => $reference, 'booking' => $this->toView($booking)];
     }
 
     /**
      * @param  array<string, mixed>  $booking
-     * @param  array<string, mixed>  $show
      * @return array<string, mixed>
      */
-    private function toView(array $booking, array $show): array
+    private function toView(array $booking): array
     {
+        $show = $booking['show'];
+        $startsAt = new DateTimeImmutable($show['starts_at']);
+        $window = EntryWindow::forShowStart($startsAt, $this->entryMinutesBefore, $this->entryMinutesAfter);
         $tickets = array_map($this->ticketRow(...), $booking['tickets']);
-        $scanned = count(array_filter($booking['tickets'], fn (array $t): bool => $t['used_at'] !== null));
 
         return [
             'ref' => $booking['ref'],
@@ -106,11 +78,11 @@ class BookingLookupService
             'show_id' => $show['id'],
             'movie' => $show['movie'],
             'screen' => $show['screen'],
-            'date' => $show['starts_at']->format('M j, Y'),
-            'time' => $show['time'],
-            'window' => $show['window'],
+            'date' => $startsAt->format('M j, Y'),
+            'time' => $startsAt->format('H:i'),
+            'window' => $window->label(),
             'seats' => count($tickets),
-            'scanned' => $scanned,
+            'scanned' => count(array_filter($tickets, fn (array $t): bool => $t['used'])),
             'tickets' => $tickets,
         ];
     }
