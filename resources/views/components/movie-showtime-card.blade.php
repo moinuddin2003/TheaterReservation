@@ -1,28 +1,38 @@
-@props(['movie', 'showingDate', 'prices', 'active' => false])
+@props(['date', 'showtimes', 'availability' => [], 'active' => false])
 
-<article class="showtime-card" data-day-panel="{{ $showingDate['date'] }}" @if (! $active) hidden @endif>
+@php
+    $firstShowtime = $showtimes->first();
+    $screen = $firstShowtime?->screen;
+    $standardPriceCents = (int) ($firstShowtime?->base_price_cents ?? 0);
+    $premiumPriceCents = $standardPriceCents + (int) config('cinebook.premium_surcharge_cents', 0);
+@endphp
+
+<article class="showtime-card" data-day-panel="{{ $date }}" @if (! $active) hidden @endif>
     <div class="showtime-card__details">
-        <h3>{{ $showingDate['date_label'] }}</h3>
+        <h3>{{ $screen?->name ?? 'Screen' }}</h3>
         <p>
-            {{ $showingDate['screen'] }}
+            Standard ${{ number_format($standardPriceCents / 100, 2) }}
             <span aria-hidden="true">·</span>
-            Standard ${{ $prices['standard'] }}
-            <span aria-hidden="true">·</span>
-            Premium ${{ $prices['premium'] }}
+            Premium ${{ number_format($premiumPriceCents / 100, 2) }}
         </p>
     </div>
-    <div class="showtime-card__times" aria-label="Showtimes {{ $showingDate['date_label'] }}">
-        @foreach ($showingDate['screenings'] as $screening)
-            @if ($screening['closed'] ?? false)
+    <div class="showtime-card__times" aria-label="Showtimes on {{ $date }}">
+        @foreach ($showtimes as $showtime)
+            @php($state = $availability[$showtime->id] ?? ['available' => 0, 'sold_out' => false])
+            @if ($showtime->hasSalesClosed())
                 <button class="showtime-button is-closed" type="button" disabled>
-                    <span>{{ $screening['time'] }}</span><small>Sales closed</small>
+                    <span>{{ $showtime->starts_at->format('g:i A') }}</span>
+                    <small>Sales closed</small>
+                </button>
+            @elseif ($state['sold_out'])
+                <button class="showtime-button is-closed" type="button" disabled>
+                    <span>{{ $showtime->starts_at->format('g:i A') }}</span>
+                    <small>Sold out</small>
                 </button>
             @else
-                <a
-                    class="showtime-button {{ ($screening['featured'] ?? false) ? 'is-featured' : '' }}"
-                    href="{{ route('movies.seats', ['movieSlug' => $movie['slug'], 'date' => $showingDate['date'], 'time' => $screening['time']]) }}"
-                >
-                    <span>{{ $screening['time'] }}</span><small>{{ $screening['available_seats'] }} seats</small>
+                <a class="showtime-button" href="{{ route('showtimes.show', $showtime) }}">
+                    <span>{{ $showtime->starts_at->format('g:i A') }}</span>
+                    <small>{{ $state['available'] }} seats</small>
                 </a>
             @endif
         @endforeach
