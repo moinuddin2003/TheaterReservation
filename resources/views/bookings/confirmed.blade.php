@@ -19,13 +19,13 @@
                                     <span>{{ $item->seat_label }} · {{ ucfirst($item->seat_type->value) }}</span>
                                     <strong>{{ $item->ticket->ticket_number }}</strong>
                                     <span>{{ ucwords(str_replace('_', ' ', $item->ticket->status->value)) }}</span>
+                                    <a
+                                        href="{{ route('bookings.tickets.show', [$booking->reference, $item->ticket->id]) }}"
+                                    >View and print ticket</a>
                                 </li>
                             @endif
                         @endforeach
                     </ul>
-                    <button class="button button--primary" type="button" data-print-page>
-                        Print or save tickets
-                    </button>
                 @else
                     <p class="booking-notice">
                         No ticket records are attached to this booking yet. Check booking details for updates.

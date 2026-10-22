@@ -4,8 +4,13 @@
 
 @section('content')
     @php($latestPayment = $booking->payments->sortByDesc('created_at')->first())
+    @php($latestRefund = $booking->refunds->sortByDesc('created_at')->first())
 
     <div class="page-shell booking-page">
+        @if (session('status'))
+            <p class="booking-notice" role="status">{{ session('status') }}</p>
+        @endif
+
         <p class="eyebrow">
             <a href="{{ route('bookings.index') }}">MY BOOKINGS</a>
             <span aria-hidden="true">/</span> {{ $booking->reference }}
@@ -35,6 +40,7 @@
                                         <th>Ticket</th>
                                         <th>Ticket status</th>
                                         <th>Price</th>
+                                        <th>Ticket page</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -48,6 +54,15 @@
                                                     : 'Awaiting confirmation' }}
                                             </td>
                                             <td>{{ number_format($item->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
+                                            <td>
+                                                @if ($item->ticket && $booking->isConfirmed() && ! $item->ticket->isVoid())
+                                                    <a href="{{ route('bookings.tickets.show', [$booking->reference, $item->ticket->id]) }}">
+                                                        View ticket
+                                                    </a>
+                                                @else
+                                                    —
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -118,6 +133,15 @@
                             class="button button--primary"
                             href="{{ route('bookings.confirmed', $booking->reference) }}"
                         >View tickets <span aria-hidden="true">→</span></a>
+                        <a
+                            class="button button--quiet"
+                            href="{{ route('bookings.cancel', $booking->reference) }}"
+                        >Cancel booking</a>
+                    @elseif ($booking->isCancelled() && $latestRefund?->isFailed())
+                        <a
+                            class="button button--primary"
+                            href="{{ route('bookings.cancel', $booking->reference) }}"
+                        >Try refund again</a>
                     @elseif ($booking->isPendingPayment())
                         <a
                             class="button button--quiet"
@@ -126,9 +150,7 @@
                     @else
                         <p class="booking-muted">This booking has no further customer action available here.</p>
                     @endif
-                    <p class="booking-muted">
-                        Payment, cancellation, and refund actions are not started from this read-only page.
-                    </p>
+                    <p class="booking-muted">Saved payment and refund records determine the actions shown here.</p>
                 </section>
             </aside>
         </div>

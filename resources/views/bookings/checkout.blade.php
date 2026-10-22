@@ -29,18 +29,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($booking->items as $item)
+                                @foreach ($booking->seatHolds as $hold)
                                     <tr>
-                                        <td>{{ $item->seat_label }}</td>
-                                        <td>{{ ucfirst($item->seat_type->value) }}</td>
-                                        <td>{{ number_format($item->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
+                                        <td>{{ $hold->seat->label }}</td>
+                                        <td>{{ ucfirst($hold->seat->type->value) }}</td>
+                                        <td>{{ number_format($hold->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                     <p class="booking-muted">
-                        {{ $booking->items->count() }} seats
+                        {{ $booking->seatHolds->count() }} seats
                         <span aria-hidden="true">·</span>
                         Total {{ strtoupper($booking->currency) }}
                         {{ number_format($booking->total_cents / 100, 2) }}
@@ -59,8 +59,17 @@
                         Hold expires {{ $booking->hold_expires_at->format('M j, Y \a\t H:i') }}.
                     </p>
                     <p class="booking-notice">
-                        Checkout is not connected yet. This page will not charge you or change the booking.
+                        Continue to Stripe’s test checkout to complete payment. No live card charges are accepted.
                     </p>
+                    @error('checkout')
+                        <p class="form-error" role="alert">{{ $message }}</p>
+                    @enderror
+                    <form action="{{ route('bookings.checkout.start', $booking->reference) }}" method="POST">
+                        @csrf
+                        <button class="button button--primary button--full" type="submit">
+                            Continue to secure Stripe checkout
+                        </button>
+                    </form>
                     <a class="button button--quiet" href="{{ route('bookings.show', $booking->reference) }}">
                         Booking details
                     </a>

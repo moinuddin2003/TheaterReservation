@@ -1,9 +1,10 @@
-@props(['row', 'number', 'type', 'status'])
+@props(['row', 'number', 'type', 'status', 'seatId'])
 
 <button
     class="seat seat--{{ $status }} {{ $type === 'premium' ? 'seat--premium' : '' }}"
     type="button"
     data-seat
+    data-seat-id="{{ $seatId }}"
     data-seat-label="{{ $row.$number }}"
     data-seat-kind="{{ $type }}"
     data-seat-type-label="{{ ucfirst($type) }}"

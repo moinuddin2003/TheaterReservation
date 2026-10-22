@@ -20,18 +20,20 @@
     >
         @foreach ($seatMap['rows'] as $row => $type)
             <span class="row-label">{{ $row }}</span>
+            @php($seatsByNumber = collect($seatMap['seats'][$row])->keyBy('number'))
             @foreach (range(1, $seatMap['seats_per_row']) as $number)
-                @php
-                    $seatLabel = $row.$number;
-                    $seatStatus = match (true) {
-                        in_array($seatLabel, $seatMap['held'], true) => 'held',
-                        in_array($seatLabel, $seatMap['sold'], true) => 'sold',
-                        in_array($seatLabel, $seatMap['disabled'], true) => 'disabled',
-                        in_array($seatLabel, $seatMap['selected'], true) => 'selected',
-                        default => 'available',
-                    };
-                @endphp
-                <x-movie-seat :row="$row" :number="$number" :type="$type" :status="$seatStatus" />
+                @if ($seatsByNumber->has($number))
+                    @php($seat = $seatsByNumber->get($number))
+                    <x-movie-seat
+                        :row="$row"
+                        :number="$seat['number']"
+                        :type="$seat['type']"
+                        :status="$seat['status']"
+                        :seat-id="$seat['id']"
+                    />
+                @else
+                    <span class="seat seat--spacer" aria-hidden="true"></span>
+                @endif
             @endforeach
             <span class="row-label">{{ $row }}</span>
         @endforeach

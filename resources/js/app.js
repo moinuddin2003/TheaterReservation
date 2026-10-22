@@ -156,6 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const holdCount = document.querySelector("[data-hold-count]");
         const holdPrice = document.querySelector("[data-hold-price]");
         const availableCount = document.querySelector("[data-available-count]");
+        const holdForm = document.querySelector("[data-hold-form]");
+        const holdInputs = document.querySelector("[data-hold-inputs]");
+        const holdButton = document.querySelector("[data-hold-submit]");
 
         const updateSelection = () => {
             const selectedButtons = seatButtons.filter(
@@ -178,8 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     seat.getAttribute("aria-pressed") !== "true"
                 );
             }).length;
-            const holdButton = document.querySelector("[data-hold-submit]");
-
             selectionList.textContent =
                 selectedLabels.length > 0
                     ? selectedLabels.join(" · ")
@@ -217,6 +218,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
                 updateSelection();
             });
+        });
+
+        holdForm.addEventListener("submit", (event) => {
+            const selectedButtons = seatButtons.filter(
+                (seat) => seat.getAttribute("aria-pressed") === "true",
+            );
+
+            if (selectedButtons.length === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            holdInputs.replaceChildren(
+                ...selectedButtons.map((seat) => {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = "seat_ids[]";
+                    input.value = seat.dataset.seatId;
+                    return input;
+                }),
+            );
+            holdButton.disabled = true;
         });
 
         updateSelection();
@@ -376,6 +399,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showToast(button.dataset.demoMessage);
         });
     });
+
 });
 
 document.addEventListener("DOMContentLoaded", () => {

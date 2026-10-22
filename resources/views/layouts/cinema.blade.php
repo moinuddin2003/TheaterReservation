@@ -58,7 +58,7 @@
                 <span>{{ config('cinema.brand') }}</span>
             </a>
             <p>{{ config('cinema.venue') }} <span aria-hidden="true">·</span> One cinema. Every great escape.</p>
-            <p>USD <span aria-hidden="true">·</span> UI preview <span aria-hidden="true">·</span> No payment collected</p>
+            <p>USD <span aria-hidden="true">·</span> Stripe test checkout <span aria-hidden="true">·</span> No live charges</p>
         </div>
     </footer>
 

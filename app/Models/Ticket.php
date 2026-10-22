@@ -24,6 +24,15 @@ class Ticket extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::creating(function (Ticket $ticket): void {
+            if (! $ticket->token) {
+                $ticket->token = bin2hex(random_bytes(20));
+            }
+        });
+    }
+
     /**
      * @var array<string, mixed>
      */

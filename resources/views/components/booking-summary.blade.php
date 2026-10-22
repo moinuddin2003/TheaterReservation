@@ -1,6 +1,10 @@
 @props(['booking'])
 
 @php($movie = $booking->showtime->movie)
+@php($seatLabels = $booking->items->pluck('seat_label'))
+@if ($seatLabels->isEmpty())
+    @php($seatLabels = $booking->seatHolds->map(fn ($hold) => $hold->seat->label))
+@endif
 
 <article class="booking-movie-card">
     <x-movie-image
@@ -16,7 +20,7 @@
             {{ $booking->showtime->screen->name }}
         </p>
         <p>
-            {{ $booking->items->pluck('seat_label')->join(', ') ?: 'Seat details unavailable' }}
+            {{ $seatLabels->join(', ') ?: 'Seat details unavailable' }}
             <span aria-hidden="true">·</span>
             {{ $booking->seats_count }} {{ str('seat')->plural($booking->seats_count) }}
         </p>
