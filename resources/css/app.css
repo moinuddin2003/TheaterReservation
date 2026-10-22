@@ -555,8 +555,26 @@ body.cinema-app {
 }
 
 .home-schedule__times a {
+    display: grid;
+    gap: 3px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: var(--surface-muted);
     color: var(--accent);
     text-decoration: none;
+}
+
+.home-schedule__times a:hover {
+    border-color: var(--accent);
+}
+
+.home-schedule__times a strong {
+    color: var(--text-soft);
+}
+
+.home-schedule__times a small {
+    color: var(--muted);
 }
 
 .home-schedule__closed {

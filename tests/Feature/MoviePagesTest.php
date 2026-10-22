@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Cinema;
 use App\Models\Movie;
+use App\Models\Screen;
 use App\Models\Showtime;
 use Illuminate\Support\Carbon;
 
@@ -85,6 +87,65 @@ it('shows each movie latest upcoming showtime and its date', function () {
         ->assertDontSee('Showtimes available soon')
         ->assertSee('Oct 25 · 15:00')
         ->assertSee('Nov 5 · 15:00');
+});
+
+it('shows bookable showtimes for every now showing movie at the cinema', function () {
+    $this->travelTo(Carbon::parse('2026-10-22 12:00:00'));
+
+    $cinema = Cinema::factory()->create(['name' => 'Test Cinema']);
+    $screen = Screen::factory()->for($cinema)->create(['name' => 'Screen A']);
+    $otherCinema = Cinema::factory()->create();
+    $otherScreen = Screen::factory()->for($otherCinema)->create();
+
+    $firstMovie = Movie::factory()->nowShowing()->create([
+        'title' => 'First Schedule Movie',
+        'slug' => 'first-schedule-movie',
+    ]);
+    $secondMovie = Movie::factory()->nowShowing()->create([
+        'title' => 'Second Schedule Movie',
+        'slug' => 'second-schedule-movie',
+    ]);
+    $comingSoonMovie = Movie::factory()->comingSoon()->create();
+    $otherCinemaMovie = Movie::factory()->nowShowing()->create();
+
+    Showtime::factory()->for($firstMovie)->for($screen)->create([
+        'starts_at' => '2026-10-23 17:30:00',
+        'ends_at' => '2026-10-23 19:30:00',
+    ]);
+    Showtime::factory()->for($secondMovie)->for($screen)->create([
+        'starts_at' => '2026-10-23 19:30:00',
+        'ends_at' => '2026-10-23 21:30:00',
+    ]);
+    Showtime::factory()->for($comingSoonMovie)->for($screen)->create([
+        'starts_at' => '2026-10-23 20:30:00',
+        'ends_at' => '2026-10-23 22:30:00',
+    ]);
+    Showtime::factory()->for($otherCinemaMovie)->for($otherScreen)->create([
+        'starts_at' => '2026-10-23 21:30:00',
+        'ends_at' => '2026-10-23 23:30:00',
+    ]);
+    Showtime::factory()->for($firstMovie)->for($screen)->cancelled()->create([
+        'starts_at' => '2026-10-23 22:00:00',
+        'ends_at' => '2026-10-24 00:00:00',
+    ]);
+
+    $response = $this->get('/')
+        ->assertOk()
+        ->assertSee('showtimes available')
+        ->assertSee('First Schedule Movie')
+        ->assertSee('Second Schedule Movie')
+        ->assertSee('17:30')
+        ->assertSee('19:30')
+        ->assertSee('Screen A')
+        ->assertDontSee('20:30')
+        ->assertDontSee('22:00');
+
+    $response->assertViewHas('showtimesByDate', function ($showtimesByDate) use ($firstMovie, $secondMovie) {
+        return $showtimesByDate
+            ->get('2026-10-23')
+            ->pluck('movie_id')
+            ->all() === [$firstMovie->id, $secondMovie->id];
+    });
 });
 
 it('shows movie details and rejects unknown movie slugs', function () {
