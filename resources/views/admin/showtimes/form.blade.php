@@ -6,13 +6,9 @@
     <x-admin.page-header
         :title="$editing ? 'Edit showtime' : 'Create showtime'"
         :subtitle="$editing ? 'Update the movie, screen, time and ticket price.' : 'Schedule a movie in an active cinema screen.'"
+        :back-url="route('admin.showtimes.index')"
+        back-label="Back to schedule"
     >
-        <x-slot:actions>
-            <x-admin.button :href="route('admin.showtimes.index')" variant="secondary">
-                <x-admin.icon name="arrow-left" class="h-4 w-4" />
-                Back to schedule
-            </x-admin.button>
-        </x-slot:actions>
     </x-admin.page-header>
 
     @if ($errors->any())

@@ -1,10 +1,11 @@
 <x-admin.layout :title="$screen->name" breadcrumb="CineBook / Admin / Cinema / Screen">
-    <x-admin.page-header :title="$screen->name" :subtitle="$screen->cinema->name.' · '.$screen->rows_count.' rows × '.$screen->seats_per_row.' seats'">
+    <x-admin.page-header
+        :title="$screen->name"
+        :subtitle="$screen->cinema->name.' · '.$screen->rows_count.' rows × '.$screen->seats_per_row.' seats'"
+        :back-url="route('admin.screens.index')"
+        back-label="Back to screens"
+    >
         <x-slot:actions>
-            <x-admin.button :href="route('admin.screens.index')" variant="secondary">
-                <x-admin.icon name="arrow-left" class="h-4 w-4" />
-                Back to screens
-            </x-admin.button>
             <x-admin.button :href="route('admin.screens.edit', $screen)" variant="secondary">Edit screen</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>

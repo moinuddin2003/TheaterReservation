@@ -1,12 +1,10 @@
 <x-admin.layout title="Cancel showtime" breadcrumb="CineBook / Admin / Showtime">
-    <x-admin.page-header title="Cancel showtime" subtitle="Review affected bookings and seats before confirming this change.">
-        <x-slot:actions>
-            <x-admin.button :href="route('admin.showtimes.index')" variant="secondary">
-                <x-admin.icon name="arrow-left" class="h-4 w-4" />
-                Back to schedule
-            </x-admin.button>
-        </x-slot:actions>
-    </x-admin.page-header>
+    <x-admin.page-header
+        title="Cancel showtime"
+        subtitle="Review affected bookings and seats before confirming this change."
+        :back-url="route('admin.showtimes.index')"
+        back-label="Back to schedule"
+    />
 
     <div class="mb-5 rounded-xl border border-cine-danger/20 bg-cine-danger/10 px-4 py-3 text-cine-danger">
         <p class="text-sm font-semibold">Booked show · cancellation, not deletion</p>

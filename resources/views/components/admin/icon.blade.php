@@ -47,6 +47,15 @@
         @case('ticket')
             <path d="M2 9a3 3 0 0 0 0 6v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a3 3 0 0 1 0-6V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M13 5v2M13 11v2M13 17v2" />
             @break
+        @case('ticket-x')
+            <path d="M2 9a3 3 0 0 0 0 6v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a3 3 0 0 1 0-6V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M13 5v2M13 11v2M13 17v2M9 10l4 4m0-4-4 4" />
+            @break
+        @case('mail')
+            <rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" />
+            @break
+        @case('ban')
+            <circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" />
+            @break
         @case('credit-card')
             <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20M6 15h2" />
             @break
@@ -85,6 +94,9 @@
             @break
         @case('arrow-left')
             <path d="m12 19-7-7 7-7M5 12h14" />
+            @break
+        @case('download')
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
             @break
         @case('more-vertical')
             <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />

@@ -1,5 +1,10 @@
 <x-admin.layout title="Screens" breadcrumb="CineBook / Admin / Cinema">
-    <x-admin.page-header title="Screens" subtitle="Review auditorium layouts, capacity, and availability by cinema.">
+    <x-admin.page-header
+        title="Screens"
+        subtitle="Review auditorium layouts, capacity, and availability by cinema."
+        :back-url="route('admin.cinema.index')"
+        back-label="Back to cinemas"
+    >
         <x-slot:actions>
             <x-admin.button href="{{ route('admin.screens.create') }}"><span aria-hidden="true">+</span>Add screen</x-admin.button>
         </x-slot:actions>
@@ -12,12 +17,8 @@
         <div role="alert" class="mb-5 rounded-xl border border-cine-danger/20 bg-cine-danger/10 px-4 py-3 text-sm text-cine-danger">{{ session('error') }}</div>
     @endif
 
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div class="mb-5">
         <p class="text-sm text-cine-secondary"><span class="font-bold text-cine-primary">{{ $screens->count() }}</span> {{ Str::plural('screen', $screens->count()) }} configured</p>
-        <a href="{{ route('admin.cinema.index') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-cine-accent hover:text-cine-primary">
-            <x-admin.icon name="arrow-left" class="h-3.5 w-3.5" />
-            Back to cinemas
-        </a>
     </div>
 
     @if ($screens->isEmpty())

@@ -9,13 +9,9 @@
     <x-admin.page-header
         :title="$editing ? 'Edit movie' : 'Add movie'"
         :subtitle="$editing ? 'Update this title in your movie catalog.' : 'Add a title to your movie catalog.'"
+        :back-url="route('admin.movies.index')"
+        back-label="Back to movies"
     >
-        <x-slot:actions>
-            <x-admin.button :href="route('admin.movies.index')" variant="secondary">
-                <x-admin.icon name="arrow-left" class="h-4 w-4" />
-                Back to movies
-            </x-admin.button>
-        </x-slot:actions>
     </x-admin.page-header>
 
     @if ($errors->any())

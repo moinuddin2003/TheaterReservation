@@ -123,4 +123,136 @@ Alpine.data('deleteConfirmationToast', () => ({
     },
 }));
 
+Alpine.data('adminModal', (initiallyOpen = false) => ({
+    show: initiallyOpen,
+    previouslyFocused: null,
+    focusables() {
+        const selector = 'a[href], button:not([disabled]), input:not([type=hidden]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]';
+
+        return [...this.$el.querySelectorAll(selector)].filter(element =>
+            element.tabIndex >= 0 && element.getClientRects().length > 0
+        );
+    },
+    init() {
+        this.$watch('show', value => {
+            if (value) {
+                document.body.classList.add('overflow-y-hidden');
+                setTimeout(() => this.focusables()[0]?.focus(), 50);
+            } else {
+                document.body.classList.remove('overflow-y-hidden');
+                setTimeout(() => this.previouslyFocused?.isConnected && this.previouslyFocused.focus(), 0);
+            }
+        });
+    },
+    open() {
+        this.previouslyFocused = document.activeElement;
+        this.show = true;
+    },
+    close() {
+        this.show = false;
+    },
+    trapFocus(event) {
+        const items = this.focusables();
+        if (items.length === 0) {
+            event.preventDefault();
+            this.$refs.panel.focus();
+            return;
+        }
+
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (event.shiftKey && (document.activeElement === first || ! this.$el.contains(document.activeElement))) {
+            event.preventDefault();
+            last.focus();
+        } else if (! event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    },
+}));
+
+Alpine.data('bookingActionModals', () => ({
+    busy: {},
+    errors: {},
+    toast: '',
+    toastTone: 'success',
+    refundableCents: 0,
+    refundAmount: '0.00',
+    currency: 'USD',
+    stripeConfigured: false,
+    alsoRefund: false,
+    refundType: 'full',
+    ticket: {},
+    errorMessages(key, field = null) {
+        const errors = this.errors[key] || {};
+        if (field) {
+            return errors[field] || [];
+        }
+
+        return errors.form || [];
+    },
+    setTicket(ticket) {
+        this.ticket = ticket;
+        this.errors.void = {};
+    },
+    setRefundType(type) {
+        this.refundType = type;
+        if (type === 'full') {
+            this.refundAmount = (this.refundableCents / 100).toFixed(2);
+        }
+    },
+    async submit(event) {
+        const form = event.currentTarget;
+        const key = form.dataset.actionKey;
+        if (!(form instanceof HTMLFormElement) || !key || this.busy[key]) {
+            return;
+        }
+
+        this.busy[key] = true;
+        this.errors[key] = {};
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const payload = await response.json();
+
+            if (!response.ok) {
+                this.errors[key] = payload.errors || {
+                    form: [payload.message || 'The action could not be completed. Please try again.'],
+                };
+                if (key === 'resend') {
+                    this.toastTone = 'danger';
+                    this.toast = this.errorMessages(key).join(' ') || 'The confirmation email could not be sent.';
+                }
+                this.busy[key] = false;
+                return;
+            }
+
+            this.toast = payload.message || 'Action completed.';
+            this.toastTone = payload.error ? 'danger' : 'success';
+            const modal = form.dataset.modal;
+            if (modal) {
+                window.dispatchEvent(new CustomEvent('close-modal', { detail: modal }));
+            }
+            window.setTimeout(() => window.location.reload(), 900);
+        } catch (error) {
+            console.error('Booking action request failed.', error);
+            this.errors[key] = {
+                form: ['The request could not reach the server. Check your connection and try again.'],
+            };
+            if (key === 'resend') {
+                this.toastTone = 'danger';
+                this.toast = this.errorMessages(key).join(' ');
+            }
+            this.busy[key] = false;
+        }
+    },
+}));
+
 Alpine.start();

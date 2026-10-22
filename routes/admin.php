@@ -53,7 +53,13 @@ Route::prefix('admin')
         Route::put('/showtimes/{showtime}', [ShowtimeController::class, 'update'])->name('showtimes.update');
         Route::get('/showtimes/{showtime}/cancel', [ShowtimeController::class, 'confirmCancel'])->name('showtimes.cancel.confirm');
         Route::post('/showtimes/{showtime}/cancel', [ShowtimeController::class, 'cancel'])->name('showtimes.cancel');
+        Route::get('/bookings/export', [BookingController::class, 'export'])->name('bookings.export');
         Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
+        Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
+        Route::post('/bookings/{booking}/refund', [BookingController::class, 'refund'])->name('bookings.refund');
+        Route::post('/bookings/{booking}/tickets/{ticket}/void', [BookingController::class, 'voidTicket'])->name('bookings.tickets.void');
+        Route::post('/bookings/{booking}/resend-email', [BookingController::class, 'resendEmail'])->name('bookings.resend-email');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');

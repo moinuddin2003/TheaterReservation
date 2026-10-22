@@ -3,7 +3,12 @@
     $labelClass = 'mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary';
 @endphp
 
-<x-admin.page-header :title="$formTitle" :subtitle="$formSubtitle" />
+<x-admin.page-header
+    :title="$formTitle"
+    :subtitle="$formSubtitle"
+    :back-url="route('admin.screens.index')"
+    back-label="Back to screens"
+/>
 
 @if ($cinemas->isEmpty())
     <x-admin.card>
