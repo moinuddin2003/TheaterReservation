@@ -264,6 +264,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    document.querySelectorAll('[data-hold-countdown]').forEach((countdown) => {
+        const expiryTime = new Date(countdown.dataset.holdExpiresAt).getTime();
+
+        const updateCountdown = () => {
+            const remainingSeconds = Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+
+            countdown.textContent = remainingSeconds > 0
+                ? `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+                : 'Hold expired';
+
+            return remainingSeconds > 0;
+        };
+
+        if (updateCountdown()) {
+            const interval = window.setInterval(() => {
+                if (!updateCountdown()) {
+                    window.clearInterval(interval);
+                }
+            }, 1000);
+        }
+    });
+
+    document.querySelectorAll('[data-print-page]').forEach((button) => {
+        button.addEventListener('click', () => window.print());
+    });
+
     const toast = document.querySelector('[data-toast]');
     let toastTimeout;
     const showToast = (message) => {

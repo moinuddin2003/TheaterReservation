@@ -23,11 +23,13 @@
                 <span class="brand__mark" aria-hidden="true"></span>
                 <span>{{ config('cinema.brand') }}</span>
             </a>
-            <x-movie-image
-                :src="config('cinema.movies.'.config('cinema.featured_movie').'.images.poster')"
-                :alt="config('cinema.movies.'.config('cinema.featured_movie').'.title').' poster'"
-                class="auth-story__image"
-            />
+            @php
+                $featuredSlug = config('cinema.featured_movie');
+                $posterPath = config("cinema.movies.{$featuredSlug}.images.poster");
+                $movieTitle = config("cinema.movies.{$featuredSlug}.title");
+            @endphp
+
+            <x-movie-image :src="$posterPath" :alt="$movieTitle . ' poster'" class="auth-story__image" />
             <div class="auth-story__copy">
                 <p class="eyebrow">YOUR NEXT GREAT ESCAPE</p>
                 <h2>The big screen. Your kind of story.</h2>
@@ -41,7 +43,8 @@
                 <h1>{{ $title }}</h1>
                 <p class="auth-subtitle">{{ $subtitle }}</p>
                 <div class="auth-content">{{ $slot }}</div>
-                <p class="auth-footer">{{ config('cinema.venue') }} · Secure account access. Reservations use Stripe hosted Checkout in test mode.</p>
+                <p class="auth-footer">{{ config('cinema.venue') }} · Secure account access. Reservations use Stripe
+                    hosted Checkout in test mode.</p>
             </div>
         </section>
     </main>

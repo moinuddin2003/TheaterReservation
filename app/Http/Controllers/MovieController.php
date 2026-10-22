@@ -33,16 +33,31 @@ class MovieController extends Controller
         $movies = Movie::query()
             ->whereIn('status', [MovieStatus::NowShowing, MovieStatus::ComingSoon])
             ->with('genres')
-            ->withCount(['showtimes as upcoming_showtimes_count' => fn ($query) => $query
-                ->where('status', ShowtimeStatus::Scheduled)
-                ->where('starts_at', '>', now()),
+            ->with([
+                'showtimes' => fn($query) => $query
+                    ->where('status', ShowtimeStatus::Scheduled)
+                    ->where('starts_at', '>=', now())
+                    ->orderByDesc('starts_at'),
+            ])
+            ->withCount([
+                'showtimes as upcoming_showtimes_count' => fn($query) => $query
+                    ->where('status', ShowtimeStatus::Scheduled)
+                    ->where('starts_at', '>', now()),
             ])
             ->search($search)
-            ->when($status, fn ($query, $value) => $query->where('status', $value))
-            ->when($genre, fn ($query, $slug) => $query->whereHas('genres', fn ($genres) => $genres->where('slug', $slug)))
+            ->when($status, fn($query, $value) => $query->where('status', $value))
+            ->when($genre, fn($query, $slug) => $query->whereHas('genres', fn($genres) => $genres->where('slug', $slug)))
             ->orderBy('title')
             ->paginate(12)
             ->withQueryString();
+
+        // $movie = Movie::all();
+        // dd($movie);
+
+        // dd($movies->items());
+
+        // $movies = Movie::where('status', 'now_showing')->get();
+        // dd($movies);
 
         return view('movies.catalog', [
             'movies' => $movies,

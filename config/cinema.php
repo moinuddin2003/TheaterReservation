@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'brand' => 'cinebook',
+    'brand' =>  'cinebook',
     'venue' => 'CineBook Downtown',
     'featured_movie' => 'the-last-horizon',
     'home' => [
@@ -104,7 +104,7 @@ return [
                 'selected' => ['G7', 'G8'],
             ],
         ],
-        'night-circuit' => [
+        'night-circuit' => [    
             'slug' => 'night-circuit',
             'title' => 'Night Circuit',
             'status' => 'Now showing',
