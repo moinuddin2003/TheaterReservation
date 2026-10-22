@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'payment_id',
     'booking_id',
+    'amount_cents',
     'currency',
     'reason',
     'gateway_refund_id',

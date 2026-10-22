@@ -1,13 +1,10 @@
 <?php
 
-use App\Models\Movie;
-use App\Models\Showtime;
-use Illuminate\Support\Carbon;
-
 it('shows the home page and movie catalog', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('The Last Horizon')
+        ->assertSee('src="'.asset('images/movies/the-last-horizon-cover.jpg').'" alt="The Last Horizon cover"', false)
         ->assertSee('Now showing');
 
     $this->get('/movies')
@@ -15,76 +12,6 @@ it('shows the home page and movie catalog', function () {
         ->assertSee('Find your next escape')
         ->assertSee('Search movies')
         ->assertSee('Night Circuit');
-});
-
-it('shows each movie latest upcoming showtime and its date', function () {
-    $this->travelTo(Carbon::parse('2026-10-21 12:00:00'));
-
-    $todayMovie = Movie::factory()->nowShowing()->create([
-        'title' => 'Today Movie',
-    ]);
-
-    Showtime::factory()->for($todayMovie)->create([
-        'starts_at' => '2026-10-21 17:30:00',
-        'ends_at' => '2026-10-21 19:30:00',
-    ]);
-
-    Showtime::factory()->for($todayMovie)->create([
-        'starts_at' => '2026-10-21 19:30:00',
-        'ends_at' => '2026-10-21 21:30:00',
-    ]);
-
-    Showtime::factory()->for($todayMovie)->create([
-        'starts_at' => '2026-10-22 10:00:00',
-        'ends_at' => '2026-10-22 12:00:00',
-    ]);
-
-    $tomorrowMovie = Movie::factory()->nowShowing()->create([
-        'title' => 'Tomorrow Movie',
-    ]);
-
-    Showtime::factory()->for($tomorrowMovie)->create([
-        'starts_at' => '2026-10-22 08:00:00',
-        'ends_at' => '2026-10-22 10:00:00',
-    ]);
-
-    $laterMovie = Movie::factory()->nowShowing()->create([
-        'title' => 'Later Movie',
-    ]);
-
-    Showtime::factory()->for($laterMovie)->create([
-        'starts_at' => '2026-10-25 15:00:00',
-        'ends_at' => '2026-10-25 17:47:00',
-    ]);
-
-    $farMovie = Movie::factory()->nowShowing()->create([
-        'title' => 'Far Movie',
-    ]);
-
-    Showtime::factory()->for($farMovie)->create([
-        'starts_at' => '2026-11-05 15:00:00',
-        'ends_at' => '2026-11-05 17:47:00',
-    ]);
-
-    $this->get('/')
-        ->assertOk()
-        ->assertSee('Tomorrow · 10:00')
-        ->assertSee('Tomorrow · 08:00')
-        ->assertDontSee('Today · 17:30')
-        ->assertDontSee('Today · 19:30')
-        ->assertDontSee('Showtimes available soon')
-        ->assertSee('Oct 25 · 15:00')
-        ->assertSee('Nov 5 · 15:00');
-
-    $this->get('/movies')
-        ->assertOk()
-        ->assertSee('Tomorrow · 10:00')
-        ->assertSee('Tomorrow · 08:00')
-        ->assertDontSee('Today · 17:30')
-        ->assertDontSee('Today · 19:30')
-        ->assertDontSee('Showtimes available soon')
-        ->assertSee('Oct 25 · 15:00')
-        ->assertSee('Nov 5 · 15:00');
 });
 
 it('shows movie details and rejects unknown movie slugs', function () {

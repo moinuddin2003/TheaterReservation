@@ -1,36 +1,29 @@
-@extends('layouts.cinema')
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+            {{ __('Profile') }}
+        </h2>
+    </x-slot>
 
-@section('title', 'Your account — '.config('cinema.brand'))
-
-@section('content')
-    <div class="page-shell account-page">
-        <p class="eyebrow">ACCOUNT <span aria-hidden="true">/</span> PROFILE</p>
-        <h1 class="booking-page__title">Your account</h1>
-
-        <div class="account-layout">
-            <aside class="account-summary">
-                <p class="eyebrow">{{ config('cinema.venue') }}</p>
-                <h2>{{ $user->name }}</h2>
-                <p>{{ $user->hasVerifiedEmail() ? '✓ Email verified' : 'Email not verified' }}</p>
-                <p>{{ ucfirst($user->role->value) }} account</p>
-                <a class="button button--quiet" href="{{ route('bookings.index') }}">
-                    My bookings <span aria-hidden="true">→</span>
-                </a>
-            </aside>
-
-            <div class="account-forms">
-                <section class="account-panel">
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+                <div class="max-w-xl">
                     @include('profile.partials.update-profile-information-form')
-                </section>
+                </div>
+            </div>
 
-                <section class="account-panel">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+                <div class="max-w-xl">
                     @include('profile.partials.update-password-form')
-                </section>
+                </div>
+            </div>
 
-                <section class="account-panel account-panel--danger">
+            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+                <div class="max-w-xl">
                     @include('profile.partials.delete-user-form')
-                </section>
+                </div>
             </div>
         </div>
     </div>
-@endsection
+</x-app-layout>

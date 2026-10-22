@@ -1,11 +1,22 @@
 @props(['floating' => false])
 
 <button
-    {{ $attributes->class(['theme-toggle', 'theme-toggle--floating' => $floating]) }}
     type="button"
+    class="theme-toggle{{ $floating ? ' theme-toggle--floating' : '' }}"
     data-theme-toggle
-    aria-label="Switch to light mode"
+    aria-label="Toggle color theme"
 >
-    <span data-theme-icon aria-hidden="true">☼</span>
-    <span class="theme-toggle__label">Light mode</span>
+    <span aria-hidden="true">◐</span>
 </button>
+
+<script>
+    document.querySelectorAll('[data-theme-toggle]:not([data-theme-toggle-ready])').forEach((button) => {
+        button.dataset.themeToggleReady = 'true';
+        button.addEventListener('click', () => {
+            const nextTheme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+
+            document.documentElement.dataset.theme = nextTheme;
+            localStorage.setItem('cinebook-theme', nextTheme);
+        });
+    });
+</script>

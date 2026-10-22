@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GenreRequest;
 use App\Models\Genre;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class GenreController extends Controller
@@ -13,24 +15,33 @@ class GenreController extends Controller
     /**
      * List all genres with the number of movies attached to each.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $genres = Genre::query()
             ->withCount('movies')
             ->orderBy('name')
             ->get();
 
-        return view('admin.genres.index', [
-            'genres' => $genres,
-        ]);
+        $editingGenre = $request->query('edit')
+            ? Genre::query()->find($request->query('edit'))
+            : null;
+        $deletingGenre = $request->query('delete')
+            ? Genre::query()->with('movies:id,title')->find($request->query('delete'))
+            : null;
+
+        return $this->catalogView($genres, $editingGenre, $deletingGenre);
     }
 
     /**
-     * Show the form to create a new genre.
+     * @param  Collection<int, Genre>  $genres
      */
-    public function create(): View
+    private function catalogView(Collection $genres, ?Genre $editingGenre = null, ?Genre $deletingGenre = null): View
     {
-        return view('admin.genres.create');
+        return view('admin.genres.index', [
+            'genres' => $genres,
+            'editingGenre' => $editingGenre,
+            'deletingGenre' => $deletingGenre,
+        ]);
     }
 
     /**
@@ -48,13 +59,9 @@ class GenreController extends Controller
     /**
      * Show the form to edit an existing genre.
      */
-    public function edit(Genre $genre): View
+    public function edit(Genre $genre): RedirectResponse
     {
-        $genre->loadCount('movies');
-
-        return view('admin.genres.edit', [
-            'genre' => $genre,
-        ]);
+        return redirect()->route('admin.genres.index', ['edit' => $genre->getKey()]);
     }
 
     /**
@@ -77,6 +84,12 @@ class GenreController extends Controller
      */
     public function destroy(Genre $genre): RedirectResponse
     {
+        if ($genre->movies()->exists()) {
+            return redirect()
+                ->route('admin.genres.index', ['delete' => $genre->getKey()])
+                ->with('error', "Genre \"{$genre->name}\" is assigned to movies. Remove it from those movies before deleting it.");
+        }
+
         $name = $genre->name;
         $genre->delete();
 

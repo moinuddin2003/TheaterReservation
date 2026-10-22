@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   CUSTOMER SITE
+   ========================================================================== */
+
 :root {
     color-scheme: light;
     --page: #f4f7fc;
@@ -744,7 +748,7 @@ body.cinema-app {
 
 .catalog-filters {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1.2fr 1.2fr 1.2fr;
     gap: 12px;
     margin-top: 16px;
 }
@@ -1946,500 +1950,75 @@ body.cinema-app {
     }
 }
 
-.booking-page,
-.account-page {
-    padding-top: 25px;
-    padding-bottom: 42px;
-}
-
-.booking-page__title {
-    margin: 8px 0;
-    font-size: clamp(25px, 3vw, 32px);
-    letter-spacing: -0.035em;
-}
-
-.booking-page__intro,
-.booking-muted,
-.booking-detail-heading > p {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.booking-page__intro {
-    margin: 0 0 16px;
-}
-
-.booking-filters {
-    display: flex;
-    gap: 16px;
-    margin: 12px 0 18px;
-    border-bottom: 1px solid var(--line);
-}
-
-.booking-filter {
-    display: inline-flex;
-    gap: 5px;
-    padding: 9px 0;
-    border-bottom: 2px solid transparent;
-    color: var(--muted);
-    font-size: 11px;
-    text-decoration: none;
-}
-
-.booking-filter.is-active {
-    border-bottom-color: var(--accent);
-    color: var(--accent);
-}
-
-.booking-list-card,
-.booking-panel,
-.booking-empty,
-.account-summary,
-.account-panel {
-    padding: 16px;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    background: var(--surface-raised);
-}
-
-.booking-list-card {
-    margin-bottom: 14px;
-}
-
-.booking-list-card__heading,
-.booking-list-card__actions,
-.booking-form__actions,
-.booking-pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.booking-list-card__heading {
-    margin-bottom: 12px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.booking-list-card__actions {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    margin-top: 12px;
-}
-
-.booking-status {
-    display: inline-flex;
-    width: fit-content;
-    padding: 3px 7px;
-    border-radius: 999px;
-    background: var(--surface-muted);
-    color: var(--text-soft);
-    font-size: 9px;
-    font-weight: 650;
-}
-
-.booking-status--confirmed {
-    color: var(--success);
-}
-
-.booking-status--pending-payment {
-    color: #a56b0d;
-}
-
-:root[data-theme='dark'] .booking-status--pending-payment {
-    color: #e4b45d;
-}
-
-.booking-status--failed,
-.booking-status--expired,
-.booking-status--cancelled {
-    color: #c85768;
-}
-
-.booking-status--refunded {
-    color: var(--accent);
-}
-
-.booking-movie-card {
-    display: grid;
-    grid-template-columns: 82px minmax(0, 1fr);
-    align-items: center;
-    gap: 13px;
-    min-width: 0;
-}
-
-.booking-movie-card__poster {
-    width: 82px;
-    aspect-ratio: 0.72;
-    border-radius: 7px;
-    object-fit: cover;
-}
-
-.booking-movie-card__details {
-    min-width: 0;
-}
-
-.booking-movie-card__details h2 {
-    margin: 0 0 5px;
-    color: var(--text);
-    font-size: 15px;
-}
-
-.booking-movie-card__details p {
-    margin: 3px 0;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.booking-empty {
-    padding: 28px;
-    text-align: center;
-}
-
-.booking-empty h2,
-.booking-panel h2 {
-    margin: 0 0 10px;
-    font-size: 15px;
-}
-
-.booking-empty p,
-.booking-panel > p {
-    color: var(--muted);
-    font-size: 11px;
-}
-
-.booking-pagination {
-    margin-top: 18px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.booking-detail-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin: 12px 0 17px;
-}
-
-.booking-detail-heading .booking-page__title {
-    margin: 0 0 6px;
-}
-
-.booking-detail-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(245px, 320px);
-    align-items: start;
-    gap: 16px;
-}
-
-.booking-detail-main,
-.booking-detail-side {
-    display: grid;
-    gap: 12px;
-    min-width: 0;
-}
-
-.booking-panel > .booking-movie-card {
-    grid-template-columns: 90px minmax(0, 1fr);
-}
-
-.booking-panel > .booking-movie-card .booking-movie-card__poster {
-    width: 90px;
-}
-
-.booking-table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-}
-
-.booking-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: var(--muted);
-    font-size: 10px;
-    text-align: left;
-}
-
-.booking-table th,
-.booking-table td {
-    padding: 10px;
-    border-bottom: 1px solid var(--line);
-    white-space: nowrap;
-}
-
-.booking-table th {
-    color: var(--text-soft);
-    font-size: 9px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.booking-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.booking-muted {
-    margin: 12px 0 0;
-}
-
-.booking-timeline {
-    display: grid;
-    gap: 8px;
-    margin: 0;
-    padding-left: 17px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.booking-notice {
-    padding: 11px;
-    border-radius: 7px;
-    background: var(--notice);
-    color: var(--notice-text) !important;
-    font-size: 10px !important;
-}
-
-.booking-hold-panel .eyebrow {
-    font-size: 9px;
-}
-
-.booking-countdown {
-    margin: 10px 0;
-    color: var(--text);
-    font-size: 32px !important;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-}
-
-.booking-status-layout {
-    margin-top: 15px;
-}
-
-.booking-status-panel {
-    display: grid;
-    justify-items: start;
-    gap: 10px;
-    padding: clamp(18px, 4vw, 30px);
-}
-
-.booking-status-panel .booking-page__title,
-.booking-confirmed-panel .booking-page__title {
-    margin: 0;
-}
-
-.booking-status-panel > p,
-.booking-confirmed-panel > p {
-    margin: 0;
-}
-
-.booking-confirmed-layout {
-    margin-top: 16px;
-}
-
-.booking-confirmed-panel {
-    display: grid;
-    justify-items: start;
-    gap: 14px;
-    padding: clamp(18px, 4vw, 30px);
-}
-
-.booking-ticket-list {
-    display: grid;
-    width: 100%;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.booking-ticket-list li {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.booking-ticket-list strong {
-    color: var(--text-soft);
-}
-
-.account-layout {
-    display: grid;
-    grid-template-columns: minmax(190px, 240px) minmax(0, 1fr);
-    align-items: center;
-    gap: 16px;
-    margin-top: 16px;
-}
-
-.account-summary {
-    display: grid;
-    gap: 9px;
-}
-
-.account-summary h2 {
-    margin: 0;
-    font-size: 16px;
-}
-
-.account-summary > p:not(.eyebrow) {
-    margin: 0;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.account-forms {
-    display: grid;
-    gap: 12px;
-}
-
-.account-form-section > header h2 {
-    margin: 0 0 4px;
-    font-size: 15px;
-}
-
-.account-form-section > header p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.account-form {
-    display: grid;
-    gap: 12px;
-    margin-top: 12px;
-}
-
-.account-field {
-    display: grid;
-    min-width: 0;
-    gap: 5px;
-}
-
-.account-field label {
-    color: var(--muted) !important;
-    font-size: 9px !important;
-    text-transform: uppercase;
-}
-
-.account-input {
-    width: 100%;
-    min-height: 43px;
-    margin: 0;
-    padding: 9px;
-    border: 1px solid var(--line) !important;
-    border-radius: 6px !important;
-    background: var(--page) !important;
-    box-shadow: none !important;
-    color: var(--text) !important;
-    font-size: 10px;
-}
-
-.account-input:focus {
-    border-color: var(--accent) !important;
-    outline: 2px solid rgb(52 120 246 / 20%);
-}
-
-.account-field ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    color: #c85768;
-    font-size: 10px;
-}
-
-.account-form__row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.account-form__actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.account-notice,
-.account-verification,
-.account-help,
-.account-success {
-    margin: 0;
-    color: var(--muted);
-    font-size: 10px;
-}
-
-.account-verification {
-    display: grid;
-    gap: 5px;
-    padding: 9px;
-    border-radius: 6px;
-    background: var(--notice);
-    color: var(--notice-text);
-}
-
-.account-text-button {
-    width: fit-content;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--accent);
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
-}
-
-.account-panel--danger > section > header h2 {
-    margin: 0 0 5px;
-    color: #c85768;
-    font-size: 14px;
-}
-
-.account-panel--danger > section > header p {
-    color: var(--muted);
-    font-size: 10px;
-}
-
-@media (max-width: 700px) {
-    .booking-detail-layout {
-        grid-template-columns: minmax(0, 1fr);
+/* ==========================================================================
+   ADMIN PANEL
+   ========================================================================== */
+
+:root {
+    --cine-bg: 10 16 32;
+    --cine-deep: 13 23 48;
+    --cine-surface: 15 26 46;
+    --cine-elevated: 26 43 69;
+    --cine-border: 255 255 255;
+    --cine-accent: 30 144 255;
+    --cine-selected-start: 29 79 168;
+    --cine-selected-end: 15 47 102;
+    --cine-primary: 255 255 255;
+    --cine-secondary: 154 169 192;
+    --cine-tertiary: 111 127 153;
+    --cine-disabled-bg: 26 36 56;
+    --cine-disabled: 74 88 115;
+    --cine-success: 34 197 94;
+    --cine-warning: 245 158 11;
+    --cine-danger: 239 68 68;
+}
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
     }
 
-    .account-layout {
-        grid-template-columns: minmax(0, 1fr);
-        align-items: stretch;
+    .admin-shell {
+        @apply min-h-screen font-admin text-cine-primary antialiased;
+        color-scheme: dark;
+        background: linear-gradient(180deg, rgb(var(--cine-bg)) 0%, rgb(var(--cine-deep)) 100%);
+    }
+
+    .admin-shell[data-theme='light'] {
+        --cine-bg: 244 247 252;
+        --cine-deep: 237 243 251;
+        --cine-surface: 255 255 255;
+        --cine-elevated: 232 239 249;
+        --cine-border: 24 43 70;
+        --cine-accent: 24 112 218;
+        --cine-primary: 19 32 51;
+        --cine-secondary: 74 91 116;
+        --cine-tertiary: 105 121 145;
+        --cine-disabled-bg: 229 235 244;
+        --cine-disabled: 104 119 143;
+        color-scheme: light;
+    }
+
+    .admin-shell button,
+    .admin-shell a,
+    .admin-shell input,
+    .admin-shell select,
+    .admin-shell textarea {
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg;
+    }
+
+    .admin-shell [aria-invalid='true'] {
+        border-color: rgb(var(--cine-danger) / 0.65);
     }
 }
 
-@media (max-width: 480px) {
-    .booking-detail-heading {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .booking-list-card__heading {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .booking-movie-card,
-    .booking-panel > .booking-movie-card {
-        grid-template-columns: 68px minmax(0, 1fr);
-    }
-
-    .booking-movie-card__poster,
-    .booking-panel > .booking-movie-card .booking-movie-card__poster {
-        width: 68px;
-    }
-
-    .account-form__row,
-    .booking-ticket-list li {
-        grid-template-columns: minmax(0, 1fr);
+@media (prefers-reduced-motion: reduce) {
+    .admin-shell *,
+    .admin-shell *::before,
+    .admin-shell *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

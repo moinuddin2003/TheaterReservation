@@ -9,6 +9,8 @@ use Illuminate\Validation\Rule;
 
 class GenreRequest extends FormRequest
 {
+    protected $errorBag = 'createGenre';
+
     public function authorize(): bool
     {
         return $this->user()?->isAdmin() ?? false;
@@ -19,6 +21,10 @@ class GenreRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        if ($this->isMethod('PUT')) {
+            $this->errorBag = 'editGenre';
+        }
+
         if ($this->filled('name')) {
             $this->merge(['name' => trim((string) $this->input('name'))]);
         }
@@ -59,6 +65,12 @@ class GenreRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'name.required' => 'Enter a name for this genre.',
+            'name.unique' => 'A genre with this name already exists.',
+            'name.max' => 'The genre name may not be longer than 60 characters.',
+            'slug.required' => 'Enter a slug or leave it blank to generate one from the name.',
+            'slug.unique' => 'This slug is already being used by another genre.',
+            'slug.max' => 'The genre slug may not be longer than 80 characters.',
             'slug.regex' => 'The slug may only contain lowercase letters, numbers and single hyphens.',
         ];
     }

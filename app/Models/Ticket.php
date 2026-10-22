@@ -106,6 +106,6 @@ class Ticket extends Model
 
     public function isVoid(): bool
     {
-        return $this->status === TicketStatus::Void;
+        return in_array($this->status, [TicketStatus::Void, TicketStatus::Voided], true);
     }
 }

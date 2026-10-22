@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\HoldStatus;
 use App\Enums\MovieStatus;
 use App\Enums\ShowtimeStatus;
 use App\Models\BookingItem;
@@ -34,16 +33,9 @@ class MovieController extends Controller
         $movies = Movie::query()
             ->whereIn('status', [MovieStatus::NowShowing, MovieStatus::ComingSoon])
             ->with('genres')
-            ->with([
-                'showtimes' => fn ($query) => $query
-                    ->where('status', ShowtimeStatus::Scheduled)
-                    ->where('starts_at', '>=', now())
-                    ->orderByDesc('starts_at'),
-            ])
-            ->withCount([
-                'showtimes as upcoming_showtimes_count' => fn ($query) => $query
-                    ->where('status', ShowtimeStatus::Scheduled)
-                    ->where('starts_at', '>', now()),
+            ->withCount(['showtimes as upcoming_showtimes_count' => fn ($query) => $query
+                ->where('status', ShowtimeStatus::Scheduled)
+                ->where('starts_at', '>', now()),
             ])
             ->search($search)
             ->when($status, fn ($query, $value) => $query->where('status', $value))
@@ -51,14 +43,6 @@ class MovieController extends Controller
             ->orderBy('title')
             ->paginate(12)
             ->withQueryString();
-
-        // $movie = Movie::all();
-        // dd($movie);
-
-        // dd($movies->items());
-
-        // $movies = Movie::where('status', 'now_showing')->get();
-        // dd($movies);
 
         return view('movies.catalog', [
             'movies' => $movies,
@@ -115,8 +99,7 @@ class MovieController extends Controller
 
         $held = SeatHold::query()
             ->whereIn('showtime_id', $ids)
-            ->where('status', HoldStatus::Active)
-            ->where('expires_at', '>', now())
+            ->where('status', 'active')
             ->selectRaw('showtime_id, count(*) as total')
             ->groupBy('showtime_id')
             ->pluck('total', 'showtime_id');

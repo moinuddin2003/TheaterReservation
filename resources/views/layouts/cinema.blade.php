@@ -25,8 +25,7 @@
                 <a class="site-nav__link {{ request()->routeIs('movies.*') ? 'is-active' : '' }}"
                     href="{{ route('movies.index') }}">Movies</a>
                 @auth
-                    <a class="site-nav__link {{ request()->routeIs('bookings.*') ? 'is-active' : '' }}"
-                        href="{{ route('bookings.index') }}">My bookings</a>
+                    <a class="site-nav__link" href="{{ route('dashboard') }}">My bookings</a>
                 @else
                     <a class="site-nav__link" href="{{ route('login') }}">My bookings</a>
                 @endauth
@@ -36,10 +35,9 @@
                 <span class="location-label"><span aria-hidden="true">⌖</span> {{ config('cinema.venue') }}</span>
                 <x-theme-toggle />
                 @auth
-                    <a class="profile-label" href="{{ route('profile.edit') }}">
-                        <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
-                        {{ auth()->user()->name }}
-                    </a>
+                    <span class="profile-label">                    <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                    {{ auth()->user()->name }}
+                </span>
                 @else
                     <a class="profile-label" href="{{ route('login') }}">Sign in</a>
                 @endauth

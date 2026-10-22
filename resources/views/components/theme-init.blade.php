@@ -1,8 +1,8 @@
 <script>
     (() => {
-        const theme = window.localStorage.getItem('cinebook-theme') === 'light' ? 'light' : 'dark';
+        const savedTheme = localStorage.getItem('cinebook-theme');
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
 
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.classList.toggle('dark', theme === 'dark');
+        document.documentElement.dataset.theme = savedTheme || (prefersLight ? 'light' : 'dark');
     })();
 </script>
