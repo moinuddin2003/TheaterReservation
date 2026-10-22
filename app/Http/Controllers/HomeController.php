@@ -13,10 +13,10 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $showtimes = fn ($query) => $query  
+        $showtimes = fn ($query) => $query
             ->where('status', ShowtimeStatus::Scheduled)
             ->where('starts_at', '>=', now())
-            ->orderByDesc('starts_at');
+            ->orderBy('starts_at');
 
         // Now showing
         $nowShowing = Movie::query()
