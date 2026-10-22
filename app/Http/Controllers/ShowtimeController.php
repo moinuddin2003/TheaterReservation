@@ -8,19 +8,20 @@ use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\View\View;
 
 class ShowtimeController extends Controller
 {
     /**
-     * Bricks 1 to 4: the real showtime row, its screen's seats, each
-     * seat's state and its unit price for this showtime.
-     *
-     * The Blade view comes in a later brick.
+     * The seat selection page for one showtime, with every value the
+     * Blade view needs prepared here. Returns the public JSON payload
+     * when the client asks for JSON instead.
      */
-    public function show(Showtime $showtime): JsonResponse
+    public function show(Request $request, Showtime $showtime): View|JsonResponse
     {
-        $showtime->loadMissing(['movie', 'screen']);
+        $showtime->loadMissing(['screen', 'movie' => fn ($query) => $query->with('genres')]);
 
         $seats = Seat::query()
             ->where('screen_id', $showtime->screen_id)
@@ -28,22 +29,59 @@ class ShowtimeController extends Controller
             ->orderBy('seat_number')
             ->get();
 
+        $standardPriceCents = (int) $showtime->base_price_cents;
+        $premiumPriceCents = $standardPriceCents + (int) config('cinebook.premium_surcharge_cents', 0);
+
         $held = $this->heldSeatIds($showtime);
         $sold = $this->soldSeatIds($showtime);
 
-        $standardPrice = (int) $showtime->base_price_cents;
-        $premiumPrice = $standardPrice + (int) config('cinebook.premium_surcharge_cents', 0);
+        $seatStates = $this->seats($seats, $held, $sold, $standardPriceCents, $premiumPriceCents);
 
-        return response()->json([
-            'showtime_id' => $showtime->id,
-            'starts_at' => $showtime->starts_at->toDateTimeString(),
-            'movie' => $showtime->movie->title,
-            'screen' => $showtime->screen->name,
-            'currency' => strtoupper((string) config('cinebook.currency', 'usd')),
-            'rows' => $seats->pluck('row_label')->unique()->count(),
+        if ($request->expectsJson()) {
+            return response()->json([
+                'showtime_id' => $showtime->id,
+                'starts_at' => $showtime->starts_at->toDateTimeString(),
+                'movie' => $showtime->movie->title,
+                'screen' => $showtime->screen->name,
+                'currency' => strtoupper((string) config('cinebook.currency', 'usd')),
+                'rows' => $seats->pluck('row_label')->unique()->count(),
+                'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
+                'seat_count' => $seats->count(),
+                'seats' => $seatStates,
+            ]);
+        }
+
+        $statuses = $seatStates->mapWithKeys(fn (array $seat) => [$seat['label'] => $seat['status']]);
+        $withStatus = fn (string $status) => $statuses->filter(fn (string $value) => $value === $status)->keys()->values();
+
+        $seatMap = [
+            'rows' => $seats->groupBy('row_label')
+                ->sortKeys()
+                ->map(fn (Collection $rowSeats) => $rowSeats->every(fn (Seat $seat) => $seat->isPremium())
+                    ? 'premium'
+                    : 'standard')
+                ->all(),
             'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
-            'seat_count' => $seats->count(),
-            'seats' => $this->seats($seats, $held, $sold, $standardPrice, $premiumPrice),
+            'held' => $withStatus('held')->all(),
+            'sold' => $withStatus('sold')->all(),
+            'disabled' => $withStatus('disabled')->all(),
+            'selected' => [],
+        ];
+
+        return view('showtimes.show', [
+            'movie' => $showtime->movie,
+            'showtime' => $showtime,
+            'screen' => $showtime->screen,
+            'seatMap' => $seatMap,
+            'prices' => [
+                'standard' => $standardPriceCents / 100,
+                'premium' => $premiumPriceCents / 100,
+            ],
+            'maxSelection' => (int) config('cinebook.max_seats_per_booking', 6),
+            'availableSeats' => $withStatus('available')->count(),
+            'holdMinutes' => (int) config('cinebook.hold_minutes', 10),
+            'salesClosed' => $showtime->hasSalesClosed(),
+            'salesCloseAt' => $showtime->salesCloseAt()->format('H:i'),
         ]);
     }
 

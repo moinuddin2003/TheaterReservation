@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HoldStatus;
 use App\Enums\MovieStatus;
 use App\Enums\ShowtimeStatus;
 use App\Models\BookingItem;
@@ -34,19 +35,19 @@ class MovieController extends Controller
             ->whereIn('status', [MovieStatus::NowShowing, MovieStatus::ComingSoon])
             ->with('genres')
             ->with([
-                'showtimes' => fn($query) => $query
+                'showtimes' => fn ($query) => $query
                     ->where('status', ShowtimeStatus::Scheduled)
                     ->where('starts_at', '>=', now())
                     ->orderByDesc('starts_at'),
             ])
             ->withCount([
-                'showtimes as upcoming_showtimes_count' => fn($query) => $query
+                'showtimes as upcoming_showtimes_count' => fn ($query) => $query
                     ->where('status', ShowtimeStatus::Scheduled)
                     ->where('starts_at', '>', now()),
             ])
             ->search($search)
-            ->when($status, fn($query, $value) => $query->where('status', $value))
-            ->when($genre, fn($query, $slug) => $query->whereHas('genres', fn($genres) => $genres->where('slug', $slug)))
+            ->when($status, fn ($query, $value) => $query->where('status', $value))
+            ->when($genre, fn ($query, $slug) => $query->whereHas('genres', fn ($genres) => $genres->where('slug', $slug)))
             ->orderBy('title')
             ->paginate(12)
             ->withQueryString();
@@ -114,7 +115,8 @@ class MovieController extends Controller
 
         $held = SeatHold::query()
             ->whereIn('showtime_id', $ids)
-            ->where('status', 'active')
+            ->where('status', HoldStatus::Active)
+            ->where('expires_at', '>', now())
             ->selectRaw('showtime_id, count(*) as total')
             ->groupBy('showtime_id')
             ->pluck('total', 'showtime_id');
