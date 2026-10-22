@@ -1560,7 +1560,7 @@ body.cinema-app {
 
 .seat-grid {
     display: grid;
-    grid-template-columns: 17px repeat(12, minmax(0, 1fr)) 17px;
+    grid-template-columns: 17px repeat(var(--seat-cols, 12), minmax(0, 1fr)) 17px;
     align-items: center;
     justify-items: center;
     gap: 8px 5px;
@@ -1915,7 +1915,7 @@ body.cinema-app {
     }
 
     .seat-grid {
-        grid-template-columns: 13px repeat(12, minmax(0, 1fr)) 13px;
+        grid-template-columns: 13px repeat(var(--seat-cols, 12), minmax(0, 1fr)) 13px;
         gap: 7px 3px;
     }
 
