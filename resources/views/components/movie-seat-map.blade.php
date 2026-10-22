@@ -1,32 +1,39 @@
 @props(['seatMap', 'prices', 'screen'])
 
-<section class="seat-map" aria-label="Choose seats for {{ $screen }}">
-    <p class="seat-map__screen">{{ $screen }}</p>
-    <div class="seat-map__rows">
-        @foreach ($seatMap['rows'] as $row => $tier)
-            <div class="seat-map__row" aria-label="Row {{ $row }}">
-                <span class="seat-map__row-label" aria-hidden="true">{{ $row }}</span>
-                @for ($number = 1; $number <= $seatMap['seats_per_row']; $number++)
-                    @php
-                        $seat = $row.$number;
-                        $status = in_array($seat, $seatMap['held'], true) ? 'held'
-                            : (in_array($seat, $seatMap['sold'], true) ? 'sold'
-                                : (in_array($seat, $seatMap['disabled'], true) ? 'disabled'
-                                    : (in_array($seat, $seatMap['selected'], true) ? 'selected' : 'available')));
-                        $unavailable = in_array($status, ['held', 'sold', 'disabled'], true);
-                    @endphp
-                    <button
-                        type="button"
-                        class="seat-map__seat seat-map__seat--{{ $status }} seat-map__seat--{{ $tier }}"
-                        data-seat="{{ $seat }}"
-                        data-seat-price="{{ $prices[$tier] }}"
-                        aria-label="Row {{ $row }}, seat {{ $number }}, {{ $status }}, ${{ $prices[$tier] }}"
-                        aria-pressed="{{ $status === 'selected' ? 'true' : 'false' }}"
-                        @if ($unavailable) disabled @endif
-                    >{{ $number }}</button>
-                @endfor
-                <span class="seat-map__row-label" aria-hidden="true">{{ $row }}</span>
-            </div>
+<section
+    class="seat-map-card"
+    aria-labelledby="seat-map-title"
+    data-standard-price="{{ $prices['standard'] }}"
+    data-premium-price="{{ $prices['premium'] }}"
+>
+    <div class="screen-curve">
+        <span id="seat-map-title">{{ $screen }}</span>
+    </div>
+    <p class="screen-caption">Front of auditorium</p>
+
+    <div
+        class="seat-grid"
+        role="group"
+        aria-label="{{ $screen }} seat map"
+        data-seat-map
+        style="--seat-cols: {{ $seatMap['seats_per_row'] }}"
+    >
+        @foreach ($seatMap['rows'] as $row => $type)
+            <span class="row-label">{{ $row }}</span>
+            @foreach (range(1, $seatMap['seats_per_row']) as $number)
+                @php
+                    $seatLabel = $row.$number;
+                    $seatStatus = match (true) {
+                        in_array($seatLabel, $seatMap['held'], true) => 'held',
+                        in_array($seatLabel, $seatMap['sold'], true) => 'sold',
+                        in_array($seatLabel, $seatMap['disabled'], true) => 'disabled',
+                        in_array($seatLabel, $seatMap['selected'], true) => 'selected',
+                        default => 'available',
+                    };
+                @endphp
+                <x-movie-seat :row="$row" :number="$number" :type="$type" :status="$seatStatus" />
+            @endforeach
+            <span class="row-label">{{ $row }}</span>
         @endforeach
     </div>
     <div class="seat-map__legend" aria-label="Seat availability">
