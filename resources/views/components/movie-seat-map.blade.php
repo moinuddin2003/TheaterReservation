@@ -11,7 +11,13 @@
     </div>
     <p class="screen-caption">Front of auditorium</p>
 
-    <div class="seat-grid" role="group" aria-label="{{ $screen }} seat map" data-seat-map>
+    <div
+        class="seat-grid"
+        role="group"
+        aria-label="{{ $screen }} seat map"
+        data-seat-map
+        style="--seat-cols: {{ $seatMap['seats_per_row'] }}"
+    >
         @foreach ($seatMap['rows'] as $row => $type)
             <span class="row-label">{{ $row }}</span>
             @foreach (range(1, $seatMap['seats_per_row']) as $number)
