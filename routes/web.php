@@ -38,13 +38,8 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 
-Route::get('/movies/{movieSlug}', function (string $movieSlug) {
-    $movie = config('cinema.movies.'.$movieSlug);
-
-    abort_if(! is_array($movie), 404);
-
-    return view('movies.index', ['movie' => $movie]);
-})->name('movies.show');
+Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])
+    ->name('movies.show');
 
 Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
     $movie = config('cinema.movies.'.$movieSlug);

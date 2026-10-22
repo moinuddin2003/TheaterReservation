@@ -20,11 +20,11 @@
 <article class="movie-card" data-movie-card data-movie-title="{{ strtolower($movie->title) }}"
     data-movie-genres="{{ strtolower($movie->genres->pluck('name')->implode(' ')) }}"
     data-movie-status="{{ $upcoming ? 'coming-soon' : 'now-showing' }}">
-    <a class="movie-card__image-link" href="{{ route('movies.show', ['movieSlug' => $movie->slug]) }}">
+    <a class="movie-card__image-link" href="{{ route('movies.show', $movie) }}">
         <x-movie-image :src="$movie->posterUrl() ?? $movie->poster_path" :alt="$movie->title . ' poster'"
             class="movie-card__image" />
     </a>
-    <h3><a href="{{ route('movies.show', ['movieSlug' => $movie->slug]) }}">{{ $movie->title }}</a></h3>
+    <h3><a href="{{ route('movies.show', $movie) }}">{{ $movie->title }}</a></h3>
     @if ($upcoming)
         <p>{{ $movie->release_date?->format('M j, Y') }}</p>
     @else
