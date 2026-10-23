@@ -1,6 +1,8 @@
-import Alpine from "alpinejs";
+import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
+
+Alpine.start();
 
 Alpine.data('adminShell', () => ({
     collapsed: localStorage.getItem('cinebook-admin-sidebar-collapsed') === 'true',

@@ -6,6 +6,7 @@ use App\Http\Controllers\MovieController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShowtimeController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\BookingController;
 use App\Models\Movie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -35,6 +36,14 @@ Route::get('/dashboard', function () {
         Role::Customer => view('dashboard'),
     };
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
+    $movie = config('cinema.movies.'.$movieSlug);
+ 
+    abort_if(! is_array($movie) || empty($movie['seat_map']), 404);
+ 
+    return view('movies.seats', ['movie' => $movie]);
+})->name('movies.seats');
 
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
