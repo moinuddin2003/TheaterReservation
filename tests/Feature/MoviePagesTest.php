@@ -7,6 +7,8 @@ use App\Models\Showtime;
 use Illuminate\Support\Carbon;
 
 it('shows the home page and movie catalog', function () {
+    $this->seed();
+
     $this->get('/')
         ->assertOk()
         ->assertSee('The Last Horizon')
@@ -149,6 +151,8 @@ it('shows bookable showtimes for every now showing movie at the cinema', functio
 });
 
 it('shows movie details and rejects unknown movie slugs', function () {
+    $this->seed();
+
     $this->get('/movies/the-last-horizon')
         ->assertOk()
         ->assertSee('Choose your showtime');

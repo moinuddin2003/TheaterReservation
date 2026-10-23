@@ -72,7 +72,23 @@ class MovieRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'title.required' => 'Enter a title for this movie.',
+            'title.unique' => 'A movie with this title already exists.',
+            'slug.required' => 'Enter a slug for this movie.',
+            'slug.unique' => 'This slug is already being used by another movie.',
             'slug.regex' => 'The slug may only contain lowercase letters, numbers and single hyphens.',
+            'synopsis.required' => 'Enter a synopsis for this movie.',
+            'duration_minutes.required' => 'Enter the movie runtime in minutes.',
+            'duration_minutes.integer' => 'The runtime must be a whole number of minutes.',
+            'duration_minutes.min' => 'The runtime must be at least 1 minute.',
+            'duration_minutes.max' => 'The runtime may not be longer than 600 minutes.',
+            'release_date.date' => 'Enter a valid release date.',
+            'poster_path.max' => 'The poster path may not be longer than 255 characters.',
+            'backdrop_path.max' => 'The backdrop path may not be longer than 255 characters.',
+            'trailer_url.url' => 'Enter a valid trailer URL, including https://.',
+            'trailer_url.max' => 'The trailer URL may not be longer than 255 characters.',
+            'status.required' => 'Choose a status for this movie.',
+            'genres.array' => 'Choose valid genres for this movie.',
             'genres.*.exists' => 'One of the selected genres no longer exists.',
             'poster.image' => 'The poster must be an image file.',
             'poster.mimes' => 'The poster must be a JPG, PNG or WebP image.',

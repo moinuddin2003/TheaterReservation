@@ -1,57 +1,31 @@
-<div class="account-form-section">
-    <header>
-        <h2>Update password</h2>
-        <p>Choose a strong password to help protect your account.</p>
-    </header>
+<form method="POST" action="{{ route('password.update') }}" class="mt-5 space-y-4">
+    @csrf
+    @method('PUT')
 
-    <form method="post" action="{{ route('password.update') }}" class="account-form">
-        @csrf
-        @method('put')
+    <div>
+        <label for="update_password_current_password" class="block text-sm text-cine-secondary">Current password</label>
+        <input id="update_password_current_password" name="current_password" type="password" autocomplete="current-password" class="mt-2 block w-full rounded-xl border-cine-border/10 bg-cine-bg text-cine-primary">
+        <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
+    </div>
 
-        <div class="account-field">
-            <x-input-label for="update_password_current_password" value="Current password" />
-            <x-text-input
-                id="update_password_current_password"
-                name="current_password"
-                type="password"
-                class="account-input"
-                autocomplete="current-password"
-            />
-            <x-input-error :messages="$errors->updatePassword->get('current_password')" />
-        </div>
+    <div>
+        <label for="update_password_password" class="block text-sm text-cine-secondary">New password</label>
+        <input id="update_password_password" name="password" type="password" autocomplete="new-password" class="mt-2 block w-full rounded-xl border-cine-border/10 bg-cine-bg text-cine-primary">
+        <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
+    </div>
 
-        <div class="account-form__row">
-            <div class="account-field">
-                <x-input-label for="update_password_password" value="New password" />
-                <x-text-input
-                    id="update_password_password"
-                    name="password"
-                    type="password"
-                    class="account-input"
-                    autocomplete="new-password"
-                />
-                <x-input-error :messages="$errors->updatePassword->get('password')" />
-            </div>
+    <div>
+        <label for="update_password_password_confirmation" class="block text-sm text-cine-secondary">Confirm password</label>
+        <input id="update_password_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" class="mt-2 block w-full rounded-xl border-cine-border/10 bg-cine-bg text-cine-primary">
+        <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
+    </div>
 
-            <div class="account-field">
-                <x-input-label for="update_password_password_confirmation" value="Confirm new password" />
-                <x-text-input
-                    id="update_password_password_confirmation"
-                    name="password_confirmation"
-                    type="password"
-                    class="account-input"
-                    autocomplete="new-password"
-                />
-                <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" />
-            </div>
-        </div>
-
-        <p class="account-help">Use at least 8 characters, including a letter and a number.</p>
-        <div class="account-form__actions">
-            <button class="button button--quiet" type="submit">Update password</button>
-            @if (session('status') === 'password-updated')
-                <p class="account-success">Saved.</p>
-            @endif
-        </div>
-    </form>
-</div>
+    <div class="flex items-center gap-4">
+        <button type="submit" class="rounded-xl bg-cine-accent px-4 py-2 text-sm font-semibold text-white">
+            Save password
+        </button>
+        @if (session('status') === 'password-updated')
+            <p class="text-sm text-cine-success">Password updated.</p>
+        @endif
+    </div>
+</form>

@@ -28,4 +28,15 @@ class SeatUpdateRequest extends FormRequest
             'is_disabled' => ['boolean'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'type.required' => 'Choose a seat type.',
+            'type.enum' => 'Choose a valid seat type.',
+        ];
+    }
 }

@@ -21,9 +21,18 @@ class ShowtimeRequest extends FormRequest
      */
     public function rules(): array
     {
+        $showtime = $this->route('showtime');
+        $currentScreenId = $showtime instanceof Showtime ? $showtime->screen_id : null;
+
         return [
             'movie_id' => ['required', 'integer', Rule::exists('movies', 'id')],
-            'screen_id' => ['required', 'integer', Rule::exists('screens', 'id')],
+            'screen_id' => [
+                'required',
+                'integer',
+                Rule::exists('screens', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->when($currentScreenId, fn ($query) => $query->orWhere('id', $currentScreenId))),
+            ],
             'starts_at' => ['required', 'date', 'after_or_equal:now'],
             'base_price' => ['required', 'numeric', 'min:0.5', 'max:1000'],
         ];
@@ -90,6 +99,7 @@ class ShowtimeRequest extends FormRequest
     {
         return [
             'starts_at.after_or_equal' => 'A showtime cannot be scheduled in the past.',
+            'screen_id.exists' => 'Choose an active screen for this showtime.',
         ];
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
 use App\Models\Genre;
 use App\Models\Movie;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,23 +27,54 @@ class MovieController extends Controller
         $status = MovieStatus::tryFrom((string) $request->query('status', ''));
         $search = $request->query('search');
         $search = is_string($search) ? $search : null;
+        $genreId = filter_var($request->query('genre'), FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]) ?: null;
+        $view = $request->query('view') === 'grid' ? 'grid' : 'list';
+
+        $statusCounts = Movie::query()
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as added_this_week', [now()->startOfWeek()])
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+        $totalMovies = (int) $statusCounts->sum('total');
+        $addedThisWeek = (int) $statusCounts->sum('added_this_week');
 
         $movies = Movie::query()
             ->with('genres')
             ->withCount('showtimes')
             ->search($search)
             ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($genreId, fn (Builder $query) => $query->whereHas(
+                'genres',
+                fn (Builder $genres) => $genres->whereKey($genreId),
+            ))
             ->orderByDesc('release_date')
             ->orderBy('title')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.movies.index', [
             'movies' => $movies,
             'statuses' => MovieStatus::cases(),
+            'genres' => Genre::query()->orderBy('name')->get(),
+            'view' => $view,
+            'stats' => [
+                'total' => $totalMovies,
+                'added_this_week' => $addedThisWeek,
+                'now_showing' => (int) ($statusCounts[MovieStatus::NowShowing->value]->total ?? 0),
+                'now_showing_added' => (int) ($statusCounts[MovieStatus::NowShowing->value]->added_this_week ?? 0),
+                'coming_soon' => (int) ($statusCounts[MovieStatus::ComingSoon->value]->total ?? 0),
+                'coming_soon_added' => (int) ($statusCounts[MovieStatus::ComingSoon->value]->added_this_week ?? 0),
+                'archived' => (int) ($statusCounts[MovieStatus::Archived->value]->total ?? 0),
+                'archived_added' => (int) ($statusCounts[MovieStatus::Archived->value]->added_this_week ?? 0),
+            ],
             'filters' => [
                 'status' => $status?->value,
                 'search' => $search,
+                'genre' => $genreId,
             ],
         ]);
     }
@@ -52,7 +84,8 @@ class MovieController extends Controller
      */
     public function create(): View
     {
-        return view('admin.movies.create', [
+        return view('admin.movies.form', [
+            'movie' => null,
             'genres' => Genre::query()->orderBy('name')->get(),
             'statuses' => MovieStatus::cases(),
         ]);
@@ -64,10 +97,13 @@ class MovieController extends Controller
      */
     public function store(MovieRequest $request): RedirectResponse
     {
-        $poster = $this->storeImage->store($request->file('poster'));
-        $backdrop = $this->storeImage->store($request->file('backdrop'));
+        $poster = null;
+        $backdrop = null;
 
         try {
+            $poster = $this->storeImage->store($request->file('poster'));
+            $backdrop = $this->storeImage->store($request->file('backdrop'));
+
             $movie = DB::transaction(function () use ($request, $poster, $backdrop): Movie {
                 $movie = new Movie($this->payload($request));
 
@@ -105,7 +141,7 @@ class MovieController extends Controller
     {
         $movie->load('genres')->loadCount('showtimes');
 
-        return view('admin.movies.edit', [
+        return view('admin.movies.form', [
             'movie' => $movie,
             'genres' => Genre::query()->orderBy('name')->get(),
             'statuses' => MovieStatus::cases(),
@@ -119,11 +155,13 @@ class MovieController extends Controller
     {
         $originalPoster = $movie->getOriginal('poster_path');
         $originalBackdrop = $movie->getOriginal('backdrop_path');
-
-        $poster = $this->storeImage->store($request->file('poster'));
-        $backdrop = $this->storeImage->store($request->file('backdrop'));
+        $poster = null;
+        $backdrop = null;
 
         try {
+            $poster = $this->storeImage->store($request->file('poster'));
+            $backdrop = $this->storeImage->store($request->file('backdrop'));
+
             DB::transaction(function () use ($request, $movie, $poster, $backdrop): void {
                 $movie->fill($this->payload($request));
 
@@ -147,13 +185,9 @@ class MovieController extends Controller
             throw $exception;
         }
 
-        if ($movie->poster_path !== $originalPoster) {
-            $this->storeImage->delete($originalPoster);
-        }
+        $this->storeImage->delete($movie->poster_path !== $originalPoster ? $originalPoster : null);
 
-        if ($movie->backdrop_path !== $originalBackdrop) {
-            $this->storeImage->delete($originalBackdrop);
-        }
+        $this->storeImage->delete($movie->backdrop_path !== $originalBackdrop ? $originalBackdrop : null);
 
         return redirect()
             ->route('admin.movies.index')
@@ -195,7 +229,6 @@ class MovieController extends Controller
         $title = $movie->title;
         $poster = $movie->poster_path;
         $backdrop = $movie->backdrop_path;
-
         $movie->delete();
 
         $this->storeImage->delete($poster);

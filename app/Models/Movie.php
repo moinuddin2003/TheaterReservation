@@ -141,7 +141,7 @@ class Movie extends Model
             return $path;
         }
 
-        return str_starts_with($path, '/')
+        return str_starts_with($path, '/') || str_starts_with($path, 'images/')
             ? asset($path)
             : Storage::disk('public')->url($path);
     }
