@@ -1,7 +1,11 @@
 <?php
 
 use App\Enums\Role;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\MovieController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShowtimeController;
+use App\Models\Movie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -32,44 +36,27 @@ Route::post('/stripe/webhook', function (Request $request) {
     return response()->json(['received' => true]);
 });
 
-Route::get('/', function () {
-    $movies = config('cinema.movies');
-    $featuredMovie = $movies[config('cinema.featured_movie')];
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
+Route::get('/movies/{movie}', [MovieController::class, 'show'])->name('movies.show');
+Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
+Route::get('/movies/{movie}/seats', function (Movie $movie, Request $request) {
+    $time = $request->query('time');
 
-    return view('home', [
-        'featuredMovie' => $featuredMovie,
-        'nowShowing' => collect(config('cinema.catalog.now_showing'))->map(fn ($slug) => $movies[$slug]),
-        'comingSoon' => collect(config('cinema.catalog.coming_soon'))->map(fn ($slug) => $movies[$slug]),
-        'dates' => config('cinema.home.dates'),
-        'genres' => config('cinema.home.genres'),
-        'featuredShowtime' => config('cinema.home.featured_showtime'),
-    ]);
-})->name('home');
+    if (filled($time)) {
+        abort_unless(is_string($time) && preg_match('/^\d{2}:\d{2}(?::\d{2})?$/D', $time), 404);
+        $time = strlen($time) === 5 ? $time.':00' : $time;
+    }
 
-Route::get('/movies', function () {
-    $movies = config('cinema.movies');
+    $showtime = $movie->showtimes()
+        ->scheduled()
+        ->where('starts_at', '>', now())
+        ->when($request->filled('date'), fn ($query) => $query->whereDate('starts_at', $request->query('date')))
+        ->when(filled($time), fn ($query) => $query->whereTime('starts_at', $time))
+        ->orderBy('starts_at')
+        ->firstOrFail();
 
-    return view('movies.catalog', [
-        'nowShowing' => collect(config('cinema.catalog.now_showing'))->map(fn ($slug) => $movies[$slug]),
-        'comingSoon' => collect(config('cinema.catalog.coming_soon'))->map(fn ($slug) => $movies[$slug]),
-        'genres' => config('cinema.home.genres'),
-    ]);
-})->name('movies.index');
-
-Route::get('/movies/{movieSlug}', function (string $movieSlug) {
-    $movie = config('cinema.movies.'.$movieSlug);
-
-    abort_if(! is_array($movie), 404);
-
-    return view('movies.index', ['movie' => $movie]);
-})->name('movies.show');
-
-Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
-    $movie = config('cinema.movies.'.$movieSlug);
-
-    abort_if(! is_array($movie) || empty($movie['seat_map']), 404);
-
-    return view('movies.seats', ['movie' => $movie]);
+    return redirect()->route('showtimes.show', $showtime);
 })->name('movies.seats');
 
 Route::get('/dashboard', function () {

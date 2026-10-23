@@ -12,37 +12,44 @@
             </div>
         </div>
 
-        <div class="catalog-tabs" role="tablist" aria-label="Filter movies by release status">
-            <button class="catalog-tab is-active" type="button" role="tab" aria-selected="true" data-catalog-status="now-showing">Now showing <span>{{ $nowShowing->count() }}</span></button>
-            <button class="catalog-tab" type="button" role="tab" aria-selected="false" data-catalog-status="coming-soon">Coming soon <span>{{ $comingSoon->count() }}</span></button>
-        </div>
-
-        <div class="catalog-filters" role="search">
+        <form class="catalog-filters" role="search" method="GET" action="{{ route('movies.index') }}">
             <label class="catalog-filter">
                 <span>Search movies</span>
-                <input type="search" placeholder="Search by title..." data-movie-search>
+                <input type="search" name="search" value="{{ $filters['search'] }}" placeholder="Search by title...">
             </label>
             <label class="catalog-filter">
                 <span>Genre</span>
-                <select data-movie-genre>
+                <select name="genre">
                     <option value="">All genres</option>
                     @foreach ($genres as $genre)
-                        <option value="{{ strtolower($genre) }}">{{ $genre }}</option>
+                        <option value="{{ $genre->slug }}" @selected($filters['genre'] === $genre->slug)>{{ $genre->name }}</option>
                     @endforeach
                 </select>
             </label>
-        </div>
+            <label class="catalog-filter">
+                <span>Availability</span>
+                <select name="status">
+                    <option value="">All movies</option>
+                    <option value="now_showing" @selected($filters['status'] === 'now_showing')>Now showing</option>
+                    <option value="coming_soon" @selected($filters['status'] === 'coming_soon')>Coming soon</option>
+                </select>
+            </label>
+            <button class="button button--primary" type="submit">Apply filters</button>
+            @if ($filters['search'] || $filters['genre'] || $filters['status'])
+                <a class="button button--quiet" href="{{ route('movies.index') }}">Clear filters</a>
+            @endif
+        </form>
 
-        <p class="catalog-summary" data-catalog-summary>{{ $nowShowing->count() }} movies now showing</p>
+        <p class="catalog-summary">
+            {{ $movies->total() }} {{ \Illuminate\Support\Str::plural('movie', $movies->total()) }} found
+        </p>
         <div class="movie-grid movie-grid--catalog">
-            @foreach ($nowShowing as $movie)
-                <x-movie-card :movie="$movie" />
-            @endforeach
-            @foreach ($comingSoon as $movie)
-                <x-movie-card :movie="$movie" upcoming />
-            @endforeach
+            @forelse ($movies as $movie)
+                <x-movie-card :movie="$movie" :upcoming="$movie->status === \App\Enums\MovieStatus::ComingSoon" />
+            @empty
+                <p>No movies match your filters.</p>
+            @endforelse
         </div>
-        <p class="catalog-empty" data-catalog-empty hidden>No movies match your filters.</p>
-        <div class="catalog-pagination"><span data-catalog-count>Showing {{ $nowShowing->count() }} movies</span><div><button class="button button--quiet" type="button" disabled>← Previous</button><span>1</span><button class="button button--quiet" type="button" disabled>Next →</button></div></div>
+        <div class="catalog-pagination">{{ $movies->links() }}</div>
     </div>
 @endsection

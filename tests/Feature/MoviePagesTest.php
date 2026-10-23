@@ -1,34 +1,90 @@
 <?php
 
-it('shows the home page and movie catalog', function () {
+use App\Enums\MovieStatus;
+use App\Models\Genre;
+use App\Models\Movie;
+use App\Models\Showtime;
+
+it('shows database movies on the home page and public catalog', function () {
+    $genre = Genre::factory()->create([
+        'name' => 'Drama',
+        'slug' => 'drama',
+    ]);
+    $nowShowing = Movie::factory()->create([
+        'title' => 'Database Feature',
+        'slug' => 'database-feature',
+        'status' => MovieStatus::NowShowing,
+    ]);
+    $nowShowing->genres()->attach($genre);
+
+    Movie::factory()->comingSoon()->create([
+        'title' => 'Database Coming Soon',
+        'slug' => 'database-coming-soon',
+    ]);
+
+    Showtime::factory()->for($nowShowing)->create([
+        'starts_at' => now()->addDay()->setTime(19, 30),
+        'ends_at' => now()->addDay()->setTime(21, 30),
+    ]);
+
     $this->get('/')
         ->assertOk()
-        ->assertSee('The Last Horizon')
-        ->assertSee('src="'.asset('images/movies/the-last-horizon-cover.jpg').'" alt="The Last Horizon cover"', false)
-        ->assertSee('Now showing');
+        ->assertSee('Database Feature')
+        ->assertSee('Database Coming Soon')
+        ->assertDontSee('The Last Horizon');
 
     $this->get('/movies')
         ->assertOk()
         ->assertSee('Find your next escape')
         ->assertSee('Search movies')
-        ->assertSee('Night Circuit');
+        ->assertSee('Database Feature')
+        ->assertSee('Database Coming Soon')
+        ->assertDontSee('Night Circuit');
+
+    $this->get('/movies?search=Database%20Feature')
+        ->assertOk()
+        ->assertSee('Database Feature')
+        ->assertDontSee('Database Coming Soon');
+
+    $this->get('/movies?genre=drama&status=now_showing')
+        ->assertOk()
+        ->assertSee('Database Feature')
+        ->assertDontSee('Database Coming Soon');
+
+    $this->get('/movies?status=coming_soon')
+        ->assertOk()
+        ->assertSee('Database Coming Soon')
+        ->assertDontSee('Database Feature');
 });
 
-it('shows movie details and rejects unknown movie slugs', function () {
-    $this->get('/movies/the-last-horizon')
-        ->assertOk()
-        ->assertSee('Choose your showtime');
+it('shows database movie details and database showtimes', function () {
+    $movie = Movie::factory()->create([
+        'title' => 'Database Feature',
+        'slug' => 'database-feature',
+    ]);
+    $showtime = Showtime::factory()->for($movie)->create([
+        'starts_at' => now()->addDay()->setTime(19, 30),
+        'ends_at' => now()->addDay()->setTime(21, 30),
+    ]);
 
-    $this->get('/movies/not-a-movie')
-        ->assertNotFound();
-});
-
-it('only shows a seat map for movies with a configured seat map', function () {
-    $this->get('/movies/the-last-horizon/seats?date=2026-10-15&time=19:30')
+    $this->get(route('movies.show', $movie))
         ->assertOk()
+        ->assertSee('Database Feature')
+        ->assertSee('Choose your showtime')
+        ->assertSee($showtime->screen->name);
+
+    $this->get(route('showtimes.show', $showtime))
+        ->assertOk()
+        ->assertSee('Database Feature')
         ->assertSee('Your selection');
 
-    $this->get('/movies/night-circuit/seats')
+    $this->get(route('movies.seats', [
+        'movie' => $movie->slug,
+        'date' => $showtime->starts_at->toDateString(),
+        'time' => $showtime->starts_at->format('H:i'),
+    ]))->assertRedirect(route('showtimes.show', $showtime));
+
+    $this->get(route('movies.show', ['movie' => 'not-a-movie']))
         ->assertNotFound();
 });
 

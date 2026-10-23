@@ -1,68 +1,62 @@
 @extends('layouts.cinema')
 
-@section('title', $movie['title'].' — '.config('cinema.brand'))
+@section('title', $movie->title.' — '.config('cinema.brand'))
 
 @section('content')
-    @php($prices = $movie['seat_map']['prices'] ?? null)
-
     <div class="page-shell movie-page">
-        <p class="eyebrow">MOVIES <span aria-hidden="true">/</span> {{ $movie['title'] }}</p>
+        <p class="eyebrow">MOVIES <span aria-hidden="true">/</span> {{ $movie->title }}</p>
 
-        <x-movie-image :src="$movie['images']['cover']" :alt="$movie['title'].' cover'" class="movie-cover" />
+        @if ($movie->backdropUrl())
+            <x-movie-image :src="$movie->backdropUrl()" :alt="$movie->title.' cover'" class="movie-cover" />
+        @endif
 
         <section class="movie-intro" aria-labelledby="movie-title">
-            <x-movie-image :src="$movie['images']['poster']" :alt="$movie['title'].' poster'" class="movie-poster" />
+            @if ($movie->posterUrl())
+                <x-movie-image :src="$movie->posterUrl()" :alt="$movie->title.' poster'" class="movie-poster" />
+            @endif
             <div class="movie-intro__body">
                 <x-movie-meta :movie="$movie" />
-                <h1 id="movie-title">{{ $movie['title'] }}</h1>
-                <p class="movie-summary">{{ $movie['synopsis'] }}</p>
-                <button class="button button--quiet" type="button" data-demo-message="Trailer preview will be added soon.">
-                    <span aria-hidden="true">▷</span> Watch trailer <span class="button__subtle">· HD</span>
-                </button>
+                <h1 id="movie-title">{{ $movie->title }}</h1>
+                <p class="movie-summary">{{ $movie->synopsis }}</p>
+                @if ($movie->trailer_url)
+                    <a class="button button--quiet" href="{{ $movie->trailer_url }}" target="_blank" rel="noopener noreferrer">
+                        <span aria-hidden="true">▷</span> Watch trailer <span class="button__subtle">· HD</span>
+                    </a>
+                @endif
             </div>
         </section>
 
-        @if ($prices && count($movie['showtimes']))
         <section class="showtimes-section" id="showtimes" aria-labelledby="showtimes-title">
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">PLAN YOUR VISIT</p>
                     <h2 id="showtimes-title">Choose your showtime</h2>
                 </div>
-                <p class="section-note"><span aria-hidden="true">⌖</span> All times local <span aria-hidden="true">·</span> {{ config('cinema.venue') }}</p>
+                <p class="section-note"><span aria-hidden="true">⌖</span> Upcoming scheduled showtimes</p>
             </div>
 
-            <div class="date-tabs" role="tablist" aria-label="Choose a date">
-                @foreach ($movie['showtimes'] as $showingDate)
-                    <button
-                        class="date-tab {{ $loop->first ? 'is-active' : '' }}"
-                        type="button"
-                        role="tab"
-                        aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                        data-day-button="{{ $showingDate['date'] }}"
-                    >
-                        <span>{{ $showingDate['weekday_short'] }}</span><strong>{{ $showingDate['date_short'] }}</strong>
-                    </button>
-                @endforeach
-            </div>
-
-            <div class="showtime-list">
-                @foreach ($movie['showtimes'] as $showingDate)
-                    <x-movie-showtime-card
-                        :movie="$movie"
-                        :showing-date="$showingDate"
-                        :prices="$prices"
-                        :active="$loop->first"
-                    />
-                @endforeach
-            </div>
-            <p class="sales-note">Sales close 15 minutes before each show. Select a time to preview seat selection.</p>
-        </section>
-        @else
-            <section class="showtimes-section">
+            @forelse ($showtimesByDate as $date => $showtimes)
+                <div class="showtime-list">
+                    <h3>{{ \Illuminate\Support\Carbon::parse($date)->format('l, F j') }}</h3>
+                    <div class="showtime-card__times">
+                        @foreach ($showtimes as $showtime)
+                            <a href="{{ route('showtimes.show', $showtime) }}">
+                                {{ $showtime->starts_at->format('H:i') }}
+                                · {{ $showtime->screen->name }}
+                                · From ${{ number_format($showtime->base_price_cents / 100, 2) }}
+                                @if (($availability[$showtime->id]['sold_out'] ?? false))
+                                    · Sold out
+                                @else
+                                    · {{ $availability[$showtime->id]['available'] ?? 0 }} seats available
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @empty
                 <p class="release-note">Showtimes will be announced soon.</p>
                 <a class="button button--quiet" href="{{ route('movies.index') }}">Browse all movies</a>
-            </section>
-        @endif
+            @endforelse
+        </section>
     </div>
 @endsection

@@ -23,6 +23,10 @@ class HomeController extends Controller
         $nowShowing = Movie::query()
             ->nowShowing()
             ->with('genres')
+            ->with(['showtimes' => fn ($query) => $upcomingShowtimes($query)
+                ->with('screen')
+                ->orderBy('starts_at'),
+            ])
             ->withCount(['showtimes as upcoming_showtimes_count' => $upcomingShowtimes])
             ->orderByDesc('release_date')
             ->take(8)
