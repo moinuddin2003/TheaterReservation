@@ -2,8 +2,6 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
-Alpine.start();
-
 Alpine.data('adminShell', () => ({
     collapsed: localStorage.getItem('cinebook-admin-sidebar-collapsed') === 'true',
     theme: localStorage.getItem('cinebook-admin-theme') === 'light' ? 'light' : 'dark',
@@ -157,6 +155,21 @@ Alpine.data('adminModal', (initiallyOpen = false) => ({
             event.preventDefault();
             this.$refs.panel.focus();
             return;
+        }
+
+        const firstItem = items[0];
+        const lastItem = items[items.length - 1];
+
+        if (event.shiftKey && document.activeElement === firstItem) {
+            event.preventDefault();
+            lastItem.focus();
+        } else if (!event.shiftKey && document.activeElement === lastItem) {
+            event.preventDefault();
+            firstItem.focus();
+        }
+    },
+}));
+
 Alpine.start();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -401,10 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSelection();
 }
 
-document.addEventListener('click', (event) => {
-    if (!(event.target instanceof Element)) {
-        return;
-    }
     const seatDateButtons = [...document.querySelectorAll("[data-seat-date]")];
     const timeButtons = [...document.querySelectorAll("[data-time-button]")];
 
