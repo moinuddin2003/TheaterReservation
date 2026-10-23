@@ -18,7 +18,7 @@
                 <p class="eyebrow">{{ $movie['title'] }} <span aria-hidden="true">/</span> {{ $firstDate['screen'] }}</p>
                 <h1>A great night starts with a great seat</h1>
             </div>
-            <a class="back-link" href="{{ route('movies.show', ['movieSlug' => $movie['slug']]) }}"><span aria-hidden="true">←</span> Back to showtimes</a>
+            <a class="back-link" href="{{ route('movies.show', $movie['slug']) }}"><span aria-hidden="true">←</span> Back to showtimes</a>
         </div>
 
         <div class="seat-date-tabs" role="tablist" aria-label="Choose a date">
@@ -45,7 +45,11 @@
                     <div>
                         <p class="eyebrow" data-movie-screen>{{ $firstDate['screen'] }}</p>
                         <h2>{{ $movie['title'] }}</h2>
-                        <x-movie-meta :movie="$movie" compact />
+                        <div class="movie-meta movie-meta--compact">
+                            <span class="rating-pill">{{ $movie['rating'] }}</span>
+                            <span>{{ $movie['runtime_minutes'] }} min</span>
+                            <span>{{ implode(' . ', $movie['genres']) }}</span>
+                        </div>
                     </div>
                 </div>
 

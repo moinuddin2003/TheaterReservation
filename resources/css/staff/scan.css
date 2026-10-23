@@ -1,0 +1,209 @@
+/* Staff scan screen */
+
+.scan-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+}
+
+.scan-layout__main,
+.scan-layout__side {
+    display: grid;
+    min-width: 0;
+    gap: 16px;
+}
+
+.scan-layout__heading {
+    margin: 0;
+    color: var(--text);
+    font-size: 22px;
+    line-height: 1.13;
+}
+
+.scan-panel,
+.scan-empty {
+    display: grid;
+    gap: 20px;
+}
+
+.scan-panel__footnote {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* Labelled field (show picker and token box) */
+
+.staff-field {
+    position: relative;
+    display: grid;
+    min-height: 76px;
+    align-content: start;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.staff-field--focus {
+    border: 2px solid var(--accent);
+}
+
+.staff-field__label {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+    text-transform: uppercase;
+}
+
+.staff-field__control {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.staff-field__control:focus,
+.staff-field__control:focus-visible {
+    outline: none;
+}
+
+.staff-field__control::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+
+.staff-field:focus-within {
+    border-color: var(--accent);
+}
+
+/* Show picker */
+
+.scan-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+}
+
+.scan-picker__field select {
+    appearance: none;
+    cursor: pointer;
+}
+
+.scan-picker__field::after {
+    content: '▾';
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.scan-picker__state {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.scan-picker__state.is-open {
+    color: var(--success);
+}
+
+/* Scanner focus area */
+
+.scan-focus {
+    display: grid;
+    gap: 22px;
+    padding: 32px;
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    background: var(--notice);
+}
+
+.scan-focus__title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.scan-focus__title h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 30px;
+    line-height: 1.13;
+}
+
+.scan-focus__hint {
+    margin: 0;
+    color: var(--muted);
+}
+
+.scan-focus .button {
+    justify-self: start;
+    min-height: 43px;
+    padding: 13px 20px;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+/* Show summary */
+
+.scan-summary {
+    display: grid;
+    gap: 20px;
+}
+
+.scan-summary > p,
+.scan-summary > h2 {
+    margin: 0;
+}
+
+.scan-summary__screen,
+.scan-summary__caption,
+.scan-summary__details {
+    color: var(--muted);
+}
+
+.scan-summary__screen {
+    text-transform: uppercase;
+}
+
+.scan-summary__count {
+    color: var(--text);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.scan-summary__title {
+    color: var(--text);
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.scan-empty h2,
+.scan-empty p {
+    margin: 0;
+}
+
+@media (max-width: 960px) {
+    .scan-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .scan-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .scan-focus {
+        padding: 20px;
+    }
+}
