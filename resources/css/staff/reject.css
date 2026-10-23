@@ -1,0 +1,67 @@
+/* Staff scan rejections: a card with an outline icon, label, headline and detail */
+
+:root {
+    --reject-danger: #b4232f;
+    --reject-warning: #9a6700;
+}
+
+:root[data-theme='dark'] {
+    --reject-danger: #f0728a;
+    --reject-warning: #e8b84a;
+}
+
+.scan-result--reject {
+    --reject-color: var(--reject-danger);
+
+    border: 2px solid var(--reject-color);
+    background: var(--surface-raised);
+}
+
+:root[data-theme='dark'] .scan-result--reject {
+    border: 2px solid var(--reject-color);
+    background: var(--surface-raised);
+}
+
+.scan-result--warning {
+    --reject-color: var(--reject-warning);
+}
+
+.scan-result--reject .scan-result__icon {
+    color: var(--reject-color);
+}
+
+.scan-result__label {
+    margin: 0;
+    color: var(--reject-color);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.scan-result--reject h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 36px;
+    line-height: 1.2;
+}
+
+.scan-result__detail,
+.scan-result__context {
+    margin: 0;
+    color: var(--muted);
+}
+
+.scan-result__detail {
+    font-size: 16px;
+}
+
+.scan-next__link {
+    color: var(--accent);
+}
+
+@media (max-width: 640px) {
+    .scan-result--reject h2 {
+        font-size: 26px;
+    }
+}

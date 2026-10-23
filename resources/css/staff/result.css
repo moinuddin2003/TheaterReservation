@@ -1,0 +1,120 @@
+/* Staff scan result (admitted) and its side panel */
+
+.scan-result {
+    display: grid;
+    gap: 20px;
+    padding: 40px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--surface-raised);
+}
+
+:root[data-theme='dark'] .scan-result {
+    border: 2px solid var(--success);
+    background: #14372f;
+}
+
+.scan-result__head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.scan-result__head h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 58px;
+    line-height: 1.13;
+}
+
+/* The check icon has a green (dark theme) and a blue (light theme) version. */
+.scan-result__icon--dark {
+    display: none;
+}
+
+:root[data-theme='dark'] .scan-result__icon--dark {
+    display: block;
+}
+
+:root[data-theme='dark'] .scan-result__icon--light {
+    display: none;
+}
+
+.scan-result__show {
+    margin: 0;
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.13;
+}
+
+.scan-result__seat-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 16px;
+}
+
+.scan-result__seat {
+    margin: 0;
+    color: var(--text);
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 1.13;
+}
+
+.scan-result__details {
+    margin: 0;
+    color: var(--muted);
+}
+
+.scan-result__message {
+    margin: 0;
+    color: var(--accent);
+}
+
+:root[data-theme='dark'] .scan-result__message {
+    color: var(--success);
+}
+
+.scan-next,
+.scan-status {
+    display: grid;
+    gap: 20px;
+}
+
+.scan-next__hint {
+    margin: 0;
+    color: var(--muted);
+}
+
+.scan-status__figures {
+    display: grid;
+    gap: 20px;
+    color: var(--muted);
+}
+
+.scan-status__figures p {
+    margin: 0;
+}
+
+.scan-status__figures .scan-status__count {
+    color: var(--text);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+@media (max-width: 640px) {
+    .scan-result {
+        padding: 24px;
+    }
+
+    .scan-result__head h2 {
+        font-size: 40px;
+    }
+
+    .scan-result__seat-row {
+        grid-template-columns: 1fr;
+    }
+}
