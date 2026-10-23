@@ -1,5 +1,22 @@
 @props(['movie', 'upcoming' => false])
 
+@php
+    $showtime = $movie->relationLoaded('showtimes')
+        ? $movie->showtimes->first()
+        : null;
+    $showtimeDate = null;
+
+    if ($showtime !== null) {
+        $showtimeDate = $showtime->starts_at->format('M j');
+
+        if ($showtime->starts_at->isToday()) {
+            $showtimeDate = 'Today';
+        } elseif ($showtime->starts_at->isTomorrow()) {
+            $showtimeDate = 'Tomorrow';
+        }
+    }
+@endphp
+
 <article class="movie-card">
     <a class="movie-card__image-link" href="{{ route('movies.show', $movie) }}">
         @if ($movie->posterUrl())
@@ -13,10 +30,8 @@
         <p>{{ $movie->release_date?->format('M j, Y') ?? 'Release date to be announced' }}</p>
     @else
         <x-movie-meta :movie="$movie" compact />
-        @if ($movie->upcoming_showtimes_count > 0)
-            <p>{{ $movie->upcoming_showtimes_count }} upcoming showtimes</p>
-        @else
-            <p>Showtimes available soon</p>
+        @if ($showtime)
+            <p>{{ $showtimeDate }} · {{ $showtime->starts_at->format('H:i') }}</p>
         @endif
     @endif
 </article>

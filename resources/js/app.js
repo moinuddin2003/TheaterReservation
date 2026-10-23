@@ -256,3 +256,32 @@ Alpine.data('bookingActionModals', () => ({
 }));
 
 Alpine.start();
+
+document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) {
+        return;
+    }
+
+    const button = event.target.closest('[data-day-button]');
+
+    if (!(button instanceof HTMLButtonElement)) {
+        return;
+    }
+
+    const section = button.closest('.showtimes-section');
+    const selectedDate = button.dataset.dayButton;
+
+    if (!section || !selectedDate) {
+        return;
+    }
+
+    section.querySelectorAll('[data-day-button]').forEach((dateButton) => {
+        const isActive = dateButton === button;
+        dateButton.classList.toggle('is-active', isActive);
+        dateButton.setAttribute('aria-selected', String(isActive));
+    });
+
+    section.querySelectorAll('[data-day-panel]').forEach((panel) => {
+        panel.hidden = panel.dataset.dayPanel !== selectedDate;
+    });
+});

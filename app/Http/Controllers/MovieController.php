@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\HoldStatus;
 use App\Enums\MovieStatus;
 use App\Enums\ShowtimeStatus;
 use App\Models\BookingItem;
@@ -99,7 +100,8 @@ class MovieController extends Controller
 
         $held = SeatHold::query()
             ->whereIn('showtime_id', $ids)
-            ->where('status', 'active')
+            ->where('status', HoldStatus::Active)
+            ->where('expires_at', '>', now())
             ->selectRaw('showtime_id, count(*) as total')
             ->groupBy('showtime_id')
             ->pluck('total', 'showtime_id');

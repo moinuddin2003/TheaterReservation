@@ -30,6 +30,7 @@ it('shows database movies on the home page and public catalog', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('Database Feature')
+        ->assertSee('Tomorrow · 19:30')
         ->assertSee('Database Coming Soon')
         ->assertDontSee('The Last Horizon');
 
@@ -71,7 +72,9 @@ it('shows database movie details and database showtimes', function () {
         ->assertOk()
         ->assertSee('Database Feature')
         ->assertSee('Choose your showtime')
-        ->assertSee($showtime->screen->name);
+        ->assertSee($showtime->screen->name)
+        ->assertSee('7:30 PM')
+        ->assertSee('data-day-button="'.$showtime->starts_at->toDateString().'"', false);
 
     $this->get(route('showtimes.show', $showtime))
         ->assertOk()
