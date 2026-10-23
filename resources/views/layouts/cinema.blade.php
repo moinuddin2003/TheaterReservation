@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="dark light">
-    <title>@yield('title', config('cinema.brand'))</title>
+    <title>@yield('title', $cinema?->name ?? config('app.name'))</title>
     <x-theme-init />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,9 +14,9 @@
 <body class="cinema-app">
     <header class="site-header">
         <div class="site-header__inner">
-            <a class="brand" href="{{ route('home') }}" aria-label="{{ config('cinema.brand') }} home">
+            <a class="brand" href="{{ route('home') }}" aria-label="{{ $cinema?->name ?? config('app.name') }} home">
                 <span class="brand__mark" aria-hidden="true"></span>
-                <span>{{ config('cinema.brand') }}</span>
+                <span>{{ $cinema?->name ?? config('app.name') }}</span>
             </a>
 
             <nav class="site-nav" aria-label="Main navigation">
@@ -32,7 +32,7 @@
             </nav>
 
             <div class="site-header__actions">
-                <span class="location-label"><span aria-hidden="true">⌖</span> {{ config('cinema.venue') }}</span>
+                <span class="location-label"><span aria-hidden="true">⌖</span> {{ $cinema?->name ?? config('app.name') }}</span>
                 <x-theme-toggle />
                 @auth
                     <span class="profile-label">                    <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
@@ -53,10 +53,10 @@
         <div class="site-footer__inner">
             <a class="brand brand--footer" href="{{ route('home') }}">
                 <span class="brand__mark" aria-hidden="true"></span>
-                <span>{{ config('cinema.brand') }}</span>
+                <span>{{ $cinema?->name ?? config('app.name') }}</span>
             </a>
-            <p>{{ config('cinema.venue') }} <span aria-hidden="true">·</span> One cinema. Every great escape.</p>
-            <p>USD <span aria-hidden="true">·</span> UI preview <span aria-hidden="true">·</span> No payment collected</p>
+            <p>{{ $cinema?->name ?? config('app.name') }} <span aria-hidden="true">·</span> One cinema. Every great escape.</p>
+            <p>USD <span aria-hidden="true">·</span> Stripe test checkout <span aria-hidden="true">·</span> No live charges</p>
         </div>
     </footer>
 

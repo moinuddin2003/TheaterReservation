@@ -3,6 +3,7 @@
 return [
     'brand' => 'cinebook',
     'venue' => 'CineBook Downtown',
+    'timezone' => env('CINEMA_TIMEZONE', 'Asia/Karachi'),
     'featured_movie' => 'the-last-horizon',
     'home' => [
         'dates' => [

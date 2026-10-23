@@ -1,11 +1,26 @@
 <?php
 
+use App\Models\Cinema;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
 
     $response->assertStatus(200);
+});
+
+test('signed-in customers see the dashboard in the cinema layout', function () {
+    Cinema::factory()->create(['name' => 'Downtown Cinema']);
+    $user = User::factory()->create(['name' => 'Cinema Customer']);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Welcome to Downtown Cinema, Cinema Customer')
+        ->assertSee('<span>Downtown Cinema</span>', false)
+        ->assertSee('Browse movies')
+        ->assertSee('My bookings')
+        ->assertSee('cinema-app', false);
 });
 
 test('users can authenticate using the login screen', function () {

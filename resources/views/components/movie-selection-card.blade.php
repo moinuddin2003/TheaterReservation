@@ -1,4 +1,4 @@
-@props(['prices', 'maxSelection'])
+@props(['prices', 'maxSelection', 'showtime'])
 
 <section
     class="selection-card"
@@ -14,7 +14,14 @@
         Standard ${{ $prices['standard'] }} <span aria-hidden="true">·</span>
         Premium ${{ $prices['premium'] }}. Select 1–{{ $maxSelection }} seats. Not held yet.
     </p>
-    <button class="button button--primary button--full" type="button" data-hold-submit data-demo-message="This is a UI preview. Seat holds and checkout will be connected later." disabled>
-        Hold <span data-hold-count>0</span> seats <span aria-hidden="true">·</span> $<span data-hold-price>0</span> <span aria-hidden="true">→</span>
-    </button>
+    <form action="{{ route('showtimes.holds.store', $showtime) }}" method="POST" data-hold-form>
+        @csrf
+        <div data-hold-inputs hidden></div>
+        <button class="button button--primary button--full" type="submit" data-hold-submit disabled>
+            Hold <span data-hold-count>0</span> seats <span aria-hidden="true">·</span> $<span data-hold-price>0</span> <span aria-hidden="true">→</span>
+        </button>
+    </form>
+    @error('seat_ids')
+        <p class="form-error" role="alert">{{ $message }}</p>
+    @enderror
 </section>

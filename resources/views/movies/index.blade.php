@@ -30,7 +30,7 @@
                         <p class="eyebrow">PLAN YOUR VISIT</p>
                         <h2 id="showtimes-title">Choose your showtime</h2>
                     </div>
-                    <p class="section-note"><span aria-hidden="true">⌖</span> All times local <span aria-hidden="true">·</span> {{ config('cinema.venue') }}</p>
+                    <p class="section-note"><span aria-hidden="true">⌖</span> All times local <span aria-hidden="true">·</span> {{ $cinema?->name ?? config('app.name') }}</p>
                 </div>
 
                 <div class="date-tabs" role="tablist" aria-label="Choose a date">

@@ -40,7 +40,7 @@
                     </div>
                 </div>
 
-                <x-movie-selection-card :prices="$prices" :max-selection="$maxSelection" />
+                <x-movie-selection-card :prices="$prices" :max-selection="$maxSelection" :showtime="$showtime" />
 
                 <div class="sign-in-note">
                     <strong><span aria-hidden="true">ⓘ</span> Sign in to hold seats</strong>

@@ -61,6 +61,16 @@ class ShowtimeController extends Controller
                     ? 'premium'
                     : 'standard')
                 ->all(),
+            'seats' => $seatStates->groupBy('row')->mapWithKeys(
+                fn (Collection $rowSeats, string $row): array => [
+                    $row => $rowSeats->map(fn (array $seat): array => [
+                        'id' => $seat['id'],
+                        'number' => $seat['number'],
+                        'type' => $seat['type'],
+                        'status' => $seat['status'],
+                    ])->all(),
+                ],
+            )->all(),
             'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
             'held' => $withStatus('held')->all(),
             'sold' => $withStatus('sold')->all(),
@@ -118,11 +128,12 @@ class ShowtimeController extends Controller
      * @param  Collection<int, Seat>  $seats
      * @param  Collection<int, int>  $held
      * @param  Collection<int, int>  $sold
-     * @return Collection<int, array{label: string, row: string, number: int, type: string, status: string, price_cents: int}>
+     * @return Collection<int, array{id: int, label: string, row: string, number: int, type: string, status: string, price_cents: int}>
      */
     private function seats(Collection $seats, Collection $held, Collection $sold, int $standardPrice, int $premiumPrice): Collection
     {
         return $seats->map(fn (Seat $seat): array => [
+            'id' => $seat->getKey(),
             'label' => $seat->label,
             'row' => $seat->row_label,
             'number' => $seat->seat_number,

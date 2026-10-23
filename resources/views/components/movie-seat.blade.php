@@ -1,13 +1,12 @@
-@props(['row', 'number', 'type', 'status'])
-
-@php
-    $label = $row.$number;
-    $isUnavailable = in_array($status, ['held', 'sold', 'disabled'], true);
-@endphp
+@props(['row', 'number', 'type', 'status', 'seatId'])
 
 <button
     type="button"
-    class="seat {{ $type === 'premium' ? 'seat--premium' : '' }} seat--{{ $status }}"
+    data-seat
+    data-seat-id="{{ $seatId }}"
+    data-seat-label="{{ $row.$number }}"
+    data-seat-kind="{{ $type }}"
+    data-seat-type-label="{{ ucfirst($type) }}"
     aria-label="Row {{ $row }}, seat {{ $number }}, {{ $status }}"
     aria-pressed="{{ $status === 'selected' ? 'true' : 'false' }}"
     data-seat="{{ $label }}"

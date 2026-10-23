@@ -7,6 +7,7 @@ use App\Enums\ShowtimeStatus;
 use App\Models\Cinema;
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\Showtime;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -45,12 +46,44 @@ class HomeController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Hero movie
+        $featured = $nowShowing->first();
+        $cinema = Cinema::query()->first();
+
+        $dates = collect(range(0, 6))->map(function (int $offset) {
+            $day = now()->addDays($offset);
+
+            return [
+                'date' => $day->toDateString(),
+                'weekday' => $offset === 0 ? 'Today' : $day->format('D'),
+                'label' => $day->format('M j'),
+            ];
+        });
+
+        $showtimesByDate = Showtime::query()
+            ->where('status', ShowtimeStatus::Scheduled)
+            ->whereBetween('starts_at', [now()->startOfDay(), now()->addDays(6)->endOfDay()])
+            ->whereHas('movie', fn ($query) => $query->where('status', MovieStatus::NowShowing))
+            ->when(
+                $cinema,
+                fn ($query) => $query->whereHas(
+                    'screen',
+                    fn ($screenQuery) => $screenQuery->where('cinema_id', $cinema->id),
+                ),
+            )
+            ->with(['movie', 'screen'])
+            ->orderBy('starts_at')
+            ->get()
+            ->groupBy(fn ($showtime) => $showtime->starts_at->toDateString());
+
         return view('home', [
             'featured' => $nowShowing->first(),
             'nowShowing' => $nowShowing,
             'comingSoon' => $comingSoon,
             'genres' => $genres,
-            'cinema' => Cinema::query()->first(),
+            'cinema' => $cinema,
+            'dates' => $dates,
+            'showtimesByDate' => $showtimesByDate,
         ]);
     }
 }
