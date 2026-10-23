@@ -1,11 +1,4 @@
-<x-guest-layout title="Welcome back" subtitle="Sign in to reserve your next movie night.">
-    @if (request()->filled('date') && request()->filled('time'))
-        <div class="auth-notice">
-            <strong>ⓘ Your showtime is waiting</strong>
-            <span>{{ request('date') }} · {{ request('time') }}. After sign-in, return to seat selection. Seats aren’t held yet.</span>
-        </div>
-    @endif
-
+<x-guest-layout>
     <x-auth-session-status :status="session('status')" />
 
     <form class="auth-form" method="POST" action="{{ route('login') }}">
@@ -33,5 +26,4 @@
         <button class="button button--primary auth-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
     </form>
 
-    <p class="auth-switch">New to CineBook? <a href="{{ route('register') }}">Create a customer account →</a></p>
 </x-guest-layout>

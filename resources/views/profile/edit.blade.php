@@ -1,40 +1,33 @@
-@extends('layouts.cinema')
+<x-admin.layout title="Profile" breadcrumb="Account">
+    @if (session('status') === 'profile-updated')
+        <p class="mb-5 rounded-xl border border-cine-success/30 bg-cine-success/10 p-4 text-sm text-cine-success">
+            Profile updated.
+        </p>
+    @endif
 
-@section('title', 'Your account')
+    <div class="grid gap-6 xl:grid-cols-2">
+        <section class="rounded-2xl border border-cine-border/10 bg-cine-surface p-6">
+            <h2 class="text-base font-bold text-cine-primary">Account details</h2>
+            <form method="POST" action="{{ route('profile.update') }}" class="mt-5 space-y-4">
+                @csrf
+                @method('PATCH')
+                <label class="block text-sm text-cine-secondary">
+                    Name
+                    <input name="name" value="{{ old('name', $user->name) }}" required class="mt-2 block w-full rounded-xl border-cine-border/10 bg-cine-bg text-cine-primary">
+                    @error('name') <span class="text-cine-danger">{{ $message }}</span> @enderror
+                </label>
+                <label class="block text-sm text-cine-secondary">
+                    Email
+                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="mt-2 block w-full rounded-xl border-cine-border/10 bg-cine-bg text-cine-primary">
+                    @error('email') <span class="text-cine-danger">{{ $message }}</span> @enderror
+                </label>
+                <button class="rounded-xl bg-cine-accent px-4 py-2 text-sm font-semibold text-white" type="submit">Save profile</button>
+            </form>
+        </section>
 
-@section('content')
-    <div class="page-shell account-page">
-        <p class="eyebrow">ACCOUNT <span aria-hidden="true">/</span> PROFILE</p>
-        <h1 class="booking-page__title">Your account</h1>
-
-        <div class="account-layout">
-            <aside class="account-summary">
-                <p class="eyebrow">{{ $cinema?->name ?? config('app.name') }}</p>
-                <h2>{{ $user->name }}</h2>
-                <p>{{ $user->hasVerifiedEmail() ? '✓ Email verified' : 'Email not verified' }}</p>
-                <p>{{ ucfirst($user->role->value) }} account</p>
-                <a class="button button--quiet" href="{{ route('bookings.index') }}">
-                    My bookings <span aria-hidden="true">→</span>
-                </a>
-            </aside>
-
-            <div class="account-forms">
-                <section class="account-panel">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
-        </div>
+        <section class="rounded-2xl border border-cine-border/10 bg-cine-surface p-6">
+            <h2 class="text-base font-bold text-cine-primary">Change password</h2>
+            @include('profile.partials.update-password-form')
+        </section>
     </div>
-</x-app-layout>
+</x-admin.layout>

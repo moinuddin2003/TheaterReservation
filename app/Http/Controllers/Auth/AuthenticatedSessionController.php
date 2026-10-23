@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -29,17 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->role === Role::Admin) {
-            return redirect()->route('admin.dashboard');
-        } elseif ($request->user()->isStaff()) {
-            return redirect()->route('staff.today');
-        if ($request->user()->isStaff()) {
-            return redirect()->route('staff.today');
-        } elseif ($request->user()->role === Role::Admin) {
+        if ($request->user()->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('dashboard');
     }
 
     /**
@@ -53,6 +46,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect()->route('login');
     }
 }

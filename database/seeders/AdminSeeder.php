@@ -16,7 +16,6 @@ class AdminSeeder extends Seeder
         $password = env('SEED_PASSWORD', 'password');
 
         $this->user('CineBook Admin', 'admin@cinebook.test', Role::Admin, $password);
-        $this->user('CineBook Staff', 'staff@cinebook.test', Role::Staff, $password);
         $this->user('Demo Customer', 'customer@cinebook.test', Role::Customer, $password);
     }
 

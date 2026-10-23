@@ -12,23 +12,27 @@ test('administrators are redirected from the customer dashboard to the admin pan
         ->assertRedirect(route('admin.dashboard'));
 });
 
-test('staff members see the staff dashboard', function () {
+test('staff accounts are limited to the minimal dashboard', function () {
     $staff = User::factory()->create(['role' => Role::Staff]);
 
     $this->actingAs($staff)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Welcome to Staff Dashboard')
-        ->assertDontSee('Welcome to Admin Page');
+        ->assertSee('Dashboard')
+        ->assertSee('Sign out')
+        ->assertDontSee('Staff Dashboard')
+        ->assertDontSee('Admin navigation');
 });
 
-test('customers keep the default dashboard', function () {
+test('customers are limited to the minimal dashboard', function () {
     $customer = User::factory()->create();
 
     $this->actingAs($customer)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee("You're logged in!");
+        ->assertSee('Dashboard')
+        ->assertDontSee('Browse movies')
+        ->assertDontSee('My bookings');
 
     expect($customer->fresh()->role)->toBe(Role::Customer);
 });
@@ -36,13 +40,12 @@ test('customers keep the default dashboard', function () {
 test('the demo accounts are seeded with their expected roles', function () {
     $this->seed();
 
-    $admin = User::where('email', 'admin@example.com')->firstOrFail();
-    $staff = User::where('email', 'staff@example.com')->firstOrFail();
-
+    $admin = User::where('email', 'admin@cinebook.test')->firstOrFail();
+    $customer = User::where('email', 'customer@cinebook.test')->firstOrFail();
     expect($admin->role)->toBe(Role::Admin)
-        ->and($staff->role)->toBe(Role::Staff)
         ->and(Hash::check('password', $admin->password))->toBeTrue()
-        ->and(Hash::check('password', $staff->password))->toBeTrue();
+        ->and($customer->role)->toBe(Role::Customer)
+        ->and(User::where('role', Role::Staff)->doesntExist())->toBeTrue();
 });
 
 test('the demo admin sees the admin dashboard after signing in', function () {
@@ -50,22 +53,10 @@ test('the demo admin sees the admin dashboard after signing in', function () {
 
     $this->followingRedirects()
         ->post('/login', [
-            'email' => 'admin@example.com',
+            'email' => 'admin@cinebook.test',
             'password' => 'password',
         ])
         ->assertOk()
         ->assertSee('Coming soon')
         ->assertSee('Admin navigation');
-});
-
-test('the demo staff member sees the staff dashboard after signing in', function () {
-    $this->seed(StaffSeeder::class);
-
-    $this->followingRedirects()
-        ->post('/login', [
-            'email' => 'staff@example.com',
-            'password' => 'password',
-        ])
-        ->assertOk()
-        ->assertSee('Welcome to Staff Dashboard');
 });

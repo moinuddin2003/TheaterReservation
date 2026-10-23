@@ -22,10 +22,5 @@ class DatabaseSeeder extends Seeder
             MovieSeeder::class,
             ShowtimeSeeder::class,
         ]);
-
-        $this->call([
-            AdminSeeder::class,
-            StaffSeeder::class,
-        ]);
     }
 }
