@@ -257,6 +257,95 @@ Alpine.data('bookingActionModals', () => ({
 
 Alpine.start();
 
+const seatButtons = [...document.querySelectorAll('[data-seat]')];
+
+if (seatButtons.length > 0) {
+    const seatMap = document.querySelector('.seat-map-card');
+    const selectionCard = document.querySelector('.selection-card');
+    const selectionList = document.querySelector('[data-selection-list]');
+    const seatCount = document.querySelector('[data-seat-count]');
+    const unitPrice = document.querySelector('[data-unit-price]');
+    const totalPrice = document.querySelector('[data-total-price]');
+    const holdCount = document.querySelector('[data-hold-count]');
+    const holdPrice = document.querySelector('[data-hold-price]');
+    const availableCount = document.querySelector('[data-available-count]');
+    const holdButton = document.querySelector('[data-hold-submit]');
+    const toast = document.querySelector('[data-toast]');
+
+    if (
+        !(seatMap instanceof HTMLElement)
+        || !(selectionCard instanceof HTMLElement)
+        || !(selectionList instanceof HTMLElement)
+        || !(seatCount instanceof HTMLElement)
+        || !(unitPrice instanceof HTMLElement)
+        || !(totalPrice instanceof HTMLElement)
+        || !(holdCount instanceof HTMLElement)
+        || !(holdPrice instanceof HTMLElement)
+        || !(availableCount instanceof HTMLElement)
+        || !(holdButton instanceof HTMLButtonElement)
+        || !(toast instanceof HTMLElement)
+    ) {
+        throw new Error('Seat selection UI is missing required elements.');
+    }
+
+    const prices = {
+        standard: Number(seatMap.dataset.standardPrice),
+        premium: Number(seatMap.dataset.premiumPrice),
+    };
+    const maxSelection = Number(selectionCard.dataset.maxSelection);
+    let toastTimeout;
+
+    const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        window.clearTimeout(toastTimeout);
+        toastTimeout = window.setTimeout(() => toast.classList.remove('is-visible'), 3200);
+    };
+
+    const updateSelection = () => {
+        const selectedSeats = seatButtons.filter((seat) => seat.getAttribute('aria-pressed') === 'true');
+        const selectedLabels = selectedSeats.map((seat) => {
+            return `${seat.dataset.seatLabel} · ${seat.dataset.seatTypeLabel}`;
+        });
+        const selectionTotal = selectedSeats.reduce((total, seat) => {
+            return total + prices[seat.dataset.seatKind];
+        }, 0);
+        const averagePrice = selectedSeats.length > 0 ? selectionTotal / selectedSeats.length : 0;
+        const availableSeats = seatButtons.filter((seat) => {
+            return !seat.disabled && seat.getAttribute('aria-pressed') !== 'true';
+        }).length;
+
+        selectionList.textContent = selectedLabels.length > 0 ? selectedLabels.join(' · ') : 'No seats selected';
+        seatCount.textContent = String(selectedSeats.length);
+        unitPrice.textContent = String(averagePrice.toFixed(2).replace(/\.?0+$/, ''));
+        totalPrice.textContent = String(selectionTotal);
+        holdCount.textContent = String(selectedSeats.length);
+        holdPrice.textContent = String(selectionTotal);
+        availableCount.textContent = String(availableSeats);
+        holdButton.disabled = selectedSeats.length === 0;
+    };
+
+    seatButtons.forEach((seat) => {
+        seat.addEventListener('click', () => {
+            const isSelected = seat.getAttribute('aria-pressed') === 'true';
+            const selectedCount = seatButtons.filter((selectedSeat) => {
+                return selectedSeat.getAttribute('aria-pressed') === 'true';
+            }).length;
+
+            if (!isSelected && selectedCount >= maxSelection) {
+                showToast(`You can select up to ${maxSelection} seats per booking.`);
+                return;
+            }
+
+            seat.setAttribute('aria-pressed', String(!isSelected));
+            seat.classList.toggle('seat--selected', !isSelected);
+            updateSelection();
+        });
+    });
+
+    updateSelection();
+}
+
 document.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) {
         return;

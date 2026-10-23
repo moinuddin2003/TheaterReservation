@@ -8,9 +8,11 @@
 <button
     type="button"
     class="seat {{ $type === 'premium' ? 'seat--premium' : '' }} seat--{{ $status }}"
-    aria-label="{{ $label }} {{ $status }}"
+    aria-label="Row {{ $row }}, seat {{ $number }}, {{ $status }}"
     aria-pressed="{{ $status === 'selected' ? 'true' : 'false' }}"
     data-seat="{{ $label }}"
-    data-seat-type="{{ $type }}"
+    data-seat-label="{{ $label }}"
+    data-seat-kind="{{ $type }}"
+    data-seat-type-label="{{ ucfirst($type) }}"
     @disabled($isUnavailable)
->{{ $number }}</button>
+>{{ sprintf('%02d', $number) }}</button>

@@ -3,6 +3,7 @@
 use App\Enums\MovieStatus;
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Models\Seat;
 use App\Models\Showtime;
 
 it('shows database movies on the home page and public catalog', function () {
@@ -67,6 +68,11 @@ it('shows database movie details and database showtimes', function () {
         'starts_at' => now()->addDay()->setTime(19, 30),
         'ends_at' => now()->addDay()->setTime(21, 30),
     ]);
+    Seat::factory()->for($showtime->screen)->create([
+        'row_label' => 'A',
+        'seat_number' => 1,
+        'label' => 'A1',
+    ]);
 
     $this->get(route('movies.show', $movie))
         ->assertOk()
@@ -79,7 +85,12 @@ it('shows database movie details and database showtimes', function () {
     $this->get(route('showtimes.show', $showtime))
         ->assertOk()
         ->assertSee('Database Feature')
-        ->assertSee('Your selection');
+        ->assertSee('Your selection')
+        ->assertSee('data-max-selection="6"', false)
+        ->assertSee('data-seat-label=', false)
+        ->assertSee('data-seat-kind=', false)
+        ->assertSee('data-seat-type-label=', false)
+        ->assertSee('data-hold-count>0', false);
 
     $this->get(route('movies.seats', [
         'movie' => $movie->slug,
