@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="dark light">
-    <title>{{ $title }} — {{ config('cinema.brand') }}</title>
+    <title>{{ $title }} — {{ $cinema?->name ?? config('app.name') }}</title>
     <x-theme-init />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -21,7 +21,7 @@
         <section class="auth-story" aria-label="CineBook">
             <a class="brand auth-story__brand" href="{{ route('home') }}">
                 <span class="brand__mark" aria-hidden="true"></span>
-                <span>{{ config('cinema.brand') }}</span>
+                <span>{{ $cinema?->name ?? config('app.name') }}</span>
             </a>
             @php
                 $featuredSlug = config('cinema.featured_movie');
@@ -43,7 +43,7 @@
                 <h1>{{ $title }}</h1>
                 <p class="auth-subtitle">{{ $subtitle }}</p>
                 <div class="auth-content">{{ $slot }}</div>
-                <p class="auth-footer">{{ config('cinema.venue') }} · Secure account access. Reservations use Stripe
+                <p class="auth-footer">{{ $cinema?->name ?? config('app.name') }} · Secure account access. Reservations use Stripe
                     hosted Checkout in test mode.</p>
             </div>
         </section>

@@ -23,6 +23,7 @@ use App\Services\Payments\StripeGateway;
 use Illuminate\Support\Str;
 use Mockery;
 use Stripe\Checkout\Session;
+use Stripe\Exception\IdempotencyException;
 use Stripe\Refund as StripeRefund;
 
 function createCustomerBooking(User $user, BookingStatus $status): Booking
@@ -149,18 +150,27 @@ test('customers can only see their own bookings', function () {
 test('booking status pages use saved booking and ticket details', function () {
     $user = User::factory()->create();
     $pendingBooking = createCustomerBooking($user, BookingStatus::PendingPayment);
+    $pendingBooking->payments()->delete();
     $confirmedBooking = createCustomerBooking($user, BookingStatus::Confirmed);
 
     $this->actingAs($user)
         ->get(route('bookings.checkout', $pendingBooking->reference))
         ->assertOk()
         ->assertSee('Your seats are on hold')
+        ->assertSee($pendingBooking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i'))
         ->assertSee('Continue to secure Stripe checkout')
         ->assertDontSee('Checkout is not connected yet');
 
+    $this->get(route('bookings.show', $pendingBooking->reference))
+        ->assertOk()
+        ->assertSee($pendingBooking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i'));
+
     $this->get(route('bookings.processing', $pendingBooking->reference))
         ->assertOk()
-        ->assertSee('Payment processing');
+        ->assertSee('Payment processing')
+        ->assertSee('No payment was started for this booking.')
+        ->assertSee('Continue to checkout')
+        ->assertSee(route('bookings.checkout', $pendingBooking->reference));
 
     $this->get(route('bookings.confirmed', $confirmedBooking->reference))
         ->assertOk()
@@ -281,6 +291,46 @@ test('a Stripe configuration failure is shown and leaves the active hold retryab
     expect($booking->refresh()->isPendingPayment())->toBeTrue()
         ->and($booking->seatHolds()->where('status', HoldStatus::Active)->count())->toBe(1)
         ->and($booking->payments()->firstOrFail()->status)->toBe(PaymentStatus::Pending);
+});
+
+test('a Stripe idempotency conflict retries checkout with a fresh payment attempt', function () {
+    $user = User::factory()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create([
+        'row_label' => 'B',
+        'seat_number' => 3,
+        'label' => 'B3',
+    ]);
+    $booking = app(HoldSeatsAction::class)->execute($showtime, $user, [$seat->id]);
+    $attempt = 0;
+    $gateway = Mockery::mock(StripeGateway::class);
+    $gateway->shouldReceive('createCheckoutSession')
+        ->twice()
+        ->andReturnUsing(function () use (&$attempt): Session {
+            $attempt++;
+
+            if ($attempt === 1) {
+                throw new IdempotencyException('Checkout parameters changed.');
+            }
+
+            return Session::constructFrom([
+                'id' => 'cs_test_retry',
+                'url' => 'https://checkout.stripe.com/c/pay/cs_test_retry',
+                'status' => 'open',
+            ]);
+        });
+    $this->app->instance(StripeGateway::class, $gateway);
+
+    $this->actingAs($user)
+        ->post(route('bookings.checkout.start', $booking->reference))
+        ->assertRedirect('https://checkout.stripe.com/c/pay/cs_test_retry');
+
+    $payments = $booking->payments()->orderBy('id')->get();
+    expect($payments)->toHaveCount(2)
+        ->and($payments[0]->status)->toBe(PaymentStatus::Expired)
+        ->and($payments[1]->status)->toBe(PaymentStatus::Pending)
+        ->and($payments[1]->gateway_session_id)->toBe('cs_test_retry')
+        ->and($payments[0]->idempotency_key)->not->toBe($payments[1]->idempotency_key);
 });
 
 test('a paid Stripe checkout confirms the booking and creates tickets', function () {
@@ -419,6 +469,11 @@ test('expired holds cannot open checkout and pending bookings are not confirmed'
         ->get(route('bookings.checkout', $booking->reference))
         ->assertRedirect(route('bookings.show', $booking->reference))
         ->assertSessionHas('status');
+
+    $this->get(route('bookings.processing', $booking->reference))
+        ->assertOk()
+        ->assertSee('Your seat hold has expired.')
+        ->assertDontSee('Continue to checkout');
 
     $this->get(route('bookings.confirmed', $booking->reference))
         ->assertRedirect(route('bookings.show', $booking->reference));

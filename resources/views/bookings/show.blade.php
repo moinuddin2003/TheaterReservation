@@ -1,6 +1,6 @@
 @extends('layouts.cinema')
 
-@section('title', 'Booking details — '.config('cinema.brand'))
+@section('title', 'Booking details')
 
 @section('content')
     @php($latestPayment = $booking->payments->sortByDesc('created_at')->first())
@@ -20,7 +20,7 @@
                 <h1 class="booking-page__title">Your booking, all in one place</h1>
                 <x-booking-status :status="$booking->status" />
             </div>
-            <p>Reserved {{ $booking->created_at->format('M j, Y \a\t H:i') }}</p>
+            <p>Reserved {{ $booking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
         </div>
 
         <div class="booking-detail-layout">
@@ -87,7 +87,7 @@
                         </p>
                         <p>Provider: {{ strtoupper($latestPayment->gateway) }}</p>
                         @if ($latestPayment->paid_at)
-                            <p>Paid {{ $latestPayment->paid_at->format('M j, Y \a\t H:i') }}</p>
+                            <p>Paid {{ $latestPayment->paid_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
                         @endif
                     @else
                         <p class="booking-muted">No payment record is attached to this booking.</p>
@@ -110,18 +110,18 @@
                 <section class="booking-panel">
                     <h2>Booking timeline</h2>
                     <ul class="booking-timeline">
-                        <li>Booking created · {{ $booking->created_at->format('M j, H:i') }}</li>
+                        <li>Booking created · {{ $booking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}</li>
                         @if ($latestPayment)
                             <li>
                                 Payment {{ ucwords(str_replace('_', ' ', $latestPayment->status->value)) }}
-                                · {{ ($latestPayment->paid_at ?? $latestPayment->created_at)->format('M j, H:i') }}
+                                · {{ ($latestPayment->paid_at ?? $latestPayment->created_at)->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}
                             </li>
                         @endif
                         @if ($booking->confirmed_at)
-                            <li>Booking confirmed · {{ $booking->confirmed_at->format('M j, H:i') }}</li>
+                            <li>Booking confirmed · {{ $booking->confirmed_at->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}</li>
                         @endif
                         @if ($booking->cancelled_at)
-                            <li>Booking cancelled · {{ $booking->cancelled_at->format('M j, H:i') }}</li>
+                            <li>Booking cancelled · {{ $booking->cancelled_at->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}</li>
                         @endif
                     </ul>
                 </section>

@@ -1,6 +1,6 @@
 @extends('layouts.cinema')
 
-@section('title', 'Payment status — '.config('cinema.brand'))
+@section('title', 'Payment status')
 
 @section('content')
     @php($latestPayment = $booking->payments->sortByDesc('created_at')->first())
@@ -23,7 +23,11 @@
                 </h1>
                 <p>
                     @if ($booking->isPendingPayment())
-                        The saved booking is still waiting for a verified payment result.
+                        @if ($latestPayment)
+                            The saved booking is still waiting for a verified payment result.
+                        @else
+                            No payment was started for this booking. Your seats are reserved until the hold expires.
+                        @endif
                     @else
                         This is the latest status currently saved for your booking.
                     @endif
@@ -39,8 +43,17 @@
                 <p class="booking-notice">
                     This page only displays saved status. It does not contact Stripe or start another payment.
                 </p>
+                @if ($canRetryCheckout)
+                    <a class="button button--primary" href="{{ route('bookings.checkout', $booking->reference) }}">
+                        Continue to checkout
+                    </a>
+                @elseif ($booking->isPendingPayment())
+                    <p class="booking-notice">
+                        Your seat hold has expired. Choose seats again to start a new booking and payment.
+                    </p>
+                @endif
                 <div class="booking-list-card__actions">
-                    <a class="button button--primary" href="{{ route('bookings.processing', $booking->reference) }}">
+                    <a class="button button--quiet" href="{{ route('bookings.processing', $booking->reference) }}">
                         Refresh status
                     </a>
                     <a class="button button--quiet" href="{{ route('bookings.index') }}">My bookings</a>

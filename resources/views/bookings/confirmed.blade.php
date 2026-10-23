@@ -1,6 +1,6 @@
 @extends('layouts.cinema')
 
-@section('title', 'Booking confirmed — '.config('cinema.brand'))
+@section('title', 'Booking confirmed')
 
 @section('content')
     <div class="page-shell booking-page">

@@ -1,6 +1,6 @@
 @extends('layouts.cinema')
 
-@section('title', 'Your account — '.config('cinema.brand'))
+@section('title', 'Your account')
 
 @section('content')
     <div class="page-shell account-page">
@@ -9,7 +9,7 @@
 
         <div class="account-layout">
             <aside class="account-summary">
-                <p class="eyebrow">{{ config('cinema.venue') }}</p>
+                <p class="eyebrow">{{ $cinema?->name ?? config('app.name') }}</p>
                 <h2>{{ $user->name }}</h2>
                 <p>{{ $user->hasVerifiedEmail() ? '✓ Email verified' : 'Email not verified' }}</p>
                 <p>{{ ucfirst($user->role->value) }} account</p>

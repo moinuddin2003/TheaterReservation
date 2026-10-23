@@ -1,10 +1,10 @@
 @extends('layouts.cinema')
 
-@section('title', 'Movies — ' . config('cinema.brand'))
+@section('title', 'Movies')
 
 @section('content')
     <div class="page-shell catalog-page">
-        <p class="eyebrow">MOVIES <span aria-hidden="true">/</span> {{ config('cinema.venue') }}</p>
+        <p class="eyebrow">MOVIES <span aria-hidden="true">/</span> {{ $cinema?->name ?? config('app.name') }}</p>
         <div class="section-heading catalog-page__heading">
             <div>
                 <h1>Find your next escape</h1>

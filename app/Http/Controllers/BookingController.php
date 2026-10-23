@@ -140,7 +140,10 @@ class BookingController extends Controller
             return redirect()->route('bookings.confirmed', $booking->reference);
         }
 
-        return view('bookings.processing', ['booking' => $booking]);
+        return view('bookings.processing', [
+            'booking' => $booking,
+            'canRetryCheckout' => $booking->isPendingPayment() && $this->hasCompleteActiveHold($booking),
+        ]);
     }
 
     public function confirmed(Request $request, string $reference): RedirectResponse|View

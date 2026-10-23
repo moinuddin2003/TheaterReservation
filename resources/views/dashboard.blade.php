@@ -1,17 +1,24 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot>
+@extends('layouts.cinema')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    {{ __("You're logged in!") }}
-                </div>
+@section('title', 'Dashboard — ' . ($cinema?->name ?? config('app.name')))
+
+@section('content')
+    <div class="page-shell booking-page">
+        <p class="eyebrow">ACCOUNT <span aria-hidden="true">/</span> DASHBOARD</p>
+        <h1 class="booking-page__title">Welcome to {{ $cinema?->name ?? config('app.name') }}, {{ auth()->user()->name }}
+        </h1>
+        <p class="booking-page__intro">Find your next movie night or review your bookings.</p>
+
+        <section class="booking-panel">
+            <h2>What would you like to do?</h2>
+            <div class="booking-list-card__actions">
+                <a class="button button--primary" href="{{ route('movies.index') }}">
+                    Browse movies <span aria-hidden="true">→</span>
+                </a>
+                <a class="button button--quiet" href="{{ route('bookings.index') }}">
+                    My bookings <span aria-hidden="true">→</span>
+                </a>
             </div>
-        </div>
+        </section>
     </div>
-</x-app-layout>
+@endsection

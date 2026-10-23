@@ -1,6 +1,6 @@
 @extends('layouts.cinema')
 
-@section('title', 'Seat hold — '.config('cinema.brand'))
+@section('title', 'Seat hold')
 
 @section('content')
     <div class="page-shell booking-page">
@@ -52,11 +52,11 @@
                 <section class="booking-panel booking-hold-panel">
                     <p class="eyebrow">HOLD ACTIVE</p>
                     <p class="booking-countdown" data-hold-countdown
-                        data-hold-expires-at="{{ $booking->hold_expires_at->toIso8601String() }}">
+                        data-hold-expires-at="{{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->toIso8601String() }}">
                         {{ $booking->hold_expires_at->diffForHumans() }}
                     </p>
                     <p>
-                        Hold expires {{ $booking->hold_expires_at->format('M j, Y \a\t H:i') }}.
+                        Hold expires {{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}.
                     </p>
                     <p class="booking-notice">
                         Continue to Stripe’s test checkout to complete payment. No live card charges are accepted.

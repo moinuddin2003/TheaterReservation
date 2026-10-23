@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Stripe\Checkout\Session;
 use Stripe\Exception\ApiErrorException;
+use Stripe\Exception\IdempotencyException;
+use Throwable;
 
 class CreateCheckoutAction
 {
@@ -64,34 +66,32 @@ class CreateCheckoutAction
         }
 
         if (! $payment) {
-            $payment = new Payment([
-                'gateway' => 'stripe',
-                'idempotency_key' => Str::random(64),
-                'currency' => $booking->currency,
-            ]);
-            $payment->forceFill([
-                'amount_cents' => $booking->total_cents,
-                'status' => PaymentStatus::Pending,
-            ]);
-            $booking->payments()->save($payment);
+            $payment = $this->createPendingPayment($booking);
         }
 
         try {
             $session = $this->stripeGateway->createCheckoutSession($booking, $payment);
-        } catch (ApiErrorException|RuntimeException $exception) {
+        } catch (IdempotencyException $exception) {
             $payment->forceFill([
-                'failure_reason' => 'Stripe checkout could not be started.',
+                'status' => PaymentStatus::Expired,
+                'failure_reason' => 'Stripe rejected a reused checkout idempotency key.',
             ])->save();
 
-            Log::warning('Stripe checkout session creation failed.', [
+            Log::warning('Stripe checkout idempotency conflict; starting a new payment attempt.', [
                 'booking_id' => $booking->getKey(),
                 'payment_id' => $payment->getKey(),
                 'exception' => $exception,
             ]);
 
-            throw ValidationException::withMessages([
-                'checkout' => 'Secure checkout could not be started. Please try again.',
-            ]);
+            $payment = $this->createPendingPayment($booking);
+
+            try {
+                $session = $this->stripeGateway->createCheckoutSession($booking, $payment);
+            } catch (ApiErrorException|RuntimeException $retryException) {
+                $this->throwCheckoutFailure($booking, $payment, $retryException);
+            }
+        } catch (ApiErrorException|RuntimeException $exception) {
+            $this->throwCheckoutFailure($booking, $payment, $exception);
         }
 
         $paymentIntentId = is_string($session->payment_intent)
@@ -105,5 +105,38 @@ class CreateCheckoutAction
         ])->save();
 
         return $session;
+    }
+
+    private function createPendingPayment(Booking $booking): Payment
+    {
+        $payment = new Payment([
+            'gateway' => 'stripe',
+            'idempotency_key' => Str::random(64),
+            'currency' => $booking->currency,
+        ]);
+        $payment->forceFill([
+            'amount_cents' => $booking->total_cents,
+            'status' => PaymentStatus::Pending,
+        ]);
+        $booking->payments()->save($payment);
+
+        return $payment;
+    }
+
+    private function throwCheckoutFailure(Booking $booking, Payment $payment, Throwable $exception): never
+    {
+        $payment->forceFill([
+            'failure_reason' => 'Stripe checkout could not be started.',
+        ])->save();
+
+        Log::warning('Stripe checkout session creation failed.', [
+            'booking_id' => $booking->getKey(),
+            'payment_id' => $payment->getKey(),
+            'exception' => $exception,
+        ]);
+
+        throw ValidationException::withMessages([
+            'checkout' => 'Secure checkout could not be started. Please try again.',
+        ]);
     }
 }

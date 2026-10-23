@@ -17,9 +17,6 @@ class StripeGateway
         $stripe = $this->client();
         $booking->loadMissing(['showtime.movie', 'seatHolds.seat']);
         $currency = strtolower($booking->currency);
-        $minimumExpiry = now()->addMinutes(30)->timestamp;
-        $maximumExpiry = now()->addHours(24)->timestamp;
-        $expiresAt = min(max($booking->hold_expires_at->timestamp, $minimumExpiry), $maximumExpiry);
         $activeHolds = $booking->seatHolds->filter(
             fn ($hold): bool => $hold->status === HoldStatus::Active && $hold->expires_at->isFuture(),
         );
@@ -42,7 +39,6 @@ class StripeGateway
 
         $session = $stripe->checkout->sessions->create([
             'mode' => 'payment',
-            'payment_method_types' => ['card'],
             'line_items' => $lineItems,
             'client_reference_id' => (string) $booking->getKey(),
             'metadata' => [
@@ -57,7 +53,6 @@ class StripeGateway
             ],
             'success_url' => route('bookings.processing', $booking->reference).'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('bookings.checkout', $booking->reference),
-            'expires_at' => $expiresAt,
         ], ['idempotency_key' => $payment->idempotency_key]);
 
         return $session;
