@@ -121,7 +121,7 @@
             </div>
         @elseif ($view === 'list')
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-cine-border/10">
+                <table class="admin-data-table min-w-full divide-y divide-cine-border/10">
                     <thead class="bg-cine-bg/40">
                         <tr class="text-left text-[10px] font-bold uppercase tracking-wider text-cine-tertiary">
                             <th scope="col" class="px-4 py-3 sm:px-5">Movie</th>

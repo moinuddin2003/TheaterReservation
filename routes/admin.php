@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminPlaceholderController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CinemaController;
@@ -13,7 +14,6 @@ use App\Http\Controllers\Admin\SeatController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ShowtimeController;
 use App\Http\Controllers\Admin\StripeEventController;
-use App\Http\Controllers\Admin\TicketController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,11 +60,15 @@ Route::prefix('admin')
         Route::post('/bookings/{booking}/refund', [BookingController::class, 'refund'])->name('bookings.refund');
         Route::post('/bookings/{booking}/tickets/{ticket}/void', [BookingController::class, 'voidTicket'])->name('bookings.tickets.void');
         Route::post('/bookings/{booking}/resend-email', [BookingController::class, 'resendEmail'])->name('bookings.resend-email');
+        Route::get('/payments/export', [PaymentController::class, 'export'])->name('payments.export');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/refunds/export', [RefundController::class, 'export'])->name('refunds.export');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
-        Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/staff-admins', [AdminPlaceholderController::class, 'staffAdmins'])->name('staff-admins.index');
+        Route::get('/reports', [AdminPlaceholderController::class, 'reports'])->name('reports.index');
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::get('/failed-jobs', [AdminPlaceholderController::class, 'failedJobs'])->name('failed-jobs.index');
         Route::get('/stripe-events', [StripeEventController::class, 'index'])->name('stripe-events.index');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });

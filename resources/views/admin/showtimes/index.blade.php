@@ -4,26 +4,47 @@
         subtitle="Manage movie showtimes, screening halls and schedule details."
     >
         <x-slot:actions>
-            <form method="GET" action="{{ route('admin.showtimes.index') }}" class="flex items-center gap-2 rounded-full border border-cine-border/10 bg-cine-surface p-1.5">
+            <x-admin.filter-dropdown
+                :action="route('admin.showtimes.index')"
+                label="filters"
+                width="w-[min(92vw,460px)]"
+            >
                 <input type="hidden" name="search" value="{{ $filters['search'] }}">
-                <input type="hidden" name="cinema_id" value="{{ $filters['cinema_id'] }}">
-                <input type="hidden" name="screen_id" value="{{ $filters['screen_id'] }}">
-                <label for="schedule-date" class="flex items-center gap-2 pl-2 text-xs font-semibold text-cine-secondary">
-                    <x-admin.icon name="calendar" class="h-4 w-4 text-cine-accent" />
-                    <span class="sr-only">Choose schedule start date</span>
-                    <span class="hidden sm:inline">Date</span>
-                </label>
-                <input
-                    id="schedule-date"
-                    type="date"
-                    name="date"
-                    value="{{ $selectedDate->toDateString() }}"
-                    class="min-h-10 w-36 rounded-full border-0 bg-transparent px-2 text-xs font-semibold text-cine-primary focus:outline-none focus:ring-2 focus:ring-cine-accent/40"
-                    onchange="this.form.submit()"
-                >
-            </form>
-            <a href="{{ route('admin.showtimes.index', array_merge(request()->except('page'), ['date' => now($timezone)->toDateString()])) }}" class="rounded-full border border-cine-border/10 bg-cine-surface px-4 py-2.5 text-xs font-semibold text-cine-secondary transition hover:border-cine-accent/30 hover:bg-cine-elevated hover:text-cine-primary">Today</a>
-            <x-admin.button :href="route('admin.showtimes.create')">Create showtime</x-admin.button>
+                <div class="grid gap-3">
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Schedule date</span>
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ $selectedDate->toDateString() }}"
+                            class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20"
+                        >
+                    </label>
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Cinema</span>
+                        <select name="cinema_id" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                            <option value="">All cinemas</option>
+                            @foreach ($cinemas as $cinema)
+                                <option value="{{ $cinema->id }}" @selected($filters['cinema_id'] === $cinema->id)>{{ $cinema->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Screen</span>
+                        <select name="screen_id" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                            <option value="">All screens</option>
+                            @foreach ($screens as $screen)
+                                <option value="{{ $screen->id }}" @selected($filters['screen_id'] === $screen->id)>{{ $screen->name }} · {{ $screen->cinema->name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                </div>
+                <div class="mt-4 flex justify-end gap-2">
+                    <a href="{{ route('admin.showtimes.index', ['date' => $selectedDate->toDateString()]) }}" class="inline-flex min-h-9 items-center rounded-lg border border-cine-border/10 px-3 text-xs font-semibold text-cine-secondary transition hover:bg-cine-elevated hover:text-cine-primary">Reset</a>
+                    <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Apply filters</x-admin.button>
+                </div>
+            </x-admin.filter-dropdown>
+            <x-admin.button :href="route('admin.showtimes.create')">+ Create showtime</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -96,45 +117,25 @@
             </div>
         </div>
 
-        <form method="GET" action="{{ route('admin.showtimes.index') }}" class="grid gap-3 border-t border-cine-border/10 bg-cine-bg/20 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(16rem,1fr)_minmax(12rem,0.55fr)_minmax(12rem,0.65fr)_auto_auto] lg:items-center">
-            <input type="hidden" name="date" value="{{ $selectedDate->toDateString() }}">
-            <label class="relative min-w-0">
-                <span class="sr-only">Search movie, cinema or screen</span>
-                <x-admin.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cine-secondary" />
-                <input name="search" type="search" value="{{ $filters['search'] }}" placeholder="Search movie, cinema or screen..." class="min-h-10 w-full rounded-xl border border-cine-border/20 bg-cine-bg/70 pl-10 pr-3 text-sm text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-            </label>
-            <label class="relative">
-                <span class="sr-only">Filter by cinema</span>
-                <x-admin.icon name="cinema" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cine-secondary" />
-                <select name="cinema_id" class="min-h-10 w-full rounded-xl border border-cine-border/20 bg-cine-bg/70 pl-10 pr-8 text-sm text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-                    <option value="">All cinemas</option>
-                    @foreach ($cinemas as $cinema)
-                        <option value="{{ $cinema->id }}" @selected($filters['cinema_id'] === $cinema->id)>{{ $cinema->name }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <label class="relative">
-                <span class="sr-only">Filter by screen</span>
-                <x-admin.icon name="monitor" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cine-secondary" />
-                <select name="screen_id" class="min-h-10 w-full rounded-xl border border-cine-border/20 bg-cine-bg/70 pl-10 pr-8 text-sm text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-                    <option value="">All screens</option>
-                    @foreach ($screens as $screen)
-                        <option value="{{ $screen->id }}" @selected($filters['screen_id'] === $screen->id)>{{ $screen->name }} · {{ $screen->cinema->name }}</option>
-                    @endforeach
-                </select>
-            </label>
-            <x-admin.button type="submit" class="min-h-10 justify-center rounded-xl px-5">
-                <x-admin.icon name="filter" class="h-4 w-4" />
-                Filter
-            </x-admin.button>
-            <a href="{{ route('admin.showtimes.index', ['date' => $selectedDate->toDateString()]) }}" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cine-border/20 bg-cine-surface px-4 text-xs font-semibold text-cine-secondary transition hover:border-cine-accent/30 hover:bg-cine-elevated hover:text-cine-primary">
-                <x-admin.icon name="undo-2" class="h-4 w-4" />
-                Reset
-            </a>
-        </form>
     </section>
 
     <x-admin.card class="!p-0">
+        <div class="flex flex-col gap-3 border-b border-cine-border/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>
+                <h3 class="text-sm font-bold text-cine-primary">Scheduled showtimes</h3>
+                <p class="mt-1 text-[10px] text-cine-tertiary">Showing {{ $showtimes->total() }} showtimes from {{ $selectedDate->format('M j, Y') }} onward</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] text-cine-tertiary">{{ number_format($showtimes->total()) }} matching</span>
+                <form method="GET" action="{{ route('admin.showtimes.index') }}" class="relative w-full sm:w-80">
+                <input type="hidden" name="date" value="{{ $selectedDate->toDateString() }}">
+                <input type="hidden" name="cinema_id" value="{{ $filters['cinema_id'] }}">
+                <input type="hidden" name="screen_id" value="{{ $filters['screen_id'] }}">
+                <x-admin.icon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cine-tertiary" />
+                <input name="search" type="search" value="{{ $filters['search'] }}" placeholder="Search showtimes..." aria-label="Search showtimes" class="min-h-9 w-full rounded-lg border border-cine-border/15 bg-cine-bg pl-9 pr-3 text-[10px] text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                </form>
+            </div>
+        </div>
         @if ($showtimes->isEmpty())
             <div class="flex flex-col items-center gap-3 p-8 text-center">
                 <x-admin.empty-state
@@ -146,7 +147,7 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-cine-border/10">
+                <table class="admin-data-table min-w-full divide-y divide-cine-border/10">
                     <thead class="bg-cine-bg/40">
                         <tr class="text-left text-[10px] font-bold uppercase tracking-wider text-cine-tertiary">
                             <th scope="col" class="px-4 py-3 sm:px-5">#</th>
@@ -202,7 +203,7 @@
                                     <span class="block">{{ $startsAtLocal->format('M j, Y') }}</span>
                                     <span class="mt-0.5 block font-semibold text-cine-primary">{{ $startsAtLocal->format('h:i A') }}–{{ $displayEndsAtLocal->format('h:i A') }}</span>
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-2.5 font-semibold text-cine-primary">${{ number_format($showtime->base_price_cents / 100, 2) }}</td>
+                                <td class="whitespace-nowrap px-3 py-2.5 font-semibold text-cine-primary"><x-admin.money :cents="$showtime->base_price_cents" /></td>
                                 <td class="whitespace-nowrap px-3 py-2.5"><x-admin.badge :status="$statusStyle">{{ $statusLabel }}</x-admin.badge></td>
                                 <td class="whitespace-nowrap px-3 py-2.5 text-right">
                                     <x-admin.showtime-actions :showtime="$showtime" />

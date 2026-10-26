@@ -69,7 +69,7 @@
                     <x-admin.badge :status="$paymentStyle">{{ $payment ? str($payment->status->value)->replace('_', ' ')->title() : 'Awaiting payment' }}</x-admin.badge>
                     <x-admin.badge :status="$bookingStyle">{{ str($bookingStatus)->replace('_', ' ')->title() }}</x-admin.badge>
                 </div>
-                <p class="mt-2 text-xs text-cine-tertiary">Booked {{ $booking->created_at->setTimezone($timezone)->format('D j M Y · H:i') }} · {{ $booking->seats_count }} seat{{ $booking->seats_count === 1 ? '' : 's' }} · {{ $booking->currency }} {{ number_format($booking->total_cents / 100, 2) }}</p>
+                <p class="mt-2 text-xs text-cine-tertiary">Booked {{ $booking->created_at->setTimezone($timezone)->format('D j M Y · H:i') }} · {{ $booking->seats_count }} seat{{ $booking->seats_count === 1 ? '' : 's' }} · <x-admin.money :cents="$booking->total_cents" :currency="$booking->currency" /></p>
             </div>
             @if ($showtimeInFuture)
                 <div class="flex flex-wrap gap-2">
@@ -190,7 +190,7 @@
                                         <p class="mt-0.5 truncate text-[10px] text-cine-tertiary">{{ $ticket?->ticket_number ?: 'Ticket not issued' }}</p>
                                     </div>
                                 </div>
-                                <span class="text-xs font-semibold text-cine-primary">{{ $booking->currency }} {{ number_format($item->price_cents / 100, 2) }}</span>
+                                <span class="text-xs font-semibold text-cine-primary"><x-admin.money :cents="$item->price_cents" :currency="$booking->currency" /></span>
                                 @if ($ticket)
                                     <x-admin.badge :status="$ticketStyle">{{ $ticket->isVoid() ? 'Void' : str($ticket->status->value)->title() }}</x-admin.badge>
                                     @if ($ticket->status->value === 'valid' && $showtimeInFuture)
@@ -269,7 +269,7 @@
                     <h3 class="font-semibold text-cine-primary">Payment</h3>
                     <x-admin.badge :status="$paymentStyle">{{ $payment ? str($payment->status->value)->replace('_', ' ')->title() : 'Awaiting' }}</x-admin.badge>
                 </div>
-                <p class="mt-4 text-2xl font-bold tracking-tight text-cine-primary">{{ $booking->currency }} {{ number_format(($payment?->amount_cents ?? $booking->total_cents) / 100, 2) }}</p>
+                <p class="mt-4 text-2xl font-bold tracking-tight text-cine-primary"><x-admin.money :cents="$payment?->amount_cents ?? $booking->total_cents" :currency="$payment?->currency ?? $booking->currency" /></p>
                 @if ($payment)
                     <div class="mt-4 space-y-3 border-t border-cine-border/10 pt-4 text-xs">
                         <div class="flex justify-between gap-3"><span class="text-cine-tertiary">Method</span><span class="text-right text-cine-secondary">{{ str($payment->gateway)->title() }}</span></div>
@@ -287,10 +287,10 @@
             <x-admin.card>
                 <h3 class="font-semibold text-cine-primary">Order summary</h3>
                 <div class="mt-4 space-y-3 border-b border-cine-border/10 pb-4 text-xs">
-                    <div class="flex justify-between gap-3"><span class="text-cine-secondary">{{ $booking->items->count() }} seat{{ $booking->items->count() === 1 ? '' : 's' }}</span><span class="text-cine-primary">{{ $booking->currency }} {{ number_format($booking->items->sum('price_cents') / 100, 2) }}</span></div>
-                    <div class="flex justify-between gap-3"><span class="text-cine-secondary">Other charges</span><span class="text-cine-primary">{{ $booking->currency }} {{ number_format(max(0, $booking->total_cents - $booking->items->sum('price_cents')) / 100, 2) }}</span></div>
+                    <div class="flex justify-between gap-3"><span class="text-cine-secondary">{{ $booking->items->count() }} seat{{ $booking->items->count() === 1 ? '' : 's' }}</span><span class="text-cine-primary"><x-admin.money :cents="$booking->items->sum('price_cents')" :currency="$booking->currency" /></span></div>
+                    <div class="flex justify-between gap-3"><span class="text-cine-secondary">Other charges</span><span class="text-cine-primary"><x-admin.money :cents="max(0, $booking->total_cents - $booking->items->sum('price_cents'))" :currency="$booking->currency" /></span></div>
                 </div>
-                <div class="mt-4 flex justify-between gap-3 text-sm font-bold"><span class="text-cine-primary">Total</span><span class="text-cine-primary">{{ $booking->currency }} {{ number_format($booking->total_cents / 100, 2) }}</span></div>
+                <div class="mt-4 flex justify-between gap-3 text-sm font-bold"><span class="text-cine-primary">Total</span><span class="text-cine-primary"><x-admin.money :cents="$booking->total_cents" :currency="$booking->currency" /></span></div>
             </x-admin.card>
 
             <x-admin.card>
@@ -307,7 +307,7 @@
                 @forelse ($booking->refunds as $refund)
                     <div class="mt-4 rounded-xl border border-cine-border/10 bg-cine-bg/50 p-3">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-sm font-bold text-cine-primary">{{ $refund->currency }} {{ number_format($refund->amount_cents / 100, 2) }}</span>
+                            <span class="text-sm font-bold text-cine-primary"><x-admin.money :cents="$refund->amount_cents" :currency="$refund->currency" /></span>
                             <x-admin.badge :status="$refund->isSucceeded() ? 'success' : ($refund->isFailed() ? 'danger' : 'warning')">{{ str($refund->status->value)->title() }}</x-admin.badge>
                         </div>
                         <p class="mt-2 text-[10px] text-cine-secondary">{{ str($refund->reason)->replace('_', ' ')->title() }}</p>
@@ -455,7 +455,7 @@
                     <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cine-accent/15 text-cine-accent"><x-admin.icon name="undo-2" class="h-4 w-4" /></span>
                     <div class="min-w-0 flex-1">
                         <h2 class="text-sm font-bold text-cine-primary">Issue refund</h2>
-                        <p class="mt-1 text-[10px] text-cine-tertiary">Booking {{ $booking->reference }} · Paid ${{ number_format(($refundablePayment?->amount_cents ?? 0) / 100, 2) }} · Already refunded ${{ number_format(max(0, ($refundablePayment?->amount_cents ?? 0) - $refundableCents) / 100, 2) }}</p>
+                        <p class="mt-1 text-[10px] text-cine-tertiary">Booking {{ $booking->reference }} · Paid <x-admin.money :cents="$refundablePayment?->amount_cents ?? 0" :currency="$refundablePayment?->currency ?? $booking->currency" /> · Already refunded <x-admin.money :cents="max(0, ($refundablePayment?->amount_cents ?? 0) - $refundableCents)" :currency="$refundablePayment?->currency ?? $booking->currency" /></p>
                     </div>
                     <button type="button" aria-label="Close dialog" class="rounded-md p-1 text-cine-tertiary hover:bg-cine-elevated hover:text-cine-primary" x-on:click="$dispatch('close-modal', 'issue-refund')"><span aria-hidden="true">×</span></button>
                 </div>

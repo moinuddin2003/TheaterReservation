@@ -19,13 +19,22 @@
 
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ([
-            ['Seats', $screen->seats_count, 'armchair'],
-            ['Bookable', max(0, $screen->seats_count - $screen->disabled_seats_count), 'check-circle'],
-            ['Premium', $screen->premium_seats_count, 'star'],
-            ['Scheduled showtimes', $screen->showtimes_count, 'calendar'],
-        ] as [$label, $value, $icon])
-            <div class="rounded-2xl border border-cine-border/10 bg-cine-surface p-4">
-                <div class="flex items-center gap-3"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-cine-accent/10 text-cine-accent"><x-admin.icon :name="$icon" class="h-4 w-4" /></span><div><p class="text-xs text-cine-secondary">{{ $label }}</p><p class="mt-0.5 text-xl font-bold text-cine-primary">{{ number_format($value) }}</p></div></div>
+            ['label' => 'Seats', 'value' => $screen->seats_count, 'icon' => 'armchair', 'detail' => 'Total configured seats'],
+            ['label' => 'Bookable', 'value' => max(0, $screen->seats_count - $screen->disabled_seats_count), 'icon' => 'check-circle', 'detail' => 'Available for booking'],
+            ['label' => 'Premium', 'value' => $screen->premium_seats_count, 'icon' => 'star', 'detail' => 'Premium seating'],
+            ['label' => 'Scheduled showtimes', 'value' => $screen->showtimes_count, 'icon' => 'calendar', 'detail' => 'Scheduled in this screen'],
+        ] as $stat)
+            <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-cine-surface p-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cine-accent/30 bg-cine-accent/15 text-cine-accent">
+                        <x-admin.icon :name="$stat['icon']" class="h-6 w-6" />
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-cine-secondary">{{ $stat['label'] }}</p>
+                        <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary">{{ number_format($stat['value']) }}</p>
+                    </div>
+                </div>
+                <p class="mt-3 flex min-h-4 items-center text-[11px] text-cine-tertiary">{{ $stat['detail'] }}</p>
             </div>
         @endforeach
     </div>
