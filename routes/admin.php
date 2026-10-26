@@ -62,6 +62,7 @@ Route::prefix('admin')
         Route::post('/bookings/{booking}/resend-email', [BookingController::class, 'resendEmail'])->name('bookings.resend-email');
         Route::get('/payments/export', [PaymentController::class, 'export'])->name('payments.export');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/refunds/export', [RefundController::class, 'export'])->name('refunds.export');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
         Route::get('/users', [UserController::class, 'index'])->name('users.index');

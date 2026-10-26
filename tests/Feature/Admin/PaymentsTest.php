@@ -4,6 +4,7 @@ use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\Ticket;
 use App\Models\User;
 use Database\Seeders\CinemaSeeder;
@@ -30,7 +31,11 @@ it('shows seeded payments and filters by customer and payment status', function 
         ->get(route('admin.payments.index'))
         ->assertOk()
         ->assertSee('Payments')
+        ->assertSee('Payment filters')
         ->assertSee('Real-time payment data')
+        ->assertSee('Payment state')
+        ->assertSee('Recent payments')
+        ->assertSee('aria-label="Search payments"', false)
         ->assertSee('PAY-00001')
         ->assertSee('href="'.route('admin.bookings.show', 'DEMO-PAY-001').'"', false)
         ->assertSee('Alex Morgan')
@@ -85,5 +90,6 @@ it('includes demo payments in the normal database seed command', function () {
     $this->seed(DatabaseSeeder::class);
 
     expect(Payment::query()->where('gateway', 'demo')->count())->toBe(8)
-        ->and(Booking::query()->where('reference', 'like', 'DEMO-PAY-%')->count())->toBe(8);
+        ->and(Booking::query()->where('reference', 'like', 'DEMO-PAY-%')->count())->toBe(8)
+        ->and(Refund::query()->where('idempotency_key', 'like', 'demo-refund-%')->count())->toBe(5);
 });

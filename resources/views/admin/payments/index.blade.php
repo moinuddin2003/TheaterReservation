@@ -4,6 +4,34 @@
         subtitle="View and manage payment records for all bookings."
     >
         <x-slot:actions>
+            <x-admin.filter-dropdown :action="route('admin.payments.index')" label="filters" width="w-[min(92vw,560px)]">
+                <input type="hidden" name="search" value="{{ $filters['search'] }}">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">From</span>
+                        <input name="from" type="date" value="{{ $filters['from'] }}" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                    </label>
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">To</span>
+                        <input name="to" type="date" value="{{ $filters['to'] }}" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                    </label>
+                    <label class="sm:col-span-2">
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Payment state</span>
+                        <select name="status" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                            <option value="">All states</option>
+                            <option value="succeeded" @selected($filters['status'] === 'succeeded')>Succeeded</option>
+                            <option value="pending" @selected($filters['status'] === 'pending')>Processing</option>
+                            <option value="failed" @selected($filters['status'] === 'failed')>Failed</option>
+                            <option value="expired" @selected($filters['status'] === 'expired')>Expired</option>
+                            <option value="refunded" @selected($filters['status'] === 'refunded')>Refunded</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="mt-4 flex justify-end gap-2">
+                    <a href="{{ route('admin.payments.index') }}" class="inline-flex min-h-9 items-center rounded-lg border border-cine-border/10 px-3 text-xs font-semibold text-cine-secondary transition hover:bg-cine-elevated hover:text-cine-primary">Reset</a>
+                    <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Apply filters</x-admin.button>
+                </div>
+            </x-admin.filter-dropdown>
             <a href="{{ route('admin.payments.export', request()->except('page')) }}" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-cine-accent px-4 text-xs font-semibold text-white shadow-cine-glow transition hover:brightness-110">
                 <x-admin.icon name="download" class="h-4 w-4" />
                 Export CSV
@@ -25,67 +53,22 @@
     </div>
 
     <x-admin.card class="!p-0">
-        <form method="GET" action="{{ route('admin.payments.index') }}" class="grid gap-3 border-b border-cine-border/10 p-4 md:grid-cols-2 xl:grid-cols-[minmax(14rem,1.2fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_auto_auto] xl:items-end">
-            <label class="relative min-w-0">
-                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Payment / booking</span>
-                <x-admin.icon name="search" class="pointer-events-none absolute left-3 top-[2.65rem] h-4 w-4 -translate-y-1/2 text-cine-tertiary" />
-                <input name="search" type="search" value="{{ $filters['search'] }}" placeholder="Search by payment or booking..." class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg pl-10 pr-3 text-xs text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-            </label>
-            <label>
-                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">From</span>
-                <input name="from" type="date" value="{{ $filters['from'] }}" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-            </label>
-            <label>
-                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">To</span>
-                <input name="to" type="date" value="{{ $filters['to'] }}" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-            </label>
-            <label>
-                <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Payment state</span>
-                <select name="status" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
-                    <option value="">All states</option>
-                    <option value="succeeded" @selected($filters['status'] === 'succeeded')>Succeeded</option>
-                    <option value="pending" @selected($filters['status'] === 'pending')>Processing</option>
-                    <option value="failed" @selected($filters['status'] === 'failed')>Failed</option>
-                    <option value="expired" @selected($filters['status'] === 'expired')>Expired</option>
-                    <option value="refunded" @selected($filters['status'] === 'refunded')>Refunded</option>
-                </select>
-            </label>
-            <x-admin.button type="submit" class="min-h-10 justify-center rounded-xl px-4">
-                <x-admin.icon name="filter" class="h-4 w-4" />
-                Filter
-            </x-admin.button>
-            <a href="{{ route('admin.payments.index') }}" class="inline-flex min-h-10 items-center justify-center rounded-xl border border-cine-border/15 px-4 text-xs font-semibold text-cine-secondary transition hover:bg-cine-elevated hover:text-cine-primary">Clear</a>
-        </form>
-
-        @php
-            $tabs = [
-                'all' => ['label' => 'All payments', 'count' => $counts['all']],
-                'succeeded' => ['label' => 'Succeeded', 'count' => $counts['succeeded']],
-                'pending' => ['label' => 'Processing', 'count' => $counts['pending']],
-                'failed' => ['label' => 'Failed', 'count' => $counts['failed']],
-            ];
-            $activeTab = in_array($filters['status'], ['succeeded', 'pending', 'failed'], true)
-                ? $filters['status']
-                : 'all';
-        @endphp
-
-        <nav aria-label="Filter payments by status" class="flex gap-5 overflow-x-auto border-b border-cine-border/10 px-4 pt-3">
-            @foreach ($tabs as $status => $tab)
-                <a
-                    href="{{ route('admin.payments.index', array_merge(request()->except('status', 'page'), $status === 'all' ? [] : ['status' => $status])) }}"
-                    @class([
-                        'inline-flex shrink-0 items-center gap-2 border-b-2 px-0.5 pb-3 text-xs font-semibold transition-colors',
-                        'border-cine-accent text-cine-primary' => $activeTab === $status,
-                        'border-transparent text-cine-tertiary hover:text-cine-secondary' => $activeTab !== $status,
-                    ])
-                    @if ($activeTab === $status) aria-current="page" @endif
-                >
-                    {{ $tab['label'] }}
-                    <span class="rounded-full bg-cine-elevated px-1.5 py-0.5 text-[9px] text-cine-tertiary">{{ number_format($tab['count']) }}</span>
-                </a>
-            @endforeach
-        </nav>
-
+        <div class="flex flex-col gap-3 border-b border-cine-border/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>
+                <h3 class="text-sm font-bold text-cine-primary">Recent payments</h3>
+                <p class="mt-1 text-[10px] text-cine-tertiary">Payment activity across all bookings</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-[10px] text-cine-tertiary">{{ number_format($payments->total()) }} matching</span>
+                <form method="GET" action="{{ route('admin.payments.index') }}" class="relative w-full sm:w-80">
+                <input type="hidden" name="from" value="{{ $filters['from'] }}">
+                <input type="hidden" name="to" value="{{ $filters['to'] }}">
+                <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                <x-admin.icon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cine-tertiary" />
+                <input name="search" type="search" value="{{ $filters['search'] }}" placeholder="Search payments..." aria-label="Search payments" class="min-h-9 w-full rounded-lg border border-cine-border/15 bg-cine-bg pl-9 pr-3 text-[10px] text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
+                </form>
+            </div>
+        </div>
         @if ($payments->isEmpty())
             <div class="p-8">
                 <x-admin.empty-state icon="credit-card" title="No payments found" text="Try changing your search or filters." />

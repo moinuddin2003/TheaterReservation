@@ -44,10 +44,6 @@ class BookingController extends Controller
         $bookingsQuery = $this->filteredBookings($request, $filters);
         $todayStart = Carbon::now($request->timezone())->startOfDay()->utc();
         $tomorrowStart = $todayStart->copy()->addDay();
-        $statusCounts = $this->filteredBookings($request, $filters, includeStatus: false)
-            ->selectRaw('status, COUNT(*) AS total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
 
         return view('admin.bookings.index', [
             'bookings' => $bookingsQuery
@@ -58,7 +54,6 @@ class BookingController extends Controller
                 ->withQueryString(),
             'filters' => $filters,
             'movies' => Movie::query()->orderBy('title')->get(['id', 'title']),
-            'statusCounts' => $statusCounts,
             'stats' => [
                 'total_bookings' => Booking::query()->count(),
                 'total_revenue' => Payment::query()->where('status', PaymentStatus::Succeeded)->sum('amount_cents'),
@@ -351,7 +346,6 @@ class BookingController extends Controller
     private function filteredBookings(
         BookingIndexRequest $request,
         array $filters,
-        bool $includeStatus = true,
     ): Builder {
         return Booking::query()
             ->when($filters['search'] !== '', function (Builder $query) use ($filters): void {
@@ -381,10 +375,7 @@ class BookingController extends Controller
                     Carbon::parse($to, $request->timezone())->addDay()->startOfDay()->utc(),
                 ));
             })
-            ->when(
-                $includeStatus && $filters['status'] !== null,
-                fn (Builder $query) => $query->where('status', $filters['status']),
-            );
+            ->when($filters['status'] !== null, fn (Builder $query) => $query->where('status', $filters['status']));
     }
 
     /**

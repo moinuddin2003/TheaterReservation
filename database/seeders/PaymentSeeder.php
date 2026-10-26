@@ -4,11 +4,13 @@ namespace Database\Seeders;
 
 use App\Enums\BookingStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\RefundStatus;
 use App\Enums\Role;
 use App\Enums\TicketStatus;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\Seat;
 use App\Models\Showtime;
 use App\Models\Ticket;
@@ -135,6 +137,38 @@ class PaymentSeeder extends Seeder
                     'ticket_number' => sprintf('DEMO-TICKET-%03d', $number),
                     'token' => hash('sha1', $reference),
                     'status' => TicketStatus::Valid,
+                ])->save();
+            }
+
+            $refundExamples = [
+                ['demo-payment-001', 1200, RefundStatus::Pending, 'requested_by_customer', 2, null],
+                ['demo-payment-005', 1000, RefundStatus::Pending, 'duplicate', 3, null],
+                ['demo-payment-003', 1000, RefundStatus::Succeeded, 'requested_by_customer', 6, 're_demo_refund_003'],
+                ['demo-payment-007', 800, RefundStatus::Failed, 'fraudulent', 9, 're_demo_refund_004'],
+                ['demo-payment-007', 1000, RefundStatus::Succeeded, 'duplicate', 12, 're_demo_refund_005'],
+            ];
+
+            foreach ($refundExamples as $index => [$paymentKey, $amountCents, $status, $reason, $daysAgo, $gatewayRefundId]) {
+                $payment = Payment::query()->where('idempotency_key', $paymentKey)->firstOrFail();
+                $createdAt = now()->subDays($daysAgo);
+                $refund = Refund::query()->firstOrNew([
+                    'idempotency_key' => sprintf('demo-refund-%03d', $index + 1),
+                ]);
+                $refund->forceFill([
+                    'payment_id' => $payment->getKey(),
+                    'booking_id' => $payment->booking_id,
+                    'amount_cents' => $amountCents,
+                    'currency' => $payment->currency,
+                    'status' => $status,
+                    'reason' => $reason,
+                    'gateway_refund_id' => $gatewayRefundId,
+                    'failure_message' => $status === RefundStatus::Failed
+                        ? 'Temporary connection error. Retry the existing refund.'
+                        : null,
+                    'initiated_by' => User::query()->where('email', 'admin@cinebook.test')->value('id'),
+                    'processed_at' => $status === RefundStatus::Pending ? null : $createdAt->copy()->addMinutes(2),
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
                 ])->save();
             }
         });

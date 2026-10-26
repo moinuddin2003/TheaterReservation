@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PaymentIndexRequest;
 use App\Models\Payment;
@@ -16,7 +15,6 @@ class PaymentController extends Controller
     public function index(PaymentIndexRequest $request): View
     {
         $filters = $request->filters();
-        $paymentsForCounts = $this->filteredPayments($filters, includeStatus: false);
         $filteredPayments = $this->filteredPayments($filters);
 
         return view('admin.payments.index', [
@@ -27,12 +25,6 @@ class PaymentController extends Controller
                 ->paginate(10)
                 ->withQueryString(),
             'filters' => $filters,
-            'counts' => [
-                'all' => (clone $paymentsForCounts)->count(),
-                'succeeded' => (clone $paymentsForCounts)->where('payments.status', PaymentStatus::Succeeded)->count(),
-                'pending' => (clone $paymentsForCounts)->where('payments.status', PaymentStatus::Pending)->count(),
-                'failed' => (clone $paymentsForCounts)->where('payments.status', PaymentStatus::Failed)->count(),
-            ],
         ]);
     }
 
@@ -90,7 +82,7 @@ class PaymentController extends Controller
      * @param  array{search: string, from: string|null, to: string|null, status: string|null}  $filters
      * @return Builder<Payment>
      */
-    private function filteredPayments(array $filters, bool $includeStatus = true): Builder
+    private function filteredPayments(array $filters): Builder
     {
         return Payment::query()
             ->select('payments.*')
@@ -119,9 +111,6 @@ class PaymentController extends Controller
                 '<',
                 Carbon::parse($to)->addDay()->startOfDay(),
             ))
-            ->when(
-                $includeStatus ? $filters['status'] : null,
-                fn (Builder $query, string $status) => $query->where('payments.status', $status),
-            );
+            ->when($filters['status'], fn (Builder $query, string $status) => $query->where('payments.status', $status));
     }
 }
