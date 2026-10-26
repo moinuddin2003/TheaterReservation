@@ -9,6 +9,6 @@
     };
 @endphp
 
-<span {{ $attributes->class(['inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold', $styles]) }}>
+<span {{ $attributes->class(['inline-flex min-h-6 items-center justify-center rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-4', $styles]) }}>
     {{ $slot }}
 </span>

@@ -6,33 +6,20 @@
         <x-slot:actions>
             <x-admin.filter-dropdown
                 :action="route('admin.showtimes.index')"
-                :label="$selectedDate->format('M j, Y')"
-                width="w-[min(92vw,360px)]"
-            >
-                <input type="hidden" name="search" value="{{ $filters['search'] }}">
-                <input type="hidden" name="cinema_id" value="{{ $filters['cinema_id'] }}">
-                <input type="hidden" name="screen_id" value="{{ $filters['screen_id'] }}">
-                <label>
-                    <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Schedule date</span>
-                    <input
-                        type="date"
-                        name="date"
-                        value="{{ $selectedDate->toDateString() }}"
-                        class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20"
-                    >
-                </label>
-                <div class="mt-4 flex justify-end">
-                    <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Apply date</x-admin.button>
-                </div>
-            </x-admin.filter-dropdown>
-            <x-admin.filter-dropdown
-                :action="route('admin.showtimes.index')"
                 label="filters"
-                width="w-[min(92vw,360px)]"
+                width="w-[min(92vw,460px)]"
             >
-                <input type="hidden" name="date" value="{{ $selectedDate->toDateString() }}">
                 <input type="hidden" name="search" value="{{ $filters['search'] }}">
                 <div class="grid gap-3">
+                    <label>
+                        <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Schedule date</span>
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ $selectedDate->toDateString() }}"
+                            class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20"
+                        >
+                    </label>
                     <label>
                         <span class="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">Cinema</span>
                         <select name="cinema_id" class="min-h-10 w-full rounded-xl border border-cine-border/15 bg-cine-bg px-3 text-xs text-cine-secondary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20">
@@ -57,8 +44,7 @@
                     <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Apply filters</x-admin.button>
                 </div>
             </x-admin.filter-dropdown>
-            <a href="{{ route('admin.showtimes.index', array_merge(request()->except('page'), ['date' => now($timezone)->toDateString()])) }}" class="rounded-full border border-cine-border/10 bg-cine-surface px-4 py-2.5 text-xs font-semibold text-cine-secondary transition hover:border-cine-accent/30 hover:bg-cine-elevated hover:text-cine-primary">Today</a>
-            <x-admin.button :href="route('admin.showtimes.create')">Create showtime</x-admin.button>
+            <x-admin.button :href="route('admin.showtimes.create')">+ Create showtime</x-admin.button>
         </x-slot:actions>
     </x-admin.page-header>
 
@@ -161,7 +147,7 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-cine-border/10">
+                <table class="admin-data-table min-w-full divide-y divide-cine-border/10">
                     <thead class="bg-cine-bg/40">
                         <tr class="text-left text-[10px] font-bold uppercase tracking-wider text-cine-tertiary">
                             <th scope="col" class="px-4 py-3 sm:px-5">#</th>

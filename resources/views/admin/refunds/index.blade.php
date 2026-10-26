@@ -57,20 +57,22 @@
 
     <div class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($summaryCards as $card)
-            <div class="rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4">
+            <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4">
                 <div class="flex items-center gap-3">
                     <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full {{ $card['iconTone'] }} {{ $card['tone'] }}">
                         <x-admin.icon :name="$card['icon']" class="h-6 w-6" />
                     </span>
-                    <p class="text-xs font-medium text-cine-secondary">{{ $card['label'] }}</p>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-cine-secondary">{{ $card['label'] }}</p>
+                        <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary">
+                            @if (isset($card['cents']))
+                                <x-admin.money :cents="$card['cents']" />
+                            @else
+                                {{ $card['value'] }}
+                            @endif
+                        </p>
+                    </div>
                 </div>
-                <p class="mt-2 text-2xl font-bold tracking-tight text-cine-primary">
-                    @if (isset($card['cents']))
-                        <x-admin.money :cents="$card['cents']" />
-                    @else
-                        {{ $card['value'] }}
-                    @endif
-                </p>
                 <p class="mt-3 flex min-h-4 items-center gap-2 text-[11px] {{ $trendTone($card['trend']['direction'], $card['trendKind']) }}">
                     <span class="font-bold">{{ $card['trend']['direction'] === 'up' ? '↑' : ($card['trend']['direction'] === 'down' ? '↓' : '·') }} {{ $card['trend']['label'] }}</span>
                     <span class="text-cine-tertiary">vs. previous period</span>
@@ -102,7 +104,7 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[780px] table-fixed divide-y divide-cine-border/10">
+                <table class="admin-data-table w-full min-w-[780px] table-fixed divide-y divide-cine-border/10">
                     <colgroup>
                         <col class="w-[20%]">
                         <col class="w-[22%]">
@@ -125,9 +127,9 @@
                         @foreach ($refunds as $refund)
                             @php
                                 $statusStyle = match ($refund->status->value) {
-                                    'succeeded' => 'bg-cine-success/10 text-cine-success',
-                                    'failed' => 'bg-cine-danger/10 text-cine-danger',
-                                    default => 'bg-cine-warning/10 text-cine-warning',
+                                    'succeeded' => 'success',
+                                    'failed' => 'danger',
+                                    default => 'warning',
                                 };
                             @endphp
                             <tr class="transition hover:bg-cine-elevated/30">
@@ -145,10 +147,9 @@
                                     <x-admin.money :cents="$refund->amount_cents" :currency="$refund->currency" />
                                 </td>
                                 <td class="whitespace-nowrap px-3 py-3">
-                                    <span @class(['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold', $statusStyle])>
-                                        <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                    <x-admin.badge :status="$statusStyle">
                                         {{ ucfirst($refund->status->value) }}
-                                    </span>
+                                    </x-admin.badge>
                                     @if ($refund->failure_message)
                                         <p class="mt-1 max-w-40 truncate text-[10px] text-cine-tertiary" title="{{ $refund->failure_message }}">{{ $refund->failure_message }}</p>
                                     @endif

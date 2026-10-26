@@ -16,10 +16,6 @@
         subtitle="Track every reservation, payment and ticket in one place."
     >
         <x-slot:actions>
-            <a href="{{ route('admin.bookings.export', request()->except('page')) }}" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-cine-border/15 bg-cine-surface px-4 text-xs font-semibold text-cine-secondary transition hover:bg-cine-elevated hover:text-cine-primary">
-                <x-admin.icon name="download" class="h-4 w-4" />
-                Export CSV
-            </a>
             <x-admin.filter-dropdown :action="route('admin.bookings.index')" label="filters" width="w-[min(92vw,560px)]">
                 <input type="hidden" name="search" value="{{ $filters['search'] }}">
                 <div class="grid gap-3 sm:grid-cols-2">
@@ -57,30 +53,35 @@
                     <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Apply filters</x-admin.button>
                 </div>
             </x-admin.filter-dropdown>
-            <span class="inline-flex items-center gap-2 rounded-full border border-cine-border/10 bg-cine-surface px-4 py-2 text-xs font-semibold text-cine-secondary">
-                <x-admin.icon name="ticket" class="h-4 w-4 text-cine-accent" />
-                {{ number_format($bookings->total()) }} total
-            </span>
+            <a href="{{ route('admin.bookings.export', request()->except('page')) }}" class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-cine-accent px-4 text-xs font-semibold text-white shadow-cine-glow transition hover:brightness-110">
+                <x-admin.icon name="download" class="h-4 w-4" />
+                Export CSV
+            </a>
         </x-slot:actions>
     </x-admin.page-header>
 
     @php
         $summaryCards = [
-            ['label' => 'Total bookings', 'value' => number_format($stats['total_bookings']), 'icon' => 'ticket', 'style' => 'text-cine-accent'],
-            ['label' => 'Total revenue', 'cents' => $stats['total_revenue'], 'currency' => 'USD', 'icon' => 'dollar-sign', 'style' => 'text-cine-success'],
-            ['label' => 'Pending refunds', 'value' => number_format($stats['pending_refunds']), 'icon' => 'undo-2', 'style' => 'text-cine-warning'],
-            ['label' => 'Failed payments today', 'value' => number_format($stats['failed_payments']), 'icon' => 'credit-card', 'style' => 'text-cine-danger'],
+            ['label' => 'Total bookings', 'value' => number_format($stats['total_bookings']), 'icon' => 'ticket', 'style' => 'text-cine-accent', 'detail' => 'All-time reservations'],
+            ['label' => 'Total revenue', 'cents' => $stats['total_revenue'], 'currency' => 'USD', 'icon' => 'dollar-sign', 'style' => 'text-cine-success', 'detail' => 'Successful payments'],
+            ['label' => 'Pending refunds', 'value' => number_format($stats['pending_refunds']), 'icon' => 'undo-2', 'style' => 'text-cine-warning', 'detail' => 'Awaiting resolution'],
+            ['label' => 'Failed payments today', 'value' => number_format($stats['failed_payments']), 'icon' => 'credit-card', 'style' => 'text-cine-danger', 'detail' => 'Recorded today'],
         ];
     @endphp
 
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         @foreach ($summaryCards as $card)
-            <div class="rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4">
-                <div class="flex items-center justify-between gap-3">
-                    <p class="text-xs font-medium text-cine-secondary">{{ $card['label'] }}</p>
-                    <x-admin.icon :name="$card['icon']" class="h-4 w-4 {{ $card['style'] }}" />
+            <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cine-border/10 bg-cine-elevated/70 {{ $card['style'] }}">
+                        <x-admin.icon :name="$card['icon']" class="h-6 w-6" />
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium text-cine-secondary">{{ $card['label'] }}</p>
+                        <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary">@if (isset($card['cents']))<x-admin.money :cents="$card['cents']" :currency="$card['currency']" />@else{{ $card['value'] }}@endif</p>
+                    </div>
                 </div>
-                <p class="mt-2 text-2xl font-bold tracking-tight text-cine-primary">@if (isset($card['cents']))<x-admin.money :cents="$card['cents']" :currency="$card['currency']" />@else{{ $card['value'] }}@endif</p>
+                <p class="mt-3 flex min-h-4 items-center text-[11px] text-cine-tertiary">{{ $card['detail'] }}</p>
             </div>
         @endforeach
     </div>
@@ -109,7 +110,7 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-cine-border/10">
+                <table class="admin-data-table min-w-full divide-y divide-cine-border/10">
                     <thead class="bg-cine-bg/40">
                         <tr class="text-left text-[9px] font-bold uppercase tracking-wider text-cine-tertiary">
                             <th scope="col" class="px-4 py-3">Code</th>

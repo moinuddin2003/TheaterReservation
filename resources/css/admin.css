@@ -74,3 +74,19 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+.admin-data-table th {
+    padding: 0.75rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.admin-data-table td {
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    vertical-align: middle;
+}

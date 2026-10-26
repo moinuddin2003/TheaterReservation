@@ -21,44 +21,44 @@
     </div>
 
     <div class="mb-5 grid gap-4 md:grid-cols-3">
-        <x-admin.card class="transition-colors hover:border-cine-accent/25">
-            <div class="flex items-start justify-between gap-3">
-                <div>
+        <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4 transition-colors hover:border-cine-accent/25">
+            <div class="flex items-center gap-3">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
+                    <x-admin.icon name="ticket" class="h-6 w-6" />
+                </span>
+                <div class="min-w-0">
                     <p class="text-xs font-medium text-cine-secondary">Confirmed bookings today</p>
-                    <p class="mt-3 text-3xl font-bold tracking-tight text-cine-primary">{{ number_format($confirmedBookingsToday) }}</p>
-                    <p class="mt-2 text-xs text-cine-tertiary">{{ number_format($ticketsSoldToday) }} tickets sold</p>
+                    <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary">{{ number_format($confirmedBookingsToday) }}</p>
                 </div>
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
-                    <x-admin.icon name="ticket" class="h-5 w-5" />
-                </span>
             </div>
-        </x-admin.card>
+            <p class="mt-3 flex min-h-4 items-center text-[11px] text-cine-tertiary">{{ number_format($ticketsSoldToday) }} tickets sold</p>
+        </div>
 
-        <x-admin.card class="transition-colors hover:border-cine-accent/25">
-            <div class="flex items-start justify-between gap-3">
-                <div>
+        <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4 transition-colors hover:border-cine-accent/25">
+            <div class="flex items-center gap-3">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
+                    <x-admin.icon name="dollar-sign" class="h-6 w-6" />
+                </span>
+                <div class="min-w-0">
                     <p class="text-xs font-medium text-cine-secondary">Net revenue today</p>
-                    <p class="mt-3 text-3xl font-bold tracking-tight text-cine-primary"><x-admin.money :cents="$netRevenueCents" /></p>
-                    <p class="mt-2 text-xs text-cine-tertiary">After successful refunds</p>
+                    <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary"><x-admin.money :cents="$netRevenueCents" /></p>
                 </div>
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
-                    <x-admin.icon name="dollar-sign" class="h-5 w-5" />
-                </span>
             </div>
-        </x-admin.card>
+            <p class="mt-3 flex min-h-4 items-center text-[11px] text-cine-tertiary">After successful refunds</p>
+        </div>
 
-        <x-admin.card class="transition-colors hover:border-cine-accent/25">
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <p class="text-xs font-medium text-cine-secondary">Next 24h occupancy</p>
-                    <p class="mt-3 text-3xl font-bold tracking-tight text-cine-primary">{{ number_format($occupancy, 1) }}%</p>
-                    <p class="mt-2 text-xs text-cine-tertiary">{{ number_format($ticketsSold) }} sold + {{ number_format($ticketsHeld) }} held / {{ number_format($capacity) }} capacity</p>
-                </div>
-                <span class="flex h-10 w-10 items-center justify-center rounded-xl border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
-                    <x-admin.icon name="chart-no-axes-column-increasing" class="h-5 w-5" />
+        <div class="min-h-[112px] rounded-2xl border border-cine-border/10 bg-gradient-to-br from-cine-surface to-cine-bg p-4 transition-colors hover:border-cine-accent/25">
+            <div class="flex items-center gap-3">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
+                    <x-admin.icon name="chart-no-axes-column-increasing" class="h-6 w-6" />
                 </span>
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-cine-secondary">Next 24h occupancy</p>
+                    <p class="mt-0.5 text-2xl font-bold tracking-tight text-cine-primary">{{ number_format($occupancy, 1) }}%</p>
+                </div>
             </div>
-        </x-admin.card>
+            <p class="mt-3 flex min-h-4 items-center text-[11px] text-cine-tertiary">{{ number_format($ticketsSold) }} sold + {{ number_format($ticketsHeld) }} held / {{ number_format($capacity) }} capacity</p>
+        </div>
     </div>
 
     <div class="mb-7 grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(250px,0.8fr)]">
@@ -138,7 +138,7 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[700px] text-left text-xs">
+                <table class="admin-data-table w-full min-w-[700px] text-left text-xs">
                     <thead class="border-b border-cine-border/10 text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary">
                         <tr>
                             <th scope="col" class="px-5 py-4">Movie / screen</th>

@@ -75,7 +75,7 @@
             </div>
         @else
             <div class="overflow-x-auto px-2 py-1">
-                <table class="w-full min-w-[1040px] table-fixed divide-y divide-cine-border/10">
+                <table class="admin-data-table w-full min-w-[1040px] table-fixed divide-y divide-cine-border/10">
                     <colgroup>
                         <col class="w-[15%]">
                         <col class="w-[21%]">
@@ -100,10 +100,10 @@
                         @foreach ($payments as $payment)
                             @php
                                 $statusStyle = match ($payment->status->value) {
-                                    'succeeded' => 'bg-cine-success/10 text-cine-success',
-                                    'failed', 'expired' => 'bg-cine-danger/10 text-cine-danger',
-                                    'refunded' => 'bg-cine-warning/10 text-cine-warning',
-                                    default => 'bg-cine-accent/10 text-cine-accent',
+                                    'succeeded' => 'success',
+                                    'failed', 'expired' => 'danger',
+                                    'refunded' => 'warning',
+                                    default => 'info',
                                 };
                             @endphp
                             <tr class="transition hover:bg-cine-elevated/30">
@@ -127,10 +127,9 @@
                                     <x-admin.money :cents="$payment->amount_cents" :currency="$payment->currency" />
                                 </td>
                                 <td class="whitespace-nowrap px-2 py-3.5 sm:px-3">
-                                    <span @class(['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold', $statusStyle])>
-                                        <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                                    <x-admin.badge :status="$statusStyle">
                                         {{ ucfirst($payment->status->value === 'pending' ? 'Processing' : $payment->status->value) }}
-                                    </span>
+                                    </x-admin.badge>
                                     @if ($payment->failure_reason)
                                         <p class="mt-1 max-w-48 truncate text-[10px] text-cine-tertiary" title="{{ $payment->failure_reason }}">{{ $payment->failure_reason }}</p>
                                     @endif
