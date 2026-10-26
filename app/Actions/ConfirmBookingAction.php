@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\BookingConfirmationResult;
 use App\Enums\BookingStatus;
 use App\Enums\HoldStatus;
 use App\Enums\PaymentStatus;
@@ -15,18 +16,18 @@ use Illuminate\Support\Facades\DB;
 
 class ConfirmBookingAction
 {
-    public function execute(Payment $payment, string $paymentIntentId): bool
+    public function execute(Payment $payment, string $paymentIntentId): BookingConfirmationResult
     {
-        return DB::transaction(function () use ($payment, $paymentIntentId): bool {
+        return DB::transaction(function () use ($payment, $paymentIntentId): BookingConfirmationResult {
             $payment = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
             $booking = Booking::query()->whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
 
             if ($booking->isConfirmed()) {
-                return true;
+                return BookingConfirmationResult::AlreadyConfirmed;
             }
 
             if (! $booking->isPendingPayment() || ! $booking->hold_expires_at->isFuture()) {
-                return false;
+                return BookingConfirmationResult::CannotConfirm;
             }
 
             $holds = SeatHold::query()
@@ -39,7 +40,7 @@ class ConfirmBookingAction
                 ->get();
 
             if ($holds->count() !== $booking->seats_count) {
-                return false;
+                return BookingConfirmationResult::CannotConfirm;
             }
 
             $payment->forceFill([
@@ -78,7 +79,7 @@ class ConfirmBookingAction
                 'confirmed_at' => now(),
             ])->save();
 
-            return true;
+            return BookingConfirmationResult::Confirmed;
         });
     }
 }

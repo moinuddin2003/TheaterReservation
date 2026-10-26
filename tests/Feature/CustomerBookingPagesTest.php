@@ -7,6 +7,9 @@ use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use App\Enums\SeatType;
 use App\Enums\TicketStatus;
+use App\Mail\BookingConfirmed;
+use App\Mail\LatePaymentRefund;
+use App\Mail\PaymentNotCompleted;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Movie;
@@ -16,10 +19,12 @@ use App\Models\Screen;
 use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
+use App\Models\StripeEvent;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\BookingCancellationService;
 use App\Services\Payments\StripeGateway;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Mockery;
 use Stripe\Checkout\Session;
@@ -163,7 +168,16 @@ test('booking status pages use saved booking and ticket details', function () {
 
     $this->get(route('bookings.show', $pendingBooking->reference))
         ->assertOk()
-        ->assertSee($pendingBooking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i'));
+        ->assertSee($pendingBooking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i'))
+        ->assertSee('Payment needed')
+        ->assertSee('G7')
+        ->assertSee('Your seats are being held for you')
+        ->assertSee('Complete payment before then to confirm your booking.')
+        ->assertSee('Continue to payment')
+        ->assertSee(route('bookings.checkout', $pendingBooking->reference))
+        ->assertDontSee('Check payment status')
+        ->assertDontSee('Seat details have not been recorded')
+        ->assertDontSee('No refund record');
 
     $this->get(route('bookings.processing', $pendingBooking->reference))
         ->assertOk()
@@ -268,7 +282,36 @@ test('unverified customers cannot hold seats', function () {
         ->post(route('showtimes.holds.store', $showtime), ['seat_ids' => [$seat->id]])
         ->assertRedirect(route('verification.notice'));
 
-    expect(Booking::query()->count())->toBe(0);
+    expect(Booking::query()->count())->toBe(0)
+        ->and(SeatHold::query()->count())->toBe(0);
+});
+
+test('expired checkout holds release their seats and notify the customer', function () {
+    Mail::fake();
+    $user = User::factory()->create();
+    $booking = createCustomerBooking($user, BookingStatus::PendingPayment);
+    $payment = $booking->payments()->firstOrFail();
+    $payment->update(['gateway_session_id' => 'cs_test_abandoned']);
+    $booking->forceFill(['hold_expires_at' => now()->subMinute()])->save();
+    $booking->seatHolds()->update(['expires_at' => now()->subMinute()]);
+    $availableSeat = Seat::factory()->for($booking->showtime->screen)->create([
+        'row_label' => 'H',
+        'seat_number' => 8,
+        'label' => 'H8',
+    ]);
+
+    app(HoldSeatsAction::class)->execute($booking->showtime, $user, [$availableSeat->id]);
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Expired)
+        ->and($payment->refresh()->status)->toBe(PaymentStatus::Expired)
+        ->and($booking->seatHolds()->firstOrFail()->status)->toBe(HoldStatus::Expired);
+
+    Mail::assertQueuedOnce(PaymentNotCompleted::class, function (PaymentNotCompleted $mail) use ($booking, $user) {
+        return $mail->booking->is($booking)
+            && $mail->hasTo($user->email)
+            && str_contains($mail->render(), 'The seat hold has now been released')
+            && str_contains($mail->render(), $booking->reference);
+    });
 });
 
 test('a Stripe configuration failure is shown and leaves the active hold retryable', function () {
@@ -334,6 +377,7 @@ test('a Stripe idempotency conflict retries checkout with a fresh payment attemp
 });
 
 test('a paid Stripe checkout confirms the booking and creates tickets', function () {
+    Mail::fake();
     $secret = 'whsec_test_checkout';
     config(['services.stripe.webhook_secret' => $secret]);
     $user = User::factory()->create();
@@ -387,9 +431,243 @@ test('a paid Stripe checkout confirms the booking and creates tickets', function
         ->and($payment->refresh()->status)->toBe(PaymentStatus::Succeeded)
         ->and($payment->gateway_session_id)->toBe('cs_test_paid')
         ->and($booking->seatHolds()->firstOrFail()->status)->toBe(HoldStatus::Converted);
+
+    Mail::assertQueuedOnce(BookingConfirmed::class, function (BookingConfirmed $mail) use ($booking, $user) {
+        return $mail->booking->is($booking)
+            && $mail->hasTo($user->email)
+            && str_contains($mail->render(), $booking->reference)
+            && str_contains($mail->render(), 'T-'.$booking->id.'-01');
+    });
+
+    $duplicatePayload = json_encode([
+        'id' => 'evt_test_checkout_paid_intent',
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_paid',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount' => $payment->amount_cents,
+                'amount_received' => $payment->amount_cents,
+                'currency' => 'usd',
+                'metadata' => [
+                    'booking_id' => (string) $booking->getKey(),
+                    'payment_id' => (string) $payment->getKey(),
+                ],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $duplicateTimestamp = time();
+    $duplicateSignature = 't='.$duplicateTimestamp.',v1='.hash_hmac(
+        'sha256',
+        $duplicateTimestamp.'.'.$duplicatePayload,
+        $secret,
+    );
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $duplicateSignature,
+    ], $duplicatePayload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    Mail::assertQueuedCount(1);
+});
+
+test('a paid Stripe payment intent confirms its booking including a previously ignored event', function () {
+    Mail::fake();
+    $secret = 'whsec_test_payment_intent';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $user = User::factory()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create([
+        'row_label' => 'E',
+        'seat_number' => 5,
+        'label' => 'E5',
+    ]);
+    $booking = app(HoldSeatsAction::class)->execute($showtime, $user, [$seat->id]);
+    $payment = new Payment([
+        'gateway' => 'stripe',
+        'gateway_session_id' => 'cs_test_intent',
+        'idempotency_key' => Str::random(64),
+        'currency' => $booking->currency,
+    ]);
+    $payment->forceFill([
+        'amount_cents' => $booking->total_cents,
+        'status' => PaymentStatus::Pending,
+    ]);
+    $booking->payments()->save($payment);
+    $eventId = 'evt_test_payment_intent_paid';
+    $savedEvent = new StripeEvent([
+        'stripe_event_id' => $eventId,
+        'type' => 'payment_intent.succeeded',
+    ]);
+    $savedEvent->forceFill(['status' => 'ignored'])->save();
+    $payload = json_encode([
+        'id' => $eventId,
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_paid',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount' => $payment->amount_cents,
+                'amount_received' => $payment->amount_cents,
+                'currency' => 'usd',
+                'metadata' => [
+                    'booking_id' => (string) $booking->getKey(),
+                    'payment_id' => (string) $payment->getKey(),
+                ],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Confirmed)
+        ->and($booking->tickets()->count())->toBe(1)
+        ->and($payment->refresh()->status)->toBe(PaymentStatus::Succeeded)
+        ->and($payment->gateway_payment_intent_id)->toBe('pi_test_paid')
+        ->and(StripeEvent::query()->where('stripe_event_id', $eventId)->firstOrFail()->status)->toBe('processed');
+
+    Mail::assertQueuedOnce(BookingConfirmed::class);
+});
+
+test('a failed Stripe checkout releases its hold and sends one payment email', function () {
+    Mail::fake();
+    $secret = 'whsec_test_failed_checkout';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $user = User::factory()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create();
+    $booking = app(HoldSeatsAction::class)->execute($showtime, $user, [$seat->id]);
+    $payment = new Payment([
+        'gateway' => 'stripe',
+        'gateway_session_id' => 'cs_test_failed',
+        'idempotency_key' => Str::random(64),
+        'currency' => $booking->currency,
+    ]);
+    $payment->forceFill([
+        'amount_cents' => $booking->total_cents,
+        'status' => PaymentStatus::Pending,
+    ]);
+    $booking->payments()->save($payment);
+    $payload = json_encode([
+        'id' => 'evt_test_failed_checkout',
+        'object' => 'event',
+        'type' => 'checkout.session.async_payment_failed',
+        'data' => [
+            'object' => [
+                'id' => 'cs_test_failed',
+                'object' => 'checkout.session',
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Failed)
+        ->and($payment->refresh()->status)->toBe(PaymentStatus::Failed)
+        ->and($booking->seatHolds()->firstOrFail()->status)->toBe(HoldStatus::Released);
+
+    Mail::assertQueuedOnce(PaymentNotCompleted::class, function (PaymentNotCompleted $mail) use ($booking, $user) {
+        return $mail->booking->is($booking)
+            && $mail->hasTo($user->email)
+            && str_contains($mail->render(), 'The seat hold has now been released');
+    });
+});
+
+test('an abandoned Stripe checkout expires its hold and emails the customer', function () {
+    Mail::fake();
+    $secret = 'whsec_test_expired_checkout';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $user = User::factory()->create();
+    $booking = createCustomerBooking($user, BookingStatus::PendingPayment);
+    $payment = $booking->payments()->firstOrFail();
+    $payment->update(['gateway_session_id' => 'cs_test_expired']);
+    $payload = json_encode([
+        'id' => 'evt_test_expired_checkout',
+        'object' => 'event',
+        'type' => 'checkout.session.expired',
+        'data' => [
+            'object' => [
+                'id' => 'cs_test_expired',
+                'object' => 'checkout.session',
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Expired)
+        ->and($payment->refresh()->status)->toBe(PaymentStatus::Expired)
+        ->and($booking->seatHolds()->firstOrFail()->status)->toBe(HoldStatus::Expired);
+
+    Mail::assertQueuedOnce(PaymentNotCompleted::class, function (PaymentNotCompleted $mail) use ($booking, $user) {
+        return $mail->booking->is($booking)
+            && $mail->hasTo($user->email)
+            && str_contains($mail->render(), 'Your payment was not completed');
+    });
+});
+
+test('unrelated succeeded Stripe payment intents are acknowledged without affecting bookings', function () {
+    $secret = 'whsec_test_unrelated_payment_intent';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $payload = json_encode([
+        'id' => 'evt_test_unrelated_payment_intent',
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_unrelated',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount_received' => 1200,
+                'currency' => 'usd',
+                'metadata' => [],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect(Booking::query()->count())->toBe(0)
+        ->and(StripeEvent::query()->where('stripe_event_id', 'evt_test_unrelated_payment_intent')
+            ->firstOrFail()->status)->toBe('ignored');
 });
 
 test('late Stripe payments are automatically refunded after the seat hold expires', function () {
+    Mail::fake();
     $secret = 'whsec_test_late_checkout';
     config(['services.stripe.webhook_secret' => $secret]);
     $user = User::factory()->create();
@@ -447,12 +725,52 @@ test('late Stripe payments are automatically refunded after the seat hold expire
         ->assertOk()
         ->assertJson(['received' => true]);
 
+    $paymentIntentPayload = json_encode([
+        'id' => 'evt_test_late_payment_intent',
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_late',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount' => $booking->total_cents,
+                'amount_received' => $booking->total_cents,
+                'currency' => 'usd',
+                'metadata' => [
+                    'booking_id' => (string) $booking->getKey(),
+                    'payment_id' => (string) $payment->getKey(),
+                ],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $paymentIntentTimestamp = time();
+    $paymentIntentSignature = 't='.$paymentIntentTimestamp.',v1='.hash_hmac(
+        'sha256',
+        $paymentIntentTimestamp.'.'.$paymentIntentPayload,
+        $secret,
+    );
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $paymentIntentSignature,
+    ], $paymentIntentPayload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
     $refund = Refund::query()->where('booking_id', $booking->getKey())->firstOrFail();
     expect($booking->refresh()->status)->toBe(BookingStatus::Refunded)
         ->and($booking->tickets()->count())->toBe(0)
         ->and($payment->refresh()->status)->toBe(PaymentStatus::Refunded)
         ->and($refund->reason)->toBe('late_payment')
         ->and($refund->status)->toBe(RefundStatus::Succeeded);
+
+    Mail::assertQueuedOnce(LatePaymentRefund::class, function (LatePaymentRefund $mail) use ($booking, $user) {
+        return $mail->refund->booking->is($booking)
+            && $mail->hasTo($user->email)
+            && str_contains($mail->render(), 'requested an automatic refund')
+            && str_contains($mail->render(), $booking->reference);
+    });
 });
 
 test('booking screens require a signed-in customer', function () {

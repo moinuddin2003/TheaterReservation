@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cinema;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
@@ -9,14 +10,20 @@ test('login screen can be rendered', function () {
 });
 
 test('customers can use the customer dashboard', function () {
+    Cinema::factory()->create(['name' => 'Downtown Cinema']);
     $user = User::factory()->create(['name' => 'Cinema Customer']);
 
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard')
+        ->assertSee('Welcome to Downtown Cinema, Cinema Customer')
+        ->assertSee('<span>Downtown Cinema</span>', false)
         ->assertSee('Browse movies')
-        ->assertSee('My bookings');
+        ->assertSee('My bookings')
+        ->assertSee('aria-haspopup="menu"', false)
+        ->assertSee('Profile')
+        ->assertSee('Log out')
+        ->assertSee('cinema-app', false);
 });
 
 test('customers can register using the customer registration form', function () {

@@ -227,15 +227,14 @@ captured recipient; Mailpit does not deliver it.
 
 The app has a `POST /stripe/webhook` route. It verifies the `Stripe-Signature`
 header using `STRIPE_WEBHOOK_SECRET` and processes Checkout completion,
-expiration, and refund events. Booking confirmation depends on receiving the
-`checkout.session.completed` event with a paid session; forwarding only
-`payment_intent.succeeded` will not confirm a booking.
+expiration, and refund events. It can also confirm a paid booking from its
+matching `payment_intent.succeeded` event.
 
 Open another PowerShell window in the folder containing `stripe.exe` and
 forward webhook events to the local app:
 
 ```powershell
-.\stripe.exe listen --forward-to http://127.0.0.1:8000/stripe/webhook
+.\stripe.exe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.succeeded,refund.updated,refund.failed --forward-to http://127.0.0.1:8000/stripe/webhook
 ```
 
 Keep this terminal open. The CLI displays a webhook signing secret beginning
@@ -249,9 +248,10 @@ listener so the app and CLI use the same secret.
 
 Complete a booking through the app's Stripe Checkout page using a Stripe test
 card, for example `4242 4242 4242 4242` with any future expiry date and any
-three-digit CVC. This creates a Checkout Session tied to the booking; a generic
-`stripe trigger payment_intent.succeeded` event is not a substitute because it
-does not contain that booking's Checkout Session metadata.
+three-digit CVC. This creates a Checkout Session and PaymentIntent tied to the
+booking. The listener forwards the verified payment event back to the app. A
+generic `stripe trigger payment_intent.succeeded` event is still not a
+substitute because it does not contain your booking's metadata.
 
 The listener should show a successful HTTP response (2xx) after forwarding the
 event. To inspect Laravel's recent log entries from the project root:
@@ -267,8 +267,9 @@ webhook secret, or a live key. If the listener shows `400`, check that
 `STRIPE_WEBHOOK_SECRET` exactly matches the active listener's `whsec_` value,
 then run `php artisan config:clear`. If the response is `419`, confirm
 `bootstrap/app.php` excludes `stripe/webhook` from request-forgery (CSRF)
-validation. After a successful payment, refresh the booking status page; it
-updates from the status saved by the webhook.
+validation. After successful payment, Stripe returns to the processing page. The webhook
+verifies the payment and confirms the booking; use **Refresh status** if the
+webhook takes a moment to arrive.
 
 Keep the Laravel server, Mailpit, and Stripe listener terminals running while
 testing. The CLI trigger is for Stripe test data only. In production, configure

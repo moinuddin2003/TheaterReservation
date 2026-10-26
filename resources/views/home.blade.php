@@ -101,11 +101,7 @@
 
                             @forelse ($bookableShowtimes as $showtime)
                                 <a
-                                    href="{{ route('movies.seats', [
-                                        'movieSlug' => $showtime->movie->slug,
-                                        'date' => $date['date'],
-                                        'time' => $showtime->starts_at->format('H:i'),
-                                    ]) }}"
+                                    href="{{ route('showtimes.show', $showtime) }}"
                                     class="home-schedule__time"
                                 >
                                     <strong>{{ $showtime->movie->title }}</strong>
