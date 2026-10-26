@@ -5,13 +5,20 @@ namespace App\Http\Controllers;
 use App\Actions\ConfirmBookingAction;
 use App\Actions\HandleLatePaymentAction;
 use App\Actions\ReleaseHoldAction;
+use App\Enums\BookingConfirmationResult;
 use App\Enums\BookingStatus;
+use App\Mail\BookingConfirmed;
+use App\Mail\LatePaymentRefund;
+use App\Mail\PaymentNotCompleted;
+use App\Models\Booking;
 use App\Models\Payment;
+use App\Models\Refund;
 use App\Models\StripeEvent;
 use App\Services\BookingCancellationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Stripe\Exception\SignatureVerificationException;
 use Stripe\StripeObject;
 use Stripe\Webhook;
@@ -92,8 +99,13 @@ class StripeWebhookController extends Controller
                 return response()->json(['error' => 'Payment intent missing'], 500);
             }
 
-            if (! $confirmBookingAction->execute($payment, $paymentIntentId)) {
-                $handleLatePaymentAction->execute($payment, $paymentIntentId);
+            $confirmationResult = $confirmBookingAction->execute($payment, $paymentIntentId);
+
+            if ($confirmationResult === BookingConfirmationResult::CannotConfirm) {
+                $latePaymentRefund = $handleLatePaymentAction->execute($payment, $paymentIntentId);
+                $this->queueLatePaymentRefundEmail($latePaymentRefund);
+            } elseif ($confirmationResult === BookingConfirmationResult::Confirmed) {
+                $this->queueConfirmationEmail($payment);
             }
 
             $this->markEvent($savedEvent, 'processed');
@@ -137,8 +149,13 @@ class StripeWebhookController extends Controller
                 return response()->json(['error' => 'Payment amount mismatch'], 500);
             }
 
-            if (! $confirmBookingAction->execute($payment, $paymentIntentId)) {
-                $handleLatePaymentAction->execute($payment, $paymentIntentId);
+            $confirmationResult = $confirmBookingAction->execute($payment, $paymentIntentId);
+
+            if ($confirmationResult === BookingConfirmationResult::CannotConfirm) {
+                $latePaymentRefund = $handleLatePaymentAction->execute($payment, $paymentIntentId);
+                $this->queueLatePaymentRefundEmail($latePaymentRefund);
+            } elseif ($confirmationResult === BookingConfirmationResult::Confirmed) {
+                $this->queueConfirmationEmail($payment);
             }
 
             $this->markEvent($savedEvent, 'processed');
@@ -153,12 +170,16 @@ class StripeWebhookController extends Controller
             if ($payment) {
                 $payment->forceFill(['gateway_session_id' => $checkoutSession->id])->save();
                 $payment->load('booking');
-                $releaseHoldAction->execute(
+                $wasReleased = $releaseHoldAction->execute(
                     $payment->booking,
                     $event->type === 'checkout.session.expired'
                         ? BookingStatus::Expired
                         : BookingStatus::Failed,
                 );
+
+                if ($wasReleased) {
+                    $this->queuePaymentNotCompletedEmail($payment);
+                }
             }
 
             $this->markEvent($savedEvent, $payment ? 'processed' : 'ignored');
@@ -194,6 +215,38 @@ class StripeWebhookController extends Controller
             'status' => $status,
             'processed_at' => now(),
         ])->save();
+    }
+
+    private function queueConfirmationEmail(Payment $payment): void
+    {
+        $booking = Booking::query()
+            ->with(['user', 'showtime.movie', 'items.ticket'])
+            ->findOrFail($payment->booking_id);
+
+        Mail::to($booking->user->email)
+            ->queue((new BookingConfirmed($booking))->afterCommit());
+    }
+
+    private function queuePaymentNotCompletedEmail(Payment $payment): void
+    {
+        $booking = Booking::query()
+            ->with(['user', 'showtime.movie', 'items.ticket'])
+            ->findOrFail($payment->booking_id);
+
+        Mail::to($booking->user->email)
+            ->queue((new PaymentNotCompleted($booking))->afterCommit());
+    }
+
+    private function queueLatePaymentRefundEmail(?Refund $refund): void
+    {
+        if (! $refund) {
+            return;
+        }
+
+        $refund->loadMissing(['booking.user', 'booking.showtime.movie']);
+
+        Mail::to($refund->booking->user->email)
+            ->queue((new LatePaymentRefund($refund))->afterCommit());
     }
 
     private function findPaymentForSession(StripeObject $session): ?Payment
