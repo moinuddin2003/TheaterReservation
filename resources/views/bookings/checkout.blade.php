@@ -3,7 +3,7 @@
 @section('title', 'Seat hold')
 
 @section('content')
-    <div class="page-shell booking-page">
+    <div class="page-shell booking-page booking-page--checkout">
         <p class="booking-steps">
             <strong>01 SELECT SEATS</strong>
             <span aria-hidden="true">→</span> 02 CHECKOUT
@@ -13,11 +13,11 @@
 
         <div class="booking-detail-layout">
             <div class="booking-detail-main">
-                <section class="booking-panel">
+                <section class="booking-panel booking-panel--checkout-summary">
                     <x-booking-summary :booking="$booking" />
                 </section>
 
-                <section class="booking-panel">
+                <section class="booking-panel booking-panel--checkout-order">
                     <h2>Order details</h2>
                     <div class="booking-table-wrap">
                         <table class="booking-table">
@@ -50,11 +50,13 @@
 
             <aside class="booking-detail-side">
                 <section class="booking-panel booking-hold-panel">
-                    <p class="eyebrow">HOLD ACTIVE</p>
-                    <p class="booking-countdown" data-hold-countdown
-                        data-hold-expires-at="{{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->toIso8601String() }}">
-                        {{ $booking->hold_expires_at->diffForHumans() }}
-                    </p>
+                    <div class="booking-hold-panel__status">
+                        <p class="eyebrow">HOLD ACTIVE</p>
+                        <p class="booking-countdown" data-hold-countdown
+                            data-hold-expires-at="{{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->toIso8601String() }}">
+                            {{ $booking->hold_expires_at->diffForHumans() }}
+                        </p>
+                    </div>
                     <p>
                         Hold expires {{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}.
                     </p>
@@ -64,15 +66,17 @@
                     @error('checkout')
                         <p class="form-error" role="alert">{{ $message }}</p>
                     @enderror
-                    <form action="{{ route('bookings.checkout.start', $booking->reference) }}" method="POST">
-                        @csrf
-                        <button class="button button--primary button--full" type="submit">
-                            Continue to secure Stripe checkout
-                        </button>
-                    </form>
-                    <a class="button button--quiet" href="{{ route('bookings.show', $booking->reference) }}">
-                        Booking details
-                    </a>
+                    <div class="booking-hold-panel__actions">
+                        <form action="{{ route('bookings.checkout.start', $booking->reference) }}" method="POST">
+                            @csrf
+                            <button class="button button--primary button--full" type="submit">
+                                Continue to secure Stripe checkout
+                            </button>
+                        </form>
+                        <a class="button button--quiet" href="{{ route('bookings.show', $booking->reference) }}">
+                            Booking details
+                        </a>
+                    </div>
                 </section>
             </aside>
         </div>

@@ -12,6 +12,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="dark light">
     <title>{{ $title }} — {{ $cinema?->name ?? config('app.name') }}</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet">
     <x-theme-init />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

@@ -20,6 +20,9 @@ test('signed-in customers see the dashboard in the cinema layout', function () {
         ->assertSee('<span>Downtown Cinema</span>', false)
         ->assertSee('Browse movies')
         ->assertSee('My bookings')
+        ->assertSee('aria-haspopup="menu"', false)
+        ->assertSee('Profile')
+        ->assertSee('Log out')
         ->assertSee('cinema-app', false);
 });
 
