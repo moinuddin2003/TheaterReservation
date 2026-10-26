@@ -202,7 +202,7 @@
                                     <span class="block">{{ $startsAtLocal->format('M j, Y') }}</span>
                                     <span class="mt-0.5 block font-semibold text-cine-primary">{{ $startsAtLocal->format('h:i A') }}–{{ $displayEndsAtLocal->format('h:i A') }}</span>
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-2.5 font-semibold text-cine-primary">${{ number_format($showtime->base_price_cents / 100, 2) }}</td>
+                                <td class="whitespace-nowrap px-3 py-2.5 font-semibold text-cine-primary"><x-admin.money :cents="$showtime->base_price_cents" /></td>
                                 <td class="whitespace-nowrap px-3 py-2.5"><x-admin.badge :status="$statusStyle">{{ $statusLabel }}</x-admin.badge></td>
                                 <td class="whitespace-nowrap px-3 py-2.5 text-right">
                                     <x-admin.showtime-actions :showtime="$showtime" />

@@ -60,6 +60,7 @@ Route::prefix('admin')
         Route::post('/bookings/{booking}/refund', [BookingController::class, 'refund'])->name('bookings.refund');
         Route::post('/bookings/{booking}/tickets/{ticket}/void', [BookingController::class, 'voidTicket'])->name('bookings.tickets.void');
         Route::post('/bookings/{booking}/resend-email', [BookingController::class, 'resendEmail'])->name('bookings.resend-email');
+        Route::get('/payments/export', [PaymentController::class, 'export'])->name('payments.export');
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');

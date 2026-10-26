@@ -18,7 +18,7 @@
     @php
         $summaryCards = [
             ['label' => 'Total bookings', 'value' => number_format($stats['total_bookings']), 'icon' => 'ticket', 'style' => 'text-cine-accent'],
-            ['label' => 'Total revenue', 'value' => '$'.number_format($stats['total_revenue'] / 100, 2), 'icon' => 'dollar-sign', 'style' => 'text-cine-success'],
+            ['label' => 'Total revenue', 'cents' => $stats['total_revenue'], 'currency' => 'USD', 'icon' => 'dollar-sign', 'style' => 'text-cine-success'],
             ['label' => 'Pending refunds', 'value' => number_format($stats['pending_refunds']), 'icon' => 'undo-2', 'style' => 'text-cine-warning'],
             ['label' => 'Failed payments today', 'value' => number_format($stats['failed_payments']), 'icon' => 'credit-card', 'style' => 'text-cine-danger'],
         ];
@@ -40,7 +40,7 @@
                     <p class="text-xs font-medium text-cine-secondary">{{ $card['label'] }}</p>
                     <x-admin.icon :name="$card['icon']" class="h-4 w-4 {{ $card['style'] }}" />
                 </div>
-                <p class="mt-2 text-2xl font-bold tracking-tight text-cine-primary">{{ $card['value'] }}</p>
+                <p class="mt-2 text-2xl font-bold tracking-tight text-cine-primary">@if (isset($card['cents']))<x-admin.money :cents="$card['cents']" :currency="$card['currency']" />@else{{ $card['value'] }}@endif</p>
             </div>
         @endforeach
     </div>
@@ -151,7 +151,7 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="whitespace-nowrap px-3 py-3 text-right font-semibold text-cine-primary">{{ $booking->currency }} {{ number_format($booking->total_cents / 100, 2) }}</td>
+                                <td class="whitespace-nowrap px-3 py-3 text-right font-semibold text-cine-primary"><x-admin.money :cents="$booking->total_cents" :currency="$booking->currency" /></td>
                                 <td class="whitespace-nowrap px-3 py-3">
                                     <x-admin.badge :status="$paymentStyle">{{ $latestPayment ? str($latestPayment->status->value)->replace('_', ' ')->title() : 'Awaiting' }}</x-admin.badge>
                                 </td>

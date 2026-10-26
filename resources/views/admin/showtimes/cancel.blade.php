@@ -22,11 +22,11 @@
                 @foreach ([
                     ['label' => 'Confirmed bookings', 'value' => $impact['confirmed']],
                     ['label' => 'Tickets to void', 'value' => $impact['tickets']],
-                    ['label' => 'Paid booking total · USD', 'value' => '$'.number_format($impact['amount_cents'] / 100, 2)],
+                    ['label' => 'Paid booking total', 'cents' => $impact['amount_cents']],
                 ] as $stat)
                     <div class="rounded-xl border border-cine-border/10 bg-cine-bg/50 p-4">
                         <p class="text-xs text-cine-tertiary">{{ $stat['label'] }}</p>
-                        <p class="mt-2 text-xl font-bold text-cine-primary">{{ $stat['value'] }}</p>
+                        <p class="mt-2 text-xl font-bold text-cine-primary">@if (isset($stat['cents']))<x-admin.money :cents="$stat['cents']" />@else{{ $stat['value'] }}@endif</p>
                     </div>
                 @endforeach
             </div>

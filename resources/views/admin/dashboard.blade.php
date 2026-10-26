@@ -38,7 +38,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="text-xs font-medium text-cine-secondary">Net revenue today</p>
-                    <p class="mt-3 text-3xl font-bold tracking-tight text-cine-primary">${{ number_format($netRevenueCents / 100, 2) }}</p>
+                    <p class="mt-3 text-3xl font-bold tracking-tight text-cine-primary"><x-admin.money :cents="$netRevenueCents" /></p>
                     <p class="mt-2 text-xs text-cine-tertiary">After successful refunds</p>
                 </div>
                 <span class="flex h-10 w-10 items-center justify-center rounded-xl border border-cine-accent/20 bg-cine-accent/10 text-cine-accent">
