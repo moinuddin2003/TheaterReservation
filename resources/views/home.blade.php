@@ -100,10 +100,7 @@
                         <div class="home-schedule__times">
 
                             @forelse ($bookableShowtimes as $showtime)
-                                <a
-                                    href="{{ route('showtimes.show', $showtime) }}"
-                                    class="home-schedule__time"
-                                >
+                                <a href="{{ route('showtimes.show', $showtime) }}" class="home-schedule__time">
                                     <strong>{{ $showtime->movie->title }}</strong>
                                     <span>{{ $showtime->starts_at->format('H:i') }}</span>
                                     <small>{{ $showtime->screen?->name ?? 'Screen' }}</small>
