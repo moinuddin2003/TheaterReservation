@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Cinema;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
@@ -9,18 +8,33 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
-test('signed-in customers see the dashboard in the cinema layout', function () {
-    Cinema::factory()->create(['name' => 'Downtown Cinema']);
+test('customers can use the customer dashboard', function () {
     $user = User::factory()->create(['name' => 'Cinema Customer']);
 
     $this->actingAs($user)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Welcome to Downtown Cinema, Cinema Customer')
-        ->assertSee('<span>Downtown Cinema</span>', false)
+        ->assertSee('Dashboard')
         ->assertSee('Browse movies')
-        ->assertSee('My bookings')
-        ->assertSee('cinema-app', false);
+        ->assertSee('My bookings');
+});
+
+test('customers can register using the customer registration form', function () {
+    $this->get('/register')
+        ->assertOk()
+        ->assertSee('Your seat in the story');
+
+    $this->post('/register', [
+        'name' => 'New Customer',
+        'email' => 'new-customer@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertRedirect(route('dashboard', absolute: false));
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'new-customer@example.com',
+        'role' => 'customer',
+    ]);
 });
 
 test('users can authenticate using the login screen', function () {
@@ -52,5 +66,5 @@ test('users can logout', function () {
     $response = $this->actingAs($user)->post('/logout');
 
     $this->assertGuest();
-    $response->assertRedirect('/');
+    $response->assertRedirect(route('login'));
 });

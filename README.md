@@ -7,6 +7,24 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Movie reservation app
+
+This project combines the customer booking experience with the CineBook admin
+panel and staff tools. Customers can browse movies, reserve seats, and manage
+their bookings; administrators manage the cinema, catalog, showtimes, payments,
+and refunds; staff use the separate `/staff` screens for admissions.
+
+Run `php artisan migrate --seed` to create the demo cinema and role accounts.
+The seeded accounts use `SEED_PASSWORD` from `.env` (default: `password`):
+
+| Role | Email | Start page |
+| --- | --- | --- |
+| Admin | `admin@cinebook.test` | `/admin` |
+| Staff | `staff@cinebook.test` | `/staff` |
+| Customer | `customer@cinebook.test` | `/dashboard` |
+
+Use `npm run dev` while developing or `npm run build` for production assets.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

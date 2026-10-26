@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Actions\CancelShowtimeAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CancelShowtimeRequest;
+use App\Http\Requests\ShowtimeIndexRequest;
 use App\Http\Requests\ShowtimeRequest;
+use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Screen;
 use App\Models\Showtime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 
 class ShowtimeController extends Controller
@@ -20,43 +24,105 @@ class ShowtimeController extends Controller
     /**
      * List showtimes with optional date, screen and movie filters.
      */
-    public function index(Request $request): View
+    public function index(ShowtimeIndexRequest $request): View
     {
-        $date = $request->query('date');
-        $date = is_string($date) && $date !== '' ? $date : null;
-        $screenId = $request->integer('screen_id') ?: null;
-        $movieId = $request->integer('movie_id') ?: null;
+        $selectedDate = $request->selectedDate();
+        $weekStart = $request->weekStart();
+        $weekEnd = $request->weekEnd();
+        $weekEndExclusive = $weekEnd->copy()->addDay()->startOfDay();
+        $weekDays = collect(range(0, 6))
+            ->map(fn (int $offset) => $weekStart->copy()->addDays($offset));
+        $dayRanges = $weekDays->map(function (Carbon $day): array {
+            $start = $day->copy()->startOfDay();
 
-        $showtimes = Showtime::query()
-            ->with(['movie', 'screen'])
-            ->withCount('bookings')
-            ->when($date, fn ($query, $date) => $query->onDate($date))
-            ->when($screenId, fn ($query, $id) => $query->where('screen_id', $id))
-            ->when($movieId, fn ($query, $id) => $query->where('movie_id', $id))
+            return [
+                'start' => $start->copy()->utc(),
+                'end' => $start->copy()->addDay()->startOfDay()->utc(),
+            ];
+        });
+        $caseClauses = [];
+        $caseBindings = [];
+        foreach ($dayRanges as $dayIndex => $range) {
+            $caseClauses[] = 'WHEN starts_at >= ? AND starts_at < ? THEN ?';
+            $caseBindings[] = $range['start']->toDateTimeString();
+            $caseBindings[] = $range['end']->toDateTimeString();
+            $caseBindings[] = $dayIndex;
+        }
+
+        $showtimeCounts = $this->applyFilters(Showtime::query(), $request)
+            ->where('starts_at', '>=', $weekStart->copy()->startOfDay()->utc())
+            ->where('starts_at', '<', $weekEndExclusive->copy()->setTimezone($request->timezone())->utc())
+            ->selectRaw('CASE '.implode(' ', $caseClauses).' ELSE NULL END AS local_day, COUNT(*) AS total', $caseBindings)
+            ->groupBy('local_day')
+            ->pluck('total', 'local_day');
+
+        $selectedDayStartUtc = $selectedDate->copy()->startOfDay()->utc();
+        $showtimes = $this->applyFilters(Showtime::query()->with(['movie', 'screen.cinema']), $request)
+            ->where('starts_at', '>=', $selectedDayStartUtc)
             ->orderBy('starts_at')
-            ->paginate(20)
+            ->orderBy(Screen::query()->select('name')->whereColumn('screens.id', 'showtimes.screen_id'))
+            ->paginate(10)
             ->withQueryString();
 
         return view('admin.showtimes.index', [
             'showtimes' => $showtimes,
-            'movies' => Movie::query()->orderBy('title')->get(),
-            'screens' => Screen::query()->orderBy('name')->get(),
+            'selectedDate' => $selectedDate,
+            'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
+            'weekDays' => $weekDays,
+            'showtimeCounts' => $showtimeCounts,
+            'timezone' => $request->timezone(),
+            'now' => Carbon::now($request->timezone()),
+            'movies' => Movie::query()->orderBy('title')->get(['id', 'title']),
+            'cinemas' => Cinema::query()->orderBy('name')->get(['id', 'name']),
+            'screens' => Screen::query()->with('cinema')->orderBy('name')->get(),
             'filters' => [
-                'date' => $date,
-                'screen_id' => $screenId,
-                'movie_id' => $movieId,
+                'search' => $request->search() ?? '',
+                'cinema_id' => $request->cinemaId(),
+                'screen_id' => $request->screenId(),
             ],
         ]);
     }
 
     /**
+     * Apply the schedule's shared search and location filters.
+     *
+     * @param  Builder<Showtime>  $query
+     * @return Builder<Showtime>
+     */
+    private function applyFilters(Builder $query, ShowtimeIndexRequest $request): Builder
+    {
+        return $query
+            ->when($request->search(), function (Builder $query, string $search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->whereHas('movie', fn (Builder $movies) => $movies->where('title', 'like', '%'.$search.'%'))
+                        ->orWhereHas('screen', function (Builder $screens) use ($search): void {
+                            $screens->where('name', 'like', '%'.$search.'%')
+                                ->orWhereHas('cinema', fn (Builder $cinemas) => $cinemas->where('name', 'like', '%'.$search.'%'));
+                        });
+                });
+            })
+            ->when($request->cinemaId(), fn (Builder $query, int $cinemaId) => $query->whereHas(
+                'screen.cinema',
+                fn (Builder $cinemas) => $cinemas->whereKey($cinemaId),
+            ))
+            ->when($request->screenId(), fn (Builder $query, int $screenId) => $query->where('screen_id', $screenId));
+    }
+
+    /**
      * Show the form to schedule a new showtime.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('admin.showtimes.create', [
+        $startDate = $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ])['date'] ?? null;
+
+        return view('admin.showtimes.form', [
+            'showtime' => null,
+            'startDate' => $startDate,
             'movies' => Movie::query()->orderBy('title')->get(),
-            'screens' => Screen::query()->where('is_active', true)->orderBy('name')->get(),
+            'screens' => Screen::query()->with('cinema')->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -84,10 +150,15 @@ class ShowtimeController extends Controller
      */
     public function edit(Showtime $showtime): View
     {
-        return view('admin.showtimes.edit', [
+        return view('admin.showtimes.form', [
             'showtime' => $showtime->load(['movie', 'screen']),
+            'startDate' => null,
             'movies' => Movie::query()->orderBy('title')->get(),
-            'screens' => Screen::query()->where('is_active', true)->orderBy('name')->get(),
+            'screens' => Screen::query()
+                ->with('cinema')
+                ->where(fn ($query) => $query->where('is_active', true)->orWhereKey($showtime->screen_id))
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -121,6 +192,8 @@ class ShowtimeController extends Controller
      */
     public function confirmCancel(Showtime $showtime): View
     {
+        abort_unless($showtime->isScheduled() && ! $showtime->hasEnded(), 404);
+
         return view('admin.showtimes.cancel', [
             'showtime' => $showtime->load(['movie', 'screen']),
             'impact' => $this->cancelShowtime->impact($showtime),
@@ -132,22 +205,25 @@ class ShowtimeController extends Controller
      */
     public function cancel(CancelShowtimeRequest $request, Showtime $showtime): RedirectResponse
     {
-        if (! $showtime->isScheduled()) {
+        $impact = $this->cancelShowtime->execute(
+            $showtime,
+            $request->user(),
+            $request->validated('cancel_reason'),
+        );
+
+        if ($impact === null) {
             return redirect()
                 ->route('admin.showtimes.index')
-                ->with('error', 'This showtime is already cancelled.');
+                ->with('error', 'This showtime is no longer available for cancellation.');
         }
 
-        if ($showtime->hasEnded()) {
-            return redirect()
-                ->route('admin.showtimes.index')
-                ->with('error', 'A showtime that has already ended cannot be cancelled.');
-        }
-
-        $this->cancelShowtime->execute($showtime, $request->user(), $request->validated('cancel_reason'));
+        $bookingCount = $impact['confirmed'] + $impact['pending_payment'];
 
         return redirect()
             ->route('admin.showtimes.index')
-            ->with('status', 'Showtime cancelled.');
+            ->with(
+                'status',
+                "Showtime cancelled. {$bookingCount} bookings cancelled, {$impact['tickets']} tickets voided and {$impact['active_holds']} seat holds released. No refunds were processed.",
+            );
     }
 }

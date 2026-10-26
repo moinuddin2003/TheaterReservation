@@ -1,7 +1,9 @@
 <?php
 
-it('returns a successful response', function () {
-    $response = $this->get('/');
+it('shows the public customer home page to visitors', function () {
+    $this->seed();
 
-    $response->assertStatus(200);
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('The Last Horizon');
 });
