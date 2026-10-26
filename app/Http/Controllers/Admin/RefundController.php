@@ -16,9 +16,8 @@ class RefundController extends Controller
     public function index(RefundIndexRequest $request): View
     {
         $filters = $request->filters();
-        $period = $this->period($filters);
-        $currentTotals = $this->totals($period['from'], $period['to']);
-        $previousTotals = $this->totals($period['previous_from'], $period['previous_to']);
+        $from = Carbon::parse($filters['from'])->startOfDay();
+        $to = Carbon::parse($filters['to'])->addDay()->startOfDay();
         $filteredRefunds = $this->filteredRefunds($filters);
 
         return view('admin.refunds.index', [
@@ -28,19 +27,8 @@ class RefundController extends Controller
                 ->orderByDesc('refunds.id')
                 ->paginate(10)
                 ->withQueryString(),
-            'latestFailedRefund' => Refund::query()
-                ->with(['booking.user', 'payment'])
-                ->where('status', RefundStatus::Failed)
-                ->latest('created_at')
-                ->first(),
             'filters' => $filters,
-            'totals' => $currentTotals,
-            'trends' => [
-                'count' => $this->trend($currentTotals['count'], $previousTotals['count']),
-                'amount' => $this->trend($currentTotals['amount_cents'], $previousTotals['amount_cents']),
-                'pending' => $this->trend($currentTotals['pending'], $previousTotals['pending']),
-                'failed' => $this->trend($currentTotals['failed'], $previousTotals['failed']),
-            ],
+            'totals' => $this->totals($from, $to),
         ]);
     }
 
@@ -135,48 +123,6 @@ class RefundController extends Controller
             'pending' => (clone $query)->where('status', RefundStatus::Pending)->count(),
             'failed' => (clone $query)->where('status', RefundStatus::Failed)->count(),
             'succeeded' => (clone $query)->where('status', RefundStatus::Succeeded)->count(),
-        ];
-    }
-
-    /**
-     * @param  array{from: string, to: string}  $filters
-     * @return array{from: Carbon, to: Carbon, previous_from: Carbon, previous_to: Carbon}
-     */
-    private function period(array $filters): array
-    {
-        $from = Carbon::parse($filters['from'])->startOfDay();
-        $to = Carbon::parse($filters['to'])->addDay()->startOfDay();
-        $days = $from->diffInDays($to);
-
-        return [
-            'from' => $from,
-            'to' => $to,
-            'previous_from' => $from->copy()->subDays($days),
-            'previous_to' => $from,
-        ];
-    }
-
-    /**
-     * @return array{label: string, direction: string}
-     */
-    private function trend(int $current, int $previous): array
-    {
-        if ($previous === 0) {
-            return [
-                'label' => $current === 0 ? '0%' : 'New',
-                'direction' => $current === 0 ? 'neutral' : 'up',
-            ];
-        }
-
-        $change = (int) round((($current - $previous) / $previous) * 100);
-
-        return [
-            'label' => ($change > 0 ? '+' : '').$change.'%',
-            'direction' => match (true) {
-                $change > 0 => 'up',
-                $change < 0 => 'down',
-                default => 'neutral',
-            },
         ];
     }
 }

@@ -34,20 +34,11 @@
 
     @php
         $summaryCards = [
-            ['label' => 'Total refunds', 'value' => number_format($totals['count']), 'trend' => $trends['count'], 'trendKind' => 'volume', 'icon' => 'undo-2', 'tone' => 'text-cine-accent', 'iconTone' => 'bg-cine-accent/10'],
-            ['label' => 'Refunded amount', 'cents' => $totals['amount_cents'], 'trend' => $trends['amount'], 'trendKind' => 'volume', 'icon' => 'dollar-sign', 'tone' => 'text-cine-success', 'iconTone' => 'bg-cine-success/10'],
-            ['label' => 'Pending refunds', 'value' => number_format($totals['pending']), 'trend' => $trends['pending'], 'trendKind' => 'risk', 'icon' => 'clock', 'tone' => 'text-cine-warning', 'iconTone' => 'bg-cine-warning/10'],
-            ['label' => 'Failed refunds', 'value' => number_format($totals['failed']), 'trend' => $trends['failed'], 'trendKind' => 'failure', 'icon' => 'alert-triangle', 'tone' => 'text-cine-danger', 'iconTone' => 'bg-cine-danger/10'],
+            ['label' => 'Total refunds', 'value' => number_format($totals['count']), 'detail' => 'Requests in selected date range', 'icon' => 'undo-2', 'tone' => 'text-cine-accent', 'iconTone' => 'bg-cine-accent/10'],
+            ['label' => 'Refunded amount', 'cents' => $totals['amount_cents'], 'detail' => 'Successfully returned to customers', 'icon' => 'dollar-sign', 'tone' => 'text-cine-success', 'iconTone' => 'bg-cine-success/10'],
+            ['label' => 'Pending refunds', 'value' => number_format($totals['pending']), 'detail' => 'Awaiting provider confirmation', 'icon' => 'clock', 'tone' => 'text-cine-warning', 'iconTone' => 'bg-cine-warning/10'],
+            ['label' => 'Failed refunds', 'value' => number_format($totals['failed']), 'detail' => 'Need attention', 'icon' => 'alert-triangle', 'tone' => 'text-cine-danger', 'iconTone' => 'bg-cine-danger/10'],
         ];
-        $trendTone = fn (string $direction, string $kind): string => match (true) {
-            $direction === 'neutral' => 'text-cine-tertiary',
-            $direction === 'up' && $kind === 'risk' => 'text-cine-warning',
-            $direction === 'up' && $kind === 'failure' => 'text-cine-danger',
-            $direction === 'up' => 'text-cine-success',
-            $kind !== 'volume' => 'text-cine-success',
-            $direction === 'down' => 'text-cine-danger',
-            default => 'text-cine-tertiary',
-        };
         $reasonLabels = [
             'requested_by_customer' => 'Customer request',
             'duplicate' => 'Duplicate payment',
@@ -73,10 +64,7 @@
                         </p>
                     </div>
                 </div>
-                <p class="mt-3 flex min-h-4 items-center gap-2 text-[11px] {{ $trendTone($card['trend']['direction'], $card['trendKind']) }}">
-                    <span class="font-bold">{{ $card['trend']['direction'] === 'up' ? '↑' : ($card['trend']['direction'] === 'down' ? '↓' : '·') }} {{ $card['trend']['label'] }}</span>
-                    <span class="text-cine-tertiary">vs. previous period</span>
-                </p>
+                <p class="mt-3 min-h-4 text-[11px] text-cine-tertiary">{{ $card['detail'] }}</p>
             </div>
         @endforeach
     </div>
@@ -177,76 +165,4 @@
         @endif
     </x-admin.card>
 
-    <div class="mt-4 grid items-stretch gap-4 xl:grid-cols-2">
-        <x-admin.card class="h-full">
-            <div class="flex items-start gap-3">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cine-accent/10 text-cine-accent">
-                    <x-admin.icon name="undo-2" class="h-5 w-5" />
-                </span>
-                <div class="min-w-0 flex-1">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-cine-accent">Refund confirmation</p>
-                    @if ($latestFailedRefund)
-                        <h3 class="mt-1 text-base font-bold text-cine-primary">
-                            Review RF-{{ str_pad((string) $latestFailedRefund->getKey(), 5, '0', STR_PAD_LEFT) }}
-                        </h3>
-                        <p class="mt-2 text-xs leading-5 text-cine-secondary">
-                            {{ $latestFailedRefund->failure_message ?: 'The provider could not complete this refund. Check the booking and payment before taking further action.' }}
-                        </p>
-                        <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-cine-tertiary">
-                            <span>Booking</span>
-                            <span class="font-medium text-cine-secondary">{{ $latestFailedRefund->booking->reference }}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>Amount</span>
-                            <span class="font-semibold text-cine-primary"><x-admin.money :cents="$latestFailedRefund->amount_cents" :currency="$latestFailedRefund->currency" /></span>
-                        </div>
-                        @if ($latestFailedRefund->payment->gateway === 'stripe')
-                            <a href="{{ route('admin.bookings.show', $latestFailedRefund->booking) }}" class="mt-4 inline-flex min-h-9 items-center gap-2 rounded-lg border border-cine-border/10 bg-cine-elevated px-3 text-xs font-semibold text-cine-primary transition hover:border-cine-accent/30">
-                                Review booking and retry options
-                                <x-admin.icon name="arrow-right" class="h-3.5 w-3.5" />
-                            </a>
-                        @else
-                            <p class="mt-4 rounded-lg border border-cine-warning/15 bg-cine-warning/5 px-3 py-2 text-[10px] leading-4 text-cine-warning">
-                                This is demo payment data. It cannot be retried through Stripe.
-                            </p>
-                        @endif
-                    @else
-                        <h3 class="mt-1 text-base font-bold text-cine-primary">No failed refunds to review</h3>
-                        <p class="mt-2 text-xs leading-5 text-cine-secondary">Failed refund requests will appear here with their booking and amount for review.</p>
-                    @endif
-                </div>
-            </div>
-        </x-admin.card>
-
-        <x-admin.card class="h-full">
-            <div class="flex items-center gap-2">
-                <x-admin.icon name="clock" class="h-4 w-4 text-cine-accent" />
-                <h3 class="text-sm font-bold text-cine-primary">Refund lifecycle</h3>
-            </div>
-            <div class="relative mt-6 grid grid-cols-3 gap-2">
-                <div class="absolute left-[16%] right-[16%] top-3 h-px bg-cine-border/15"></div>
-                @foreach ([
-                    ['number' => '1', 'title' => 'Pending', 'detail' => 'Refund request received'],
-                    ['number' => '2', 'title' => 'Processing', 'detail' => 'Provider is handling the refund'],
-                    ['number' => '3', 'title' => 'Completed', 'detail' => 'Refund sent to customer'],
-                ] as $step)
-                    <div class="relative z-10 flex flex-col items-center text-center">
-                        <span @class([
-                            'flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold',
-                            'bg-cine-warning text-cine-bg' => $step['number'] === '1' && $totals['pending'] > 0,
-                            'bg-cine-success text-cine-bg' => $step['number'] === '3' && $totals['succeeded'] > 0,
-                            'bg-cine-elevated text-cine-secondary' => ! ($step['number'] === '1' && $totals['pending'] > 0) && ! ($step['number'] === '3' && $totals['succeeded'] > 0),
-                        ])>{{ $step['number'] }}</span>
-                        <p class="mt-2 text-[10px] font-semibold text-cine-primary">{{ $step['title'] }}</p>
-                        <p class="mt-1 max-w-28 text-[9px] leading-4 text-cine-tertiary">{{ $step['detail'] }}</p>
-                    </div>
-                @endforeach
-            </div>
-            <div class="mt-5 flex items-start gap-2 rounded-xl border border-cine-warning/15 bg-cine-warning/5 px-3 py-2.5">
-                <x-admin.icon name="info" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-cine-warning" />
-                <p class="text-[10px] leading-4 text-cine-secondary">
-                    {{ number_format($totals['pending']) }} refund{{ $totals['pending'] === 1 ? '' : 's' }} pending in this date range. The booking remains cancelled while the provider confirms the refund.
-                </p>
-            </div>
-        </x-admin.card>
-    </div>
 </x-admin.layout>
