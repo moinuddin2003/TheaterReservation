@@ -12,11 +12,13 @@ dataset('admin panel routes', [
     ['admin.bookings.index', 'Bookings'],
     ['admin.payments.index', 'Payments'],
     ['admin.refunds.index', 'Refunds'],
-    ['admin.tickets.index', 'Tickets & Scans'],
-    ['admin.users.index', 'Users'],
+    ['admin.users.index', 'Customers'],
+    ['admin.staff-admins.index', 'Staff and admins'],
+    ['admin.reports.index', 'Reports'],
     ['admin.settings.edit', 'Settings'],
     ['admin.stripe-events.index', 'Stripe Events'],
     ['admin.audit-logs.index', 'Audit Logs'],
+    ['admin.failed-jobs.index', 'Failed jobs'],
 ]);
 
 test('an administrator can open every admin placeholder page', function (string $route, string $title) {
@@ -89,4 +91,36 @@ test('the admin sidebar marks the current page as active', function () {
         ->get(route('admin.movies.index'))
         ->assertOk()
         ->assertSee('aria-current="page"', false);
+});
+
+test('the admin sidebar only shows the requested sections', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+
+    $response = $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
+
+    foreach ([
+        'Dashboard',
+        'Movies',
+        'Genres',
+        'Cinema & Screens',
+        'Showtimes',
+        'Bookings',
+        'Payments',
+        'Refunds',
+        'Customers',
+        'Staff and admins',
+        'Reports',
+        'Audit log',
+        'Settings',
+        'Failed jobs',
+    ] as $label) {
+        $response->assertSee($label);
+    }
+
+    $response
+        ->assertSee('href="'.route('admin.cinema.index').'"', false)
+        ->assertDontSee('href="'.route('admin.screens.index').'"', false)
+        ->assertDontSee('Tickets &amp; Scans')
+        ->assertDontSee('Stripe Events')
+        ->assertDontSee('Audit Logs');
 });
