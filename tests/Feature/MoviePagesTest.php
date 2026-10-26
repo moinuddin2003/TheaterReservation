@@ -108,7 +108,7 @@ it('shows bookable showtimes for every now showing movie at the cinema', functio
     $comingSoonMovie = Movie::factory()->comingSoon()->create();
     $otherCinemaMovie = Movie::factory()->nowShowing()->create();
 
-    Showtime::factory()->for($firstMovie)->for($screen)->create([
+    $firstShowtime = Showtime::factory()->for($firstMovie)->for($screen)->create([
         'starts_at' => '2026-10-23 17:30:00',
         'ends_at' => '2026-10-23 19:30:00',
     ]);
@@ -137,6 +137,7 @@ it('shows bookable showtimes for every now showing movie at the cinema', functio
         ->assertSee('17:30')
         ->assertSee('19:30')
         ->assertSee('Screen A')
+        ->assertSee(route('showtimes.show', $firstShowtime))
         ->assertDontSee('20:30')
         ->assertDontSee('22:00');
 

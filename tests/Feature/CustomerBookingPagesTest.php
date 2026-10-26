@@ -16,6 +16,7 @@ use App\Models\Screen;
 use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
+use App\Models\StripeEvent;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\BookingCancellationService;
@@ -387,6 +388,103 @@ test('a paid Stripe checkout confirms the booking and creates tickets', function
         ->and($payment->refresh()->status)->toBe(PaymentStatus::Succeeded)
         ->and($payment->gateway_session_id)->toBe('cs_test_paid')
         ->and($booking->seatHolds()->firstOrFail()->status)->toBe(HoldStatus::Converted);
+});
+
+test('a paid Stripe payment intent confirms its booking including a previously ignored event', function () {
+    $secret = 'whsec_test_payment_intent';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $user = User::factory()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create([
+        'row_label' => 'E',
+        'seat_number' => 5,
+        'label' => 'E5',
+    ]);
+    $booking = app(HoldSeatsAction::class)->execute($showtime, $user, [$seat->id]);
+    $payment = new Payment([
+        'gateway' => 'stripe',
+        'gateway_session_id' => 'cs_test_intent',
+        'idempotency_key' => Str::random(64),
+        'currency' => $booking->currency,
+    ]);
+    $payment->forceFill([
+        'amount_cents' => $booking->total_cents,
+        'status' => PaymentStatus::Pending,
+    ]);
+    $booking->payments()->save($payment);
+    $eventId = 'evt_test_payment_intent_paid';
+    $savedEvent = new StripeEvent([
+        'stripe_event_id' => $eventId,
+        'type' => 'payment_intent.succeeded',
+    ]);
+    $savedEvent->forceFill(['status' => 'ignored'])->save();
+    $payload = json_encode([
+        'id' => $eventId,
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_paid',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount' => $payment->amount_cents,
+                'amount_received' => $payment->amount_cents,
+                'currency' => 'usd',
+                'metadata' => [
+                    'booking_id' => (string) $booking->getKey(),
+                    'payment_id' => (string) $payment->getKey(),
+                ],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect($booking->refresh()->status)->toBe(BookingStatus::Confirmed)
+        ->and($booking->tickets()->count())->toBe(1)
+        ->and($payment->refresh()->status)->toBe(PaymentStatus::Succeeded)
+        ->and($payment->gateway_payment_intent_id)->toBe('pi_test_paid')
+        ->and(StripeEvent::query()->where('stripe_event_id', $eventId)->firstOrFail()->status)->toBe('processed');
+});
+
+test('unrelated succeeded Stripe payment intents are acknowledged without affecting bookings', function () {
+    $secret = 'whsec_test_unrelated_payment_intent';
+    config(['services.stripe.webhook_secret' => $secret]);
+    $payload = json_encode([
+        'id' => 'evt_test_unrelated_payment_intent',
+        'object' => 'event',
+        'type' => 'payment_intent.succeeded',
+        'data' => [
+            'object' => [
+                'id' => 'pi_test_unrelated',
+                'object' => 'payment_intent',
+                'status' => 'succeeded',
+                'amount_received' => 1200,
+                'currency' => 'usd',
+                'metadata' => [],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = 't='.$timestamp.',v1='.hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+    $this->call('POST', route('stripe.webhook'), [], [], [], [
+        'CONTENT_TYPE' => 'application/json',
+        'HTTP_STRIPE_SIGNATURE' => $signature,
+    ], $payload)
+        ->assertOk()
+        ->assertJson(['received' => true]);
+
+    expect(Booking::query()->count())->toBe(0)
+        ->and(StripeEvent::query()->where('stripe_event_id', 'evt_test_unrelated_payment_intent')
+            ->firstOrFail()->status)->toBe('ignored');
 });
 
 test('late Stripe payments are automatically refunded after the seat hold expires', function () {

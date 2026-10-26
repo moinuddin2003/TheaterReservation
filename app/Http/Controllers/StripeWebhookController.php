@@ -44,7 +44,7 @@ class StripeWebhookController extends Controller
             ['type' => $event->type],
         );
 
-        if ($savedEvent->isProcessed() || $savedEvent->isIgnored()) {
+        if ($savedEvent->isProcessed()) {
             return response()->json(['received' => true]);
         }
 
@@ -53,12 +53,9 @@ class StripeWebhookController extends Controller
             $payment = $this->findPaymentForSession($checkoutSession);
 
             if (! $payment || ($checkoutSession->payment_status ?? null) !== 'paid') {
-                $savedEvent->forceFill([
-                    'status' => 'failed',
-                    'error_message' => 'The completed checkout session could not be matched to a payment.',
-                ])->save();
+                $this->markEvent($savedEvent, 'ignored');
 
-                return response()->json(['error' => 'Checkout payment not found'], 500);
+                return response()->json(['received' => true]);
             }
 
             $payment->forceFill(['gateway_session_id' => $checkoutSession->id])->save();
@@ -93,6 +90,51 @@ class StripeWebhookController extends Controller
                 ])->save();
 
                 return response()->json(['error' => 'Payment intent missing'], 500);
+            }
+
+            if (! $confirmBookingAction->execute($payment, $paymentIntentId)) {
+                $handleLatePaymentAction->execute($payment, $paymentIntentId);
+            }
+
+            $this->markEvent($savedEvent, 'processed');
+
+            return response()->json(['received' => true]);
+        }
+
+        if ($event->type === 'payment_intent.succeeded') {
+            $paymentIntent = $event->data->object;
+            $payment = $this->findPaymentForIntent($paymentIntent);
+            $paymentIntentId = $paymentIntent->id ?? null;
+
+            if (! $payment) {
+                $this->markEvent($savedEvent, 'ignored');
+
+                return response()->json(['received' => true]);
+            }
+
+            if (! is_string($paymentIntentId) || ($paymentIntent->status ?? null) !== 'succeeded') {
+                $savedEvent->forceFill([
+                    'status' => 'failed',
+                    'error_message' => 'The matched payment intent does not have a valid succeeded status.',
+                ])->save();
+
+                return response()->json(['error' => 'Invalid payment intent status'], 500);
+            }
+
+            if (
+                (int) ($paymentIntent->amount_received ?? -1) !== $payment->amount_cents
+                || strtolower((string) ($paymentIntent->currency ?? '')) !== strtolower($payment->currency)
+            ) {
+                Log::error('Stripe payment intent amount does not match the saved payment.', [
+                    'payment_id' => $payment->getKey(),
+                    'stripe_payment_intent_id' => $paymentIntentId,
+                ]);
+                $savedEvent->forceFill([
+                    'status' => 'failed',
+                    'error_message' => 'Stripe payment intent amount or currency mismatch.',
+                ])->save();
+
+                return response()->json(['error' => 'Payment amount mismatch'], 500);
             }
 
             if (! $confirmBookingAction->execute($payment, $paymentIntentId)) {
@@ -182,5 +224,26 @@ class StripeWebhookController extends Controller
             ->first();
 
         return $payment && ! $payment->gateway_session_id ? $payment : null;
+    }
+
+    private function findPaymentForIntent(StripeObject $paymentIntent): ?Payment
+    {
+        $paymentId = $paymentIntent->metadata->payment_id ?? null;
+        $bookingId = $paymentIntent->metadata->booking_id ?? null;
+
+        if (
+            ! is_string($paymentId)
+            || ! ctype_digit($paymentId)
+            || ! is_string($bookingId)
+            || ! ctype_digit($bookingId)
+        ) {
+            return null;
+        }
+
+        return Payment::query()
+            ->whereKey($paymentId)
+            ->where('booking_id', $bookingId)
+            ->where('gateway', 'stripe')
+            ->first();
     }
 }
