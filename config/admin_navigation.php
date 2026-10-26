@@ -8,7 +8,7 @@ return [
     ['group' => 'Cinema', 'label' => 'Showtimes', 'route' => 'admin.showtimes.index', 'icon' => 'calendar-clock', 'roles' => ['admin']],
     ['group' => 'Sales', 'label' => 'Bookings', 'route' => 'admin.bookings.index', 'icon' => 'ticket', 'roles' => ['admin']],
     ['group' => 'Sales', 'label' => 'Payments', 'route' => 'admin.payments.index', 'icon' => 'credit-card', 'roles' => ['admin']],
-    ['group' => 'Sales', 'label' => 'Refunds', 'route' => 'admin.refunds.index', 'icon' => 'undo-2', 'roles' => ['admin'], 'badge' => '0'],
+    ['group' => 'Sales', 'label' => 'Refunds', 'route' => 'admin.refunds.index', 'icon' => 'undo-2', 'roles' => ['admin']],
     ['group' => 'Entry', 'label' => 'Tickets & Scans', 'route' => 'admin.tickets.index', 'icon' => 'scan-line', 'roles' => ['admin']],
     ['group' => 'People', 'label' => 'Users', 'route' => 'admin.users.index', 'icon' => 'users', 'roles' => ['admin']],
     ['group' => 'System', 'label' => 'Settings', 'route' => 'admin.settings.edit', 'icon' => 'settings', 'roles' => ['admin']],
