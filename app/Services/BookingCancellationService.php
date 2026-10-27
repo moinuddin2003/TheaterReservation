@@ -10,7 +10,6 @@ use App\Enums\TicketStatus;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Models\Setting;
 use App\Models\User;
 use App\Services\Payments\StripeGateway;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -21,7 +20,10 @@ use Stripe\Exception\ApiErrorException;
 
 class BookingCancellationService
 {
-    public function __construct(private StripeGateway $stripeGateway) {}
+    public function __construct(
+        private StripeGateway $stripeGateway,
+        private SettingsService $settings,
+    ) {}
 
     public function cancel(Booking $booking, User $user): Refund
     {
@@ -59,10 +61,7 @@ class BookingCancellationService
 
             if ($booking->isConfirmed()) {
                 $booking->load('showtime');
-                $cancelWindowHours = (int) (
-                    Setting::query()->whereKey('cancel_window_hours')->value('value')
-                    ?? config('cinebook.cancel_window_hours', 2)
-                );
+                $cancelWindowHours = (int) $this->settings->get('cancel_window_hours');
 
                 if ($booking->showtime->starts_at->lessThanOrEqualTo(now()->addHours($cancelWindowHours))) {
                     throw ValidationException::withMessages([

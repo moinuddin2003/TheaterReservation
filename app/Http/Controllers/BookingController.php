@@ -10,6 +10,7 @@ use App\Models\Showtime;
 use App\Models\User;
 use App\Services\BookingCancellationService;
 use App\Services\QrCodeService;
+use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -86,11 +87,12 @@ class BookingController extends Controller
         Request $request,
         Showtime $showtime,
         HoldSeatsAction $holdSeatsAction,
+        SettingsService $settings,
     ): RedirectResponse {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
-        $maxSeats = (int) config('cinebook.max_seats_per_booking', 6);
+        $maxSeats = (int) $settings->get('max_seats_per_booking');
         $validated = $request->validate([
             'seat_ids' => ['required', 'array', 'min:1', 'max:'.$maxSeats],
             'seat_ids.*' => ['required', 'integer', 'distinct:strict'],

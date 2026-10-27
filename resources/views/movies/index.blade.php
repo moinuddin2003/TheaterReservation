@@ -57,6 +57,7 @@
                                 :showtimes="$screenShowtimes"
                                 :availability="$availability"
                                 :active="$date === $firstDate"
+                                :premium-surcharge-cents="$premiumSurchargeCents"
                             />
                         @endforeach
                     @endforeach

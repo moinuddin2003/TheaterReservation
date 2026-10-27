@@ -14,6 +14,9 @@
             </a>
         @endif
         <h2 class="text-2xl font-bold tracking-tight text-cine-primary sm:text-3xl">{{ $title }}</h2>
+        @if (isset($meta))
+            <div class="mt-2">{{ $meta }}</div>
+        @endif
         @if ($subtitle)
             <p class="mt-2 max-w-2xl text-sm leading-6 text-cine-secondary">{{ $subtitle }}</p>
         @endif

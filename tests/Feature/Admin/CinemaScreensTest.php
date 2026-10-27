@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Enums\SeatType;
+use App\Models\AuditLog;
 use App\Models\BookingItem;
 use App\Models\Cinema;
 use App\Models\Screen;
@@ -49,6 +50,7 @@ test('an administrator can manage cinema details and cannot remove a cinema that
         ->assertRedirect(route('admin.cinema.index'))
         ->assertSessionHas('status');
     $this->assertDatabaseMissing('cinemas', ['id' => $cinema->id]);
+    expect(AuditLog::query()->whereIn('action', ['cinema.created', 'cinema.updated', 'cinema.deleted'])->count())->toBe(3);
 });
 
 test('cinemas with screens are protected from deletion', function () {
@@ -193,6 +195,29 @@ test('an administrator can create a screen, generate seats, and edit seat settin
         ->assertSessionHas('status');
 
     expect($screen->fresh()->name)->toBe('Screen One');
+
+    $previousSeatIds = $screen->seats()->pluck('id')->all();
+    $this->post(route('admin.screens.seats.generate', $screen), [
+        'premium_rows' => ['C'],
+    ])->assertRedirect(route('admin.screens.show', $screen));
+    expect(Seat::query()->whereIn('id', $previousSeatIds)->exists())->toBeFalse();
+    $gridAudit = AuditLog::query()->where('action', 'seat.grid_regenerated')->latest('id')->firstOrFail();
+    expect(collect($gridAudit->before['seats'])->pluck('id')->all())->toBe($previousSeatIds)
+        ->and(collect($gridAudit->after['seats'])->pluck('id')->intersect($previousSeatIds))->toBeEmpty();
+
+    $this->delete(route('admin.screens.destroy', $screen))
+        ->assertRedirect(route('admin.screens.index'))
+        ->assertSessionHas('status');
+    $this->assertDatabaseMissing('screens', ['id' => $screen->id]);
+
+    expect(AuditLog::query()->whereIn('action', [
+        'screen.created',
+        'screen.updated',
+        'seat.grid_regenerated',
+        'seat.updated',
+        'screen.deleted',
+    ])->count())->toBe(6)
+        ->and(AuditLog::query()->where('action', 'seat.grid_regenerated')->count())->toBe(2);
 });
 
 test('screens with showtimes cannot be deleted or have seats regenerated', function () {
