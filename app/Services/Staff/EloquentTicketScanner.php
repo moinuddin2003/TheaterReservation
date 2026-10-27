@@ -25,21 +25,22 @@ class EloquentTicketScanner implements TicketScanner
     public function __construct(
         private readonly ScanRules $rules,
         private readonly ScanRejectionView $rejections,
-    ) {
-    }
+    ) {}
 
     public function scan(string $token, ?int $selectedShowId, int $staffUserId, ?string $ip): array
     {
         $token = trim($token);
-        $at = now()->toDateTimeImmutable();
-        $ticket = $token === '' ? null : Ticket::with(['booking', 'bookingItem', 'showtime.movie', 'showtime.screen'])->where('token', $token)->first();
-        $selected = $selectedShowId ? $this->showFacts(Showtime::with(['movie', 'screen'])->find($selectedShowId)) : null;
 
-        return DB::transaction(function () use ($ticket, $selected, $at, $token, $staffUserId, $ip): array {
+        return DB::transaction(function () use ($token, $selectedShowId, $staffUserId, $ip): array {
+            $ticket = $token === '' ? null : Ticket::with(['booking', 'bookingItem', 'showtime.movie', 'showtime.screen'])
+                ->where('token', $token)
+                ->lockForUpdate()
+                ->first();
+            $selected = $selectedShowId ? $this->showFacts(Showtime::with(['movie', 'screen'])->find($selectedShowId)) : null;
+            $at = now()->toDateTimeImmutable();
             $result = $this->rules->evaluate($ticket ? $this->describe($ticket) : null, $selected, $at);
 
             if ($result['status'] === ScanResult::Admitted->value && ! $this->claim($ticket, $staffUserId, $at)) {
-                // Another scan won the race a moment ago.
                 $result = $this->rules->evaluate($this->describe($ticket->refresh()), $selected, $at);
             }
 
@@ -93,7 +94,7 @@ class EloquentTicketScanner implements TicketScanner
      */
     private function describe(Ticket $ticket): array
     {
-        $void = $ticket->status === TicketStatus::Void || $ticket->booking->status !== BookingStatus::Confirmed;
+        $void = $ticket->isVoid() || $ticket->booking->status !== BookingStatus::Confirmed;
 
         return [
             'state' => $void ? 'void' : $ticket->status->value,
