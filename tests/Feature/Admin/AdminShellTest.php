@@ -15,9 +15,10 @@ dataset('admin panel routes', [
     ['admin.reports.index', 'Sales reports'],
     ['admin.audit-logs.index', 'Audit log'],
     ['admin.settings.edit', 'Reservation settings'],
-    ['admin.failed-jobs.index', 'Failed jobs'],
-    ['admin.users.index', 'Customers'],
+    ['admin.customers.index', 'Customers'],
+    ['admin.staff-admins.index', 'Staff & Admin'],
     ['admin.stripe-events.index', 'Stripe Events'],
+    ['admin.failed-jobs.index', 'Failed jobs'],
 ]);
 
 test('an administrator can open every admin operations page', function (string $route, string $title) {
@@ -107,7 +108,7 @@ test('the admin sidebar only shows the requested sections', function () {
         'Payments',
         'Refunds',
         'Customers',
-        'Staff and admins',
+        'Staff & Admin',
         'Reports',
         'Audit log',
         'Settings',
