@@ -187,6 +187,28 @@ it('shows movie details and rejects unknown movie slugs', function () {
         ->assertNotFound();
 });
 
+it('uses the trailer URL saved for the movie and hides the link when no trailer is set', function () {
+    $trailerUrl = 'https://www.youtube.com/watch?v=admin-selected-trailer';
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'Trailer Link Movie',
+        'slug' => 'trailer-link-movie',
+        'trailer_url' => $trailerUrl,
+    ]);
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertSee('href="'.$trailerUrl.'"', false)
+        ->assertSee('Watch trailer')
+        ->assertDontSee('DDU-rZs-Ic4');
+
+    $movie->forceFill(['trailer_url' => null])->save();
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertDontSee('Watch trailer')
+        ->assertDontSee($trailerUrl);
+});
+
 it('only shows a seat map for movies with a configured seat map', function () {
     $this->get('/movies/the-last-horizon/seats?date=2026-10-15&time=19:30')
         ->assertOk()

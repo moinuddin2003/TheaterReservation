@@ -17,10 +17,12 @@
                 <x-movie-meta :movie="$movie" />
                 <h1 id="movie-title">{{ $movie->title }}</h1>
                 <p class="movie-summary">{{ $movie->synopsis }}</p>
-                <a class="button button--quiet" href="https://www.youtube.com/watch?v=DDU-rZs-Ic4"
-                    target="_blank" rel="noopener noreferrer">
-                    <span aria-hidden="true">▷</span> Watch video <span class="button__subtle">· HD</span>
-                </a>
+                @if (filled($movie->trailer_url))
+                    <a class="button button--quiet" href="{{ $movie->trailer_url }}"
+                        target="_blank" rel="noopener noreferrer">
+                        <span aria-hidden="true">▷</span> Watch trailer
+                    </a>
+                @endif
             </div>
         </section>
 
