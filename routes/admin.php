@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ScreenController;
 use App\Http\Controllers\Admin\SeatController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\ShowtimeController;
+use App\Http\Controllers\Admin\StaffAdminController;
 use App\Http\Controllers\Admin\StripeEventController;
 use Illuminate\Support\Facades\Route;
 
@@ -66,7 +67,8 @@ Route::prefix('admin')
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
-        Route::get('/staff-admins', [AdminPlaceholderController::class, 'staffAdmins'])->name('staff-admins.index');
+        Route::get('/staff-admins', [StaffAdminController::class, 'index'])->name('staff-admins.index');
+        Route::get('/staff-admins/{staff}', [StaffAdminController::class, 'show'])->name('staff-admins.show');
         Route::get('/reports', [AdminPlaceholderController::class, 'reports'])->name('reports.index');
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::get('/failed-jobs', [AdminPlaceholderController::class, 'failedJobs'])->name('failed-jobs.index');
