@@ -41,8 +41,10 @@
                 <x-admin.sidebar />
 
                 <div class="min-w-0 flex-1">
-                    <x-admin.topbar :title="$title" :breadcrumb="$breadcrumb" />
-                    <main class="mx-auto w-full max-w-[1600px] px-4 py-7 sm:px-6 lg:px-10 lg:py-9">
+                    <button type="button" @click="mobileOpen = true" class="fixed left-4 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-cine-border/10 bg-cine-surface text-cine-secondary lg:hidden" aria-label="Open navigation">
+                        <x-admin.icon name="menu" class="h-5 w-5" />
+                    </button>
+                    <main class="mx-auto w-full max-w-[1600px] px-4 py-7 sm:px-6 lg:px-9 lg:py-9">
                         {{ $slot }}
                     </main>
                 </div>

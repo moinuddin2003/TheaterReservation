@@ -32,6 +32,12 @@
         @case('check-circle')
             <path d="M20 11.1V12a8 8 0 1 1-4.7-7.3" /><path d="m9 11 3 3L22 4" />
             @break
+        @case('circle-check')
+            <circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" />
+            @break
+        @case('chart-column')
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+            @break
         @case('calendar-clock')
             <path d="M8 2v4M16 2v4M3 10h11M5 4h14a2 2 0 0 1 2 2v6" /><rect x="3" y="4" width="18" height="17" rx="2" /><circle cx="18" cy="18" r="3" /><path d="M18 16.5V18l1 1" />
             @break
@@ -67,6 +73,9 @@
             @break
         @case('users')
             <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" /><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            @break
+        @case('shield-check')
+            <path d="M12 3 5 6v5c0 4.5 2.8 8.2 7 10 4.2-1.8 7-5.5 7-10V6l-7-3Z" /><path d="m9 12 2 2 4-4" />
             @break
         @case('settings')
             <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" /><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.5.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.5-.9l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.8l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.5-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.5.9l1.7-.7 1.4 2.4-1.4 1.1a7 7 0 0 1 0 1.8Z" transform="translate(-1 -1)" />

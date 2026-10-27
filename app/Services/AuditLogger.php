@@ -24,7 +24,7 @@ class AuditLogger
             'user_id' => $actor->id,
             'action' => $action,
             'auditable_type' => $auditable::class,
-            'auditable_id' => $auditable->getKey(),
+            'auditable_id' => is_numeric($auditable->getKey()) ? $auditable->getKey() : 0,
             'before' => $before,
             'after' => $after,
             'ip_address' => $ipAddress,

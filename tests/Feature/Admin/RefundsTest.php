@@ -23,6 +23,8 @@ beforeEach(function () {
 
 it('shows refund summaries and the recent refund list', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
+    $refund = Refund::query()->where('idempotency_key', 'demo-refund-001')->firstOrFail();
+    $refundLabel = 'RF-'.str_pad((string) $refund->getKey(), 5, '0', STR_PAD_LEFT);
 
     $this->actingAs($admin)
         ->get(route('admin.refunds.index'))
@@ -36,7 +38,7 @@ it('shows refund summaries and the recent refund list', function () {
         ->assertSee('Awaiting provider confirmation')
         ->assertSee('Failed refunds')
         ->assertSee('Need attention')
-        ->assertSee('RF-00001')
+        ->assertSee($refundLabel)
         ->assertSee('Maya Chen')
         ->assertSee('Customer request')
         ->assertSee('Temporary connection error')
