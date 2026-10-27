@@ -12,7 +12,7 @@ dataset('admin panel routes', [
     ['admin.bookings.index', 'Bookings'],
     ['admin.payments.index', 'Payments'],
     ['admin.refunds.index', 'Refunds'],
-    ['admin.users.index', 'Customers'],
+    ['admin.customers.index', 'Customers'],
     ['admin.staff-admins.index', 'Staff and admins'],
     ['admin.reports.index', 'Reports'],
     ['admin.settings.edit', 'Settings'],
