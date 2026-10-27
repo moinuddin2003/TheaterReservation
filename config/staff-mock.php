@@ -10,7 +10,6 @@ return [
     'now' => '2026-10-15 18:55',
     // The time of a mock scan (shown on the admitted result screen).
     'scan_at' => '2026-10-15 18:58:00',
-    'user' => ['name' => 'Sam Rivera'],
     'shows' => [
         ['id' => 1, 'movie' => 'The Last Horizon', 'screen' => 'Screen 1', 'starts_at' => '2026-10-15 14:30', 'sold' => 38, 'scanned' => 38],
         ['id' => 2, 'movie' => 'The Paper Kingdom', 'screen' => 'Screen 2 IMAX', 'starts_at' => '2026-10-15 15:00', 'sold' => 40, 'scanned' => 40],

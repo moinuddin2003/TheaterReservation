@@ -5,6 +5,7 @@ use App\Models\Ticket;
 use App\Models\TicketScan;
 use App\Models\User;
 use App\Services\Staff\EloquentTicketScanner;
+use App\Services\Staff\MockTicketScanner;
 use Illuminate\Support\Carbon;
 use Tests\Support\StaffDbFixture;
 
@@ -92,6 +93,12 @@ test('a void ticket is never admitted', function () {
     expect(dbScan($this->token, $this->show->id, $this->staff)['status'])->toBe('void');
 });
 
+test('a legacy voided ticket is never admitted', function () {
+    Ticket::where('token', $this->token)->update(['status' => 'voided']);
+
+    expect(dbScan($this->token, $this->show->id, $this->staff)['status'])->toBe('void');
+});
+
 test('a ticket of a booking that is no longer confirmed counts as void', function () {
     $this->booking->forceFill(['status' => 'cancelled'])->save();
 
@@ -124,7 +131,7 @@ test('the scanner leaves the screen data alone because it already comes from the
 test('the staff data source setting picks the scanner', function () {
     config(['staff.data_source' => 'mock']);
 
-    expect(app(TicketScanner::class))->toBeInstanceOf(App\Services\Staff\MockTicketScanner::class);
+    expect(app(TicketScanner::class))->toBeInstanceOf(MockTicketScanner::class);
 
     config(['staff.data_source' => 'database']);
 

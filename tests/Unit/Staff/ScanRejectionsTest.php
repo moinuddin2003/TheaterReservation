@@ -47,6 +47,10 @@ test('a void ticket is rejected as void', function () {
     expect(rejectionScan(rejectionTicket(['state' => 'void']))['status'])->toBe('void');
 });
 
+test('a legacy voided ticket is rejected as void', function () {
+    expect(rejectionScan(rejectionTicket(['state' => 'voided']))['status'])->toBe('void');
+});
+
 test('a ticket for another show is rejected as the wrong showtime', function () {
     $result = rejectionScan(rejectionTicket(['show_id' => 3]), '18:55', 4);
 
