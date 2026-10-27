@@ -30,4 +30,28 @@ class AuditLogger
             'ip_address' => $ipAddress,
         ]);
     }
+
+    /**
+     * @param  array<string, mixed>  $before
+     * @param  array<string, mixed>  $after
+     */
+    public function logResource(
+        User $actor,
+        string $action,
+        string $resourceType,
+        int $resourceId,
+        array $before = [],
+        array $after = [],
+        ?string $ipAddress = null,
+    ): AuditLog {
+        return AuditLog::query()->create([
+            'user_id' => $actor->id,
+            'action' => $action,
+            'auditable_type' => $resourceType,
+            'auditable_id' => $resourceId,
+            'before' => $before,
+            'after' => $after,
+            'ip_address' => $ipAddress,
+        ]);
+    }
 }

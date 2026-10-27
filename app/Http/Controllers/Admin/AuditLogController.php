@@ -17,7 +17,7 @@ class AuditLogController extends Controller
         $date = $request->date('date');
         $selectedLog = $request->integer('log');
         $logs = AuditLog::query()
-            ->with(['user', 'auditable'])
+            ->with('user')
             ->when($action !== '', fn ($query) => $query->where('action', 'like', "%{$action}%"))
             ->when($actor !== '', fn ($query) => $query->whereHas('user', fn ($users) => $users
                 ->where('name', 'like', "%{$actor}%")
@@ -39,7 +39,7 @@ class AuditLogController extends Controller
             'actor' => $actor,
             'target' => $target,
             'date' => $date?->toDateString(),
-            'selectedLog' => $selectedLog ? AuditLog::query()->with(['user', 'auditable'])->findOrFail($selectedLog) : null,
+            'selectedLog' => $selectedLog ? AuditLog::query()->with('user')->findOrFail($selectedLog) : null,
         ]);
     }
 }

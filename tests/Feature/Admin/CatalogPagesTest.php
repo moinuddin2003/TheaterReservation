@@ -2,6 +2,7 @@
 
 use App\Enums\MovieStatus;
 use App\Enums\Role;
+use App\Models\AuditLog;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\User;
@@ -75,6 +76,7 @@ test('an administrator can create, edit, and delete genres', function () {
         ->assertSessionHas('status');
 
     $this->assertDatabaseMissing('genres', ['id' => $genre->id]);
+    expect(AuditLog::query()->whereIn('action', ['genre.created', 'genre.updated', 'genre.deleted'])->count())->toBe(3);
 });
 
 test('movie and genre validation errors are shown beside the matching fields', function () {
@@ -290,7 +292,8 @@ test('an administrator can create and edit a movie stored in the database', func
 
     expect($movie->fresh()->title)->toBe('Orbit Seven: New Mission')
         ->and($movie->fresh()->status)->toBe(MovieStatus::NowShowing)
-        ->and($movie->fresh()->genres->modelKeys())->toBe([$genre->id]);
+        ->and($movie->fresh()->genres->modelKeys())->toBe([$genre->id])
+        ->and(AuditLog::query()->whereIn('action', ['movie.created', 'movie.updated'])->count())->toBe(2);
 });
 
 test('an administrator can upload a movie poster when creating and editing a movie', function () {
@@ -393,4 +396,5 @@ test('movie edit and delete actions are available in list and grid views', funct
         ->assertSessionHas('status');
 
     $this->assertDatabaseMissing('movies', ['id' => $movie->id]);
+    expect(AuditLog::query()->where('action', 'movie.deleted')->where('auditable_id', $movie->id)->exists())->toBeTrue();
 });

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogger;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Queue\CallQueuedClosure;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -47,7 +50,7 @@ class FailedJobController extends Controller
         ]);
     }
 
-    public function retry(string $failedJob): RedirectResponse
+    public function retry(Request $request, string $failedJob, AuditLogger $auditLogger): RedirectResponse
     {
         $job = DB::table('failed_jobs')->where('id', $failedJob)->first();
         abort_unless($job, 404);
@@ -58,19 +61,41 @@ class FailedJobController extends Controller
         );
 
         Artisan::call('queue:retry', ['id' => [$job->uuid]]);
+        $auditLogger->logResource(
+            $request->user(),
+            'failed_job.retried',
+            'FailedJob',
+            (int) $job->id,
+            $this->jobAuditData($job),
+            ['uuid' => $job->uuid, 'queue' => $job->queue, 'status' => 'queued'],
+            $request->ip(),
+        );
 
         return to_route('admin.failed-jobs.index')->with('status', 'Failed job queued for retry.');
     }
 
-    public function destroy(string $failedJob): RedirectResponse
+    public function destroy(Request $request, string $failedJob, AuditLogger $auditLogger): RedirectResponse
     {
-        $deleted = DB::table('failed_jobs')->where('id', $failedJob)->delete();
-        abort_unless($deleted, 404);
+        DB::transaction(function () use ($request, $failedJob, $auditLogger): void {
+            $job = DB::table('failed_jobs')->where('id', $failedJob)->lockForUpdate()->first();
+            abort_unless($job, 404);
+
+            DB::table('failed_jobs')->where('id', $failedJob)->delete();
+            $auditLogger->logResource(
+                $request->user(),
+                'failed_job.deleted',
+                'FailedJob',
+                (int) $job->id,
+                $this->jobAuditData($job),
+                [],
+                $request->ip(),
+            );
+        });
 
         return to_route('admin.failed-jobs.index')->with('status', 'Failed job removed.');
     }
 
-    private function filteredJobs(string $jobClass, ?\Illuminate\Support\Carbon $since, string $summary): \Illuminate\Database\Query\Builder
+    private function filteredJobs(string $jobClass, ?Carbon $since, string $summary): Builder
     {
         return DB::table('failed_jobs')
             ->when($since, fn ($query) => $query->where('failed_at', '>=', $since))
@@ -113,5 +138,18 @@ class FailedJobController extends Controller
         }
 
         return is_string($command) ? class_basename($command) : 'Unknown job';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function jobAuditData(object $job): array
+    {
+        return [
+            'uuid' => $job->uuid,
+            'queue' => $job->queue,
+            'failed_at' => $job->failed_at,
+            'job_class' => $this->jobClass($this->withPayloadFallback($job)->payload),
+        ];
     }
 }

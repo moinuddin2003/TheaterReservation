@@ -6,8 +6,8 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingItem;
 use App\Models\Movie;
-use App\Models\Payment;
 use App\Models\Refund;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
@@ -71,7 +71,7 @@ class ReportController extends Controller
         return view('admin.reports.index', [
             'daily' => $daily,
             'movies' => $movies,
-            'moviesList' => \App\Models\Movie::query()->orderBy('title')->get(['id', 'title']),
+            'moviesList' => Movie::query()->orderBy('title')->get(['id', 'title']),
             'movieId' => $movieId,
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
@@ -81,10 +81,26 @@ class ReportController extends Controller
         ]);
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request, AuditLogger $auditLogger): StreamedResponse
     {
         $response = $this->index($request);
         $data = $response->getData();
+        $auditLogger->logResource(
+            $request->user(),
+            'report.csv_export_requested',
+            'ReportExport',
+            0,
+            [],
+            [
+                'from' => $data['from'],
+                'to' => $data['to'],
+                'movie_id' => $data['movieId'],
+                'tickets' => $data['tickets'],
+                'gross_cents' => $data['grossCents'],
+                'refunds_cents' => $data['refundsCents'],
+            ],
+            $request->ip(),
+        );
 
         return response()->streamDownload(function () use ($data): void {
             $handle = fopen('php://output', 'w');

@@ -13,10 +13,13 @@ use App\Models\Payment;
 use App\Models\SeatHold;
 use App\Models\Showtime;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 class CancelShowtimeAction
 {
+    public function __construct(private readonly AuditLogger $auditLogger) {}
+
     /**
      * Cancel the showtime and close its active reservations atomically.
      */
@@ -31,9 +34,9 @@ class CancelShowtimeAction
      *   amount_cents: int
      * }|null
      */
-    public function execute(Showtime $showtime, User $actor, string $reason): ?array
+    public function execute(Showtime $showtime, User $actor, string $reason, ?string $ipAddress = null): ?array
     {
-        return DB::transaction(function () use ($showtime, $actor, $reason): ?array {
+        return DB::transaction(function () use ($showtime, $actor, $reason, $ipAddress): ?array {
             $showtime = Showtime::query()->lockForUpdate()->findOrFail($showtime->id);
 
             if (! $showtime->isScheduled() || $showtime->hasEnded()) {
@@ -41,6 +44,12 @@ class CancelShowtimeAction
             }
 
             $impact = $this->impact($showtime);
+            $before = [
+                'status' => $showtime->status->value,
+                'starts_at' => $showtime->starts_at->toISOString(),
+                'ends_at' => $showtime->ends_at->toISOString(),
+                'base_price_cents' => $showtime->base_price_cents,
+            ];
             $now = now();
             $showtime->status = ShowtimeStatus::Cancelled;
             $showtime->cancelled_at = $now;
@@ -93,6 +102,20 @@ class CancelShowtimeAction
                     'failure_reason' => 'Showtime cancelled before payment completed.',
                     'updated_at' => $now,
                 ]);
+
+            $this->auditLogger->log(
+                $actor,
+                'showtime.cancelled',
+                $showtime,
+                $before,
+                [
+                    'status' => $showtime->status->value,
+                    'cancel_reason' => $reason,
+                    'impact' => $impact,
+                    'refunds_processed' => false,
+                ],
+                $ipAddress,
+            );
 
             return $impact;
         });

@@ -117,6 +117,7 @@ test('an administrator can inspect, retry and remove a failed job', function () 
         $this->post(route('admin.failed-jobs.retry', $jobId))
             ->assertRedirect(route('admin.failed-jobs.index'));
         expect(DB::table('failed_jobs')->where('id', $jobId)->exists())->toBeFalse();
+        expect(AuditLog::query()->where('action', 'failed_job.retried')->where('auditable_id', $jobId)->exists())->toBeTrue();
     } else {
         $detail->assertSee('Retry is unavailable');
         $this->post(route('admin.failed-jobs.retry', $jobId))
@@ -125,7 +126,17 @@ test('an administrator can inspect, retry and remove a failed job', function () 
         $this->delete(route('admin.failed-jobs.destroy', $jobId))
             ->assertRedirect(route('admin.failed-jobs.index'));
         expect(DB::table('failed_jobs')->where('id', $jobId)->exists())->toBeFalse();
+        expect(AuditLog::query()->where('action', 'failed_job.deleted')->where('auditable_id', $jobId)->exists())->toBeTrue();
     }
+
+    $deleteJob = $job;
+    $deleteJob['uuid'] = (string) str()->uuid();
+    $deleteJob['failed_at'] = now();
+    $deleteJobId = DB::table('failed_jobs')->insertGetId($deleteJob);
+    $this->delete(route('admin.failed-jobs.destroy', $deleteJobId))
+        ->assertRedirect(route('admin.failed-jobs.index'));
+    expect(DB::table('failed_jobs')->where('id', $deleteJobId)->exists())->toBeFalse()
+        ->and(AuditLog::query()->where('action', 'failed_job.deleted')->where('auditable_id', $deleteJobId)->exists())->toBeTrue();
 });
 
 test('sales reports attribute successful refunds to the selected movie and date', function () {
@@ -178,5 +189,11 @@ test('sales report export includes the daily refund values', function () {
     $refundsCents = array_sum(array_map(fn (array $row): int => (int) round((float) $row[3] * 100), $rows));
 
     expect($csv)->toContain('Refunds USD')
-        ->and($refundsCents)->toBe(2000);
+        ->and($refundsCents)->toBe(2000)
+        ->and(AuditLog::query()->where('action', 'report.csv_export_requested')->where('auditable_type', 'ReportExport')->exists())->toBeTrue();
+
+    $this->get(route('admin.audit-logs.index', ['action' => 'report.csv_export_requested']))
+        ->assertOk()
+        ->assertSee('ReportExport')
+        ->assertSee('report.csv_export_requested');
 });
