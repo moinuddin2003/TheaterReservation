@@ -20,9 +20,9 @@ use App\Models\Booking;
 use App\Models\Movie;
 use App\Models\Payment;
 use App\Models\Refund;
-use App\Models\Setting;
 use App\Models\Ticket;
 use App\Services\AuditLogger;
+use App\Services\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -65,7 +65,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function show(Booking $booking): View
+    public function show(Booking $booking, SettingsService $settings): View
     {
         $booking->load([
             'user',
@@ -90,10 +90,7 @@ class BookingController extends Controller
                 ->where('status', RefundStatus::Succeeded)
                 ->sum('amount_cents'))
             : 0;
-        $cancelWindowHours = Setting::query()->whereKey('cancel_window_hours')->value('value');
-        $cancelWindowHours = $cancelWindowHours === null
-            ? (int) config('cinebook.cancel_window_hours', 2)
-            : (int) $cancelWindowHours;
+        $cancelWindowHours = (int) $settings->get('cancel_window_hours');
         $cancellationWindowClosed = now()->greaterThan(
             $booking->showtime->starts_at->copy()->subHours(max(0, $cancelWindowHours)),
         );

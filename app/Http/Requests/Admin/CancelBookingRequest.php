@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Enums\BookingStatus;
 use App\Models\Booking;
-use App\Models\Setting;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -52,10 +52,7 @@ class CancelBookingRequest extends FormRequest
             return false;
         }
 
-        $cancelWindowHours = Setting::query()->whereKey('cancel_window_hours')->value('value');
-        $cancelWindowHours = $cancelWindowHours === null
-            ? (int) config('cinebook.cancel_window_hours', 2)
-            : (int) $cancelWindowHours;
+        $cancelWindowHours = (int) app(SettingsService::class)->get('cancel_window_hours');
 
         return now()->greaterThan(
             $booking->showtime->starts_at->copy()->subHours(max(0, $cancelWindowHours)),

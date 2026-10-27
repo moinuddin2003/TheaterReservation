@@ -7,16 +7,6 @@ use Illuminate\View\View;
 
 class AdminPlaceholderController extends Controller
 {
-    public function staffAdmins(): View
-    {
-        return $this->placeholder(
-            'Staff and admins',
-            'Manage staff and administrator accounts.',
-            'People',
-            'users',
-        );
-    }
-
     public function reports(): View
     {
         return $this->placeholder(

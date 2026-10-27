@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GenreRequest;
 use App\Models\Genre;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class GenreController extends Controller
@@ -47,9 +49,14 @@ class GenreController extends Controller
     /**
      * Persist a new genre.
      */
-    public function store(GenreRequest $request): RedirectResponse
+    public function store(GenreRequest $request, AuditLogger $auditLogger): RedirectResponse
     {
-        $genre = Genre::create($request->validated());
+        $genre = DB::transaction(function () use ($request, $auditLogger): Genre {
+            $genre = Genre::create($request->validated());
+            $auditLogger->log($request->user(), 'genre.created', $genre, [], $genre->only(['name', 'slug']), $request->ip());
+
+            return $genre;
+        });
 
         return redirect()
             ->route('admin.genres.index')
@@ -67,9 +74,13 @@ class GenreController extends Controller
     /**
      * Update an existing genre.
      */
-    public function update(GenreRequest $request, Genre $genre): RedirectResponse
+    public function update(GenreRequest $request, Genre $genre, AuditLogger $auditLogger): RedirectResponse
     {
-        $genre->update($request->validated());
+        DB::transaction(function () use ($request, $genre, $auditLogger): void {
+            $before = $genre->only(['name', 'slug']);
+            $genre->update($request->validated());
+            $auditLogger->log($request->user(), 'genre.updated', $genre, $before, $genre->only(['name', 'slug']), $request->ip());
+        });
 
         return redirect()
             ->route('admin.genres.index')
@@ -82,7 +93,7 @@ class GenreController extends Controller
      * Attached movies are detached via the genre_movie cascade; the UI warns
      * before this is reached when the genre is in use.
      */
-    public function destroy(Genre $genre): RedirectResponse
+    public function destroy(Request $request, Genre $genre, AuditLogger $auditLogger): RedirectResponse
     {
         if ($genre->movies()->exists()) {
             return redirect()
@@ -91,7 +102,11 @@ class GenreController extends Controller
         }
 
         $name = $genre->name;
-        $genre->delete();
+        DB::transaction(function () use ($request, $genre, $auditLogger): void {
+            $before = $genre->only(['name', 'slug']);
+            $genre->delete();
+            $auditLogger->log($request->user(), 'genre.deleted', $genre, $before, [], $request->ip());
+        });
 
         return redirect()
             ->route('admin.genres.index')

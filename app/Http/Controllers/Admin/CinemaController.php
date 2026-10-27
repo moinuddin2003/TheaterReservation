@@ -7,8 +7,10 @@ use App\Http\Requests\CinemaRequest;
 use App\Models\Cinema;
 use App\Models\Screen;
 use App\Models\Seat;
+use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class CinemaController extends Controller
@@ -54,25 +56,34 @@ class CinemaController extends Controller
         ]);
     }
 
-    public function store(CinemaRequest $request): RedirectResponse
+    public function store(CinemaRequest $request, AuditLogger $auditLogger): RedirectResponse
     {
-        $cinema = Cinema::create($request->validated());
+        $cinema = DB::transaction(function () use ($request, $auditLogger): Cinema {
+            $cinema = Cinema::create($request->validated());
+            $auditLogger->log($request->user(), 'cinema.created', $cinema, [], $cinema->only(['name', 'address', 'phone']), $request->ip());
+
+            return $cinema;
+        });
 
         return redirect()
             ->route('admin.cinema.index')
             ->with('status', "Cinema \"{$cinema->name}\" was created.");
     }
 
-    public function update(CinemaRequest $request, Cinema $cinema): RedirectResponse
+    public function update(CinemaRequest $request, Cinema $cinema, AuditLogger $auditLogger): RedirectResponse
     {
-        $cinema->update($request->validated());
+        DB::transaction(function () use ($request, $cinema, $auditLogger): void {
+            $before = $cinema->only(['name', 'address', 'phone']);
+            $cinema->update($request->validated());
+            $auditLogger->log($request->user(), 'cinema.updated', $cinema, $before, $cinema->only(['name', 'address', 'phone']), $request->ip());
+        });
 
         return redirect()
             ->route('admin.cinema.index')
             ->with('status', "Cinema \"{$cinema->name}\" was updated.");
     }
 
-    public function destroy(Cinema $cinema): RedirectResponse
+    public function destroy(Request $request, Cinema $cinema, AuditLogger $auditLogger): RedirectResponse
     {
         if ($cinema->screens()->exists()) {
             return redirect()
@@ -81,7 +92,11 @@ class CinemaController extends Controller
         }
 
         $name = $cinema->name;
-        $cinema->delete();
+        DB::transaction(function () use ($request, $cinema, $auditLogger): void {
+            $before = $cinema->only(['name', 'address', 'phone']);
+            $cinema->delete();
+            $auditLogger->log($request->user(), 'cinema.deleted', $cinema, $before, [], $request->ip());
+        });
 
         return redirect()
             ->route('admin.cinema.index')

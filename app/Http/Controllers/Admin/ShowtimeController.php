@@ -11,10 +11,12 @@ use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Screen;
 use App\Models\Showtime;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ShowtimeController extends Controller
@@ -129,16 +131,28 @@ class ShowtimeController extends Controller
     /**
      * Persist a new showtime.
      */
-    public function store(ShowtimeRequest $request): RedirectResponse
+    public function store(ShowtimeRequest $request, AuditLogger $auditLogger): RedirectResponse
     {
-        $showtime = new Showtime([
-            'movie_id' => $request->validated('movie_id'),
-            'screen_id' => $request->validated('screen_id'),
-            'starts_at' => $request->startsAt(),
-            'ends_at' => $request->endsAt(),
-        ]);
-        $showtime->base_price_cents = $request->basePriceCents();
-        $showtime->save();
+        $showtime = DB::transaction(function () use ($request, $auditLogger): Showtime {
+            $showtime = new Showtime([
+                'movie_id' => $request->validated('movie_id'),
+                'screen_id' => $request->validated('screen_id'),
+                'starts_at' => $request->startsAt(),
+                'ends_at' => $request->endsAt(),
+            ]);
+            $showtime->base_price_cents = $request->basePriceCents();
+            $showtime->save();
+            $auditLogger->log(
+                $request->user(),
+                'showtime.created',
+                $showtime,
+                [],
+                $this->showtimeAuditData($showtime),
+                $request->ip(),
+            );
+
+            return $showtime;
+        });
 
         return redirect()
             ->route('admin.showtimes.index')
@@ -165,7 +179,7 @@ class ShowtimeController extends Controller
     /**
      * Update a scheduled showtime.
      */
-    public function update(ShowtimeRequest $request, Showtime $showtime): RedirectResponse
+    public function update(ShowtimeRequest $request, Showtime $showtime, AuditLogger $auditLogger): RedirectResponse
     {
         if (! $showtime->isScheduled()) {
             return redirect()
@@ -173,14 +187,25 @@ class ShowtimeController extends Controller
                 ->with('error', 'A cancelled showtime cannot be edited.');
         }
 
-        $showtime->fill([
-            'movie_id' => $request->validated('movie_id'),
-            'screen_id' => $request->validated('screen_id'),
-            'starts_at' => $request->startsAt(),
-            'ends_at' => $request->endsAt(),
-        ]);
-        $showtime->base_price_cents = $request->basePriceCents();
-        $showtime->save();
+        DB::transaction(function () use ($request, $showtime, $auditLogger): void {
+            $before = $this->showtimeAuditData($showtime);
+            $showtime->fill([
+                'movie_id' => $request->validated('movie_id'),
+                'screen_id' => $request->validated('screen_id'),
+                'starts_at' => $request->startsAt(),
+                'ends_at' => $request->endsAt(),
+            ]);
+            $showtime->base_price_cents = $request->basePriceCents();
+            $showtime->save();
+            $auditLogger->log(
+                $request->user(),
+                'showtime.updated',
+                $showtime,
+                $before,
+                $this->showtimeAuditData($showtime),
+                $request->ip(),
+            );
+        });
 
         return redirect()
             ->route('admin.showtimes.index')
@@ -209,6 +234,7 @@ class ShowtimeController extends Controller
             $showtime,
             $request->user(),
             $request->validated('cancel_reason'),
+            $request->ip(),
         );
 
         if ($impact === null) {
@@ -225,5 +251,20 @@ class ShowtimeController extends Controller
                 'status',
                 "Showtime cancelled. {$bookingCount} bookings cancelled, {$impact['tickets']} tickets voided and {$impact['active_holds']} seat holds released. No refunds were processed.",
             );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function showtimeAuditData(Showtime $showtime): array
+    {
+        return [
+            'movie_id' => $showtime->movie_id,
+            'screen_id' => $showtime->screen_id,
+            'starts_at' => $showtime->starts_at->toISOString(),
+            'ends_at' => $showtime->ends_at->toISOString(),
+            'base_price_cents' => $showtime->base_price_cents,
+            'status' => $showtime->status->value,
+        ];
     }
 }

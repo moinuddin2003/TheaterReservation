@@ -11,6 +11,7 @@ use App\Models\Movie;
 use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -74,7 +75,7 @@ class MovieController extends Controller
     /**
      * Public movie detail with upcoming showtimes grouped by date.
      */
-    public function show(Movie $movie): View
+    public function show(Movie $movie, SettingsService $settings): View
     {
         $movie->load('genres');
 
@@ -89,6 +90,7 @@ class MovieController extends Controller
             'movie' => $movie,
             'showtimesByDate' => $showtimes->groupBy(fn ($showtime) => $showtime->starts_at->toDateString()),
             'availability' => $this->availabilityFor($showtimes),
+            'premiumSurchargeCents' => (int) $settings->get('premium_surcharge_cents'),
         ]);
     }
 

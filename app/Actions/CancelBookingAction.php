@@ -10,16 +10,19 @@ use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Payment;
 use App\Models\SeatHold;
-use App\Models\Setting;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CancelBookingAction
 {
-    public function __construct(private readonly AuditLogger $auditLogger) {}
+    public function __construct(
+        private readonly AuditLogger $auditLogger,
+        private readonly SettingsService $settings,
+    ) {}
 
     public function execute(
         Booking $booking,
@@ -59,12 +62,7 @@ class CancelBookingAction
                 ]);
             }
 
-            $cancelWindowHours = Setting::query()
-                ->whereKey('cancel_window_hours')
-                ->value('value');
-            $cancelWindowHours = $cancelWindowHours === null
-                ? (int) config('cinebook.cancel_window_hours', 2)
-                : (int) $cancelWindowHours;
+            $cancelWindowHours = (int) $this->settings->get('cancel_window_hours');
             $cutoff = $booking->showtime->starts_at->copy()->subHours(max(0, $cancelWindowHours));
 
             if (now()->greaterThan($cutoff) && blank($overrideReason)) {

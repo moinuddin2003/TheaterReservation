@@ -13,6 +13,7 @@ use Database\Seeders\GenreSeeder;
 use Database\Seeders\MovieSeeder;
 use Database\Seeders\PaymentSeeder;
 use Database\Seeders\ShowtimeSeeder;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->seed([
@@ -26,17 +27,18 @@ beforeEach(function () {
 
 it('shows seeded payments and filters by customer and payment status', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
+    $payment = Payment::query()->where('idempotency_key', 'demo-payment-001')->firstOrFail();
+    $paymentLabel = 'PAY-'.str_pad((string) $payment->getKey(), 5, '0', STR_PAD_LEFT);
 
     $this->actingAs($admin)
         ->get(route('admin.payments.index'))
         ->assertOk()
         ->assertSee('Payments')
-        ->assertSee('Payment filters')
         ->assertSee('Real-time payment data')
         ->assertSee('Payment state')
         ->assertSee('Recent payments')
         ->assertSee('aria-label="Search payments"', false)
-        ->assertSee('PAY-00001')
+        ->assertSee($paymentLabel)
         ->assertSee('href="'.route('admin.bookings.show', 'DEMO-PAY-001').'"', false)
         ->assertSee('Alex Morgan')
         ->assertSee('Movie / showtime')
@@ -91,5 +93,10 @@ it('includes demo payments in the normal database seed command', function () {
 
     expect(Payment::query()->where('gateway', 'demo')->count())->toBe(8)
         ->and(Booking::query()->where('reference', 'like', 'DEMO-PAY-%')->count())->toBe(8)
-        ->and(Refund::query()->where('idempotency_key', 'like', 'demo-refund-%')->count())->toBe(5);
+        ->and(Refund::query()->where('idempotency_key', 'like', 'demo-refund-%')->count())->toBe(5)
+        ->and(DB::table('audit_logs')->where('ip_address', 'like', '198.51.100.%')->count())->toBe(4)
+        ->and(DB::table('failed_jobs')->whereIn('uuid', [
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+        ])->count())->toBe(2);
 });

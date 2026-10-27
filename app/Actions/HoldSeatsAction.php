@@ -12,6 +12,7 @@ use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
 use App\Models\User;
+use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -19,6 +20,8 @@ use Illuminate\Validation\ValidationException;
 
 class HoldSeatsAction
 {
+    public function __construct(private readonly SettingsService $settings) {}
+
     /**
      * @param  array<int, int>  $seatIds
      */
@@ -43,7 +46,7 @@ class HoldSeatsAction
                 ]);
             }
             $seatIds = array_values($seatIds);
-            $maxSeats = (int) config('cinebook.max_seats_per_booking', 6);
+            $maxSeats = (int) $this->settings->get('max_seats_per_booking');
 
             if (count($seatIds) === 0 || count($seatIds) > $maxSeats) {
                 throw ValidationException::withMessages([
@@ -119,13 +122,13 @@ class HoldSeatsAction
                 ]);
             }
 
-            $premiumSurcharge = (int) config('cinebook.premium_surcharge_cents', 0);
+            $premiumSurcharge = (int) $this->settings->get('premium_surcharge_cents');
             $holds = $seats->map(fn (Seat $seat): array => [
                 'seat' => $seat,
                 'price_cents' => $showtime->base_price_cents + ($seat->isPremium() ? $premiumSurcharge : 0),
             ]);
             $totalCents = (int) $holds->sum('price_cents');
-            $expiresAt = now()->addMinutes((int) config('cinebook.hold_minutes', 10));
+            $expiresAt = now()->addMinutes((int) $this->settings->get('hold_minutes'));
 
             $booking = new Booking([
                 'reference' => 'CB-'.Str::upper(Str::random(10)),
