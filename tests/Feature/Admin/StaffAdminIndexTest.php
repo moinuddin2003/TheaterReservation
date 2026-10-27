@@ -104,6 +104,8 @@ test('staff details show the staff member scan history and admins have no detail
         ->assertSee('Alex Staff')
         ->assertSee('Scan summary')
         ->assertSee('Scan history')
+        ->assertSee('space-y-3 self-start xl:sticky xl:top-24', false)
+        ->assertSee('xl:min-w-full', false)
         ->assertSee('STAFF-TICKET-01')
         ->assertSee('Movie Guest')
         ->assertSee($showtime->movie->title)

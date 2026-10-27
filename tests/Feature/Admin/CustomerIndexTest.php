@@ -103,6 +103,8 @@ test('customer details show booking history and a standard back link', function 
         ->assertSee('Member since')
         ->assertSee('Spending summary')
         ->assertSee('Booking history')
+        ->assertSee('space-y-3 self-start xl:sticky xl:top-24', false)
+        ->assertSee('xl:min-w-full', false)
         ->assertSee($booking->reference)
         ->assertSee($showtime->movie->title)
         ->assertSee(route('admin.bookings.show', $booking), false)

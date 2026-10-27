@@ -12,8 +12,8 @@
         </x-slot:meta>
     </x-admin.page-header>
 
-    <div class="grid items-start gap-4 xl:grid-cols-[minmax(230px,0.78fr)_minmax(0,1.72fr)]">
-        <div class="space-y-3">
+    <div class="grid items-start gap-4 xl:grid-cols-[minmax(300px,0.95fr)_minmax(0,1.65fr)]">
+        <div class="space-y-3 self-start xl:sticky xl:top-24">
             <x-admin.card class="!p-4 sm:!p-5">
                 <div class="flex items-center gap-3 border-b border-cine-border/10 pb-4">
                     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cine-success/20 bg-cine-success/10 text-cine-success">
@@ -92,7 +92,7 @@
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="admin-data-table w-full min-w-[790px] table-fixed divide-y divide-cine-border/10">
+                    <table class="admin-data-table w-full min-w-[790px] table-fixed divide-y divide-cine-border/10 xl:min-w-full">
                         <colgroup>
                             <col class="w-[18%]">
                             <col class="w-[22%]">
