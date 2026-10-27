@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Enums\BookingStatus;
 use App\Enums\HoldStatus;
 use App\Enums\PaymentStatus;
+use App\Mail\PaymentNotCompleted;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Seat;
@@ -13,6 +14,7 @@ use App\Models\Showtime;
 use App\Models\User;
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -61,19 +63,30 @@ class HoldSeatsAction
                     'released_at' => now(),
                 ]);
 
-            $expiredBookingIds = Booking::query()
+            $expiredBookings = Booking::query()
                 ->where('showtime_id', $showtime->getKey())
                 ->where('status', BookingStatus::PendingPayment)
                 ->where('hold_expires_at', '<=', now())
-                ->pluck('id');
+                ->whereHas('payments', fn ($query) => $query
+                    ->where('status', PaymentStatus::Pending)
+                    ->whereNotNull('gateway_session_id'))
+                ->with(['user', 'showtime.movie', 'items.ticket'])
+                ->get();
 
-            if ($expiredBookingIds->isNotEmpty()) {
+            if ($expiredBookings->isNotEmpty()) {
+                $expiredBookingIds = $expiredBookings->modelKeys();
+
                 Booking::query()->whereIn('id', $expiredBookingIds)
                     ->update(['status' => BookingStatus::Expired->value]);
                 Payment::query()
                     ->whereIn('booking_id', $expiredBookingIds)
                     ->where('status', PaymentStatus::Pending)
                     ->update(['status' => PaymentStatus::Expired->value]);
+
+                foreach ($expiredBookings as $expiredBooking) {
+                    Mail::to($expiredBooking->user->email)
+                        ->queue((new PaymentNotCompleted($expiredBooking))->afterCommit());
+                }
             }
 
             $seats = Seat::query()

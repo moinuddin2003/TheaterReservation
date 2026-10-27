@@ -17,9 +17,10 @@
                 <x-movie-meta :movie="$movie" />
                 <h1 id="movie-title">{{ $movie->title }}</h1>
                 <p class="movie-summary">{{ $movie->synopsis }}</p>
-                <button class="button button--quiet" type="button" data-demo-message="Trailer preview will be added soon.">
-                    <span aria-hidden="true">▷</span> Watch trailer <span class="button__subtle">· HD</span>
-                </button>
+                <a class="button button--quiet" href="https://www.youtube.com/watch?v=DDU-rZs-Ic4"
+                    target="_blank" rel="noopener noreferrer">
+                    <span aria-hidden="true">▷</span> Watch video <span class="button__subtle">· HD</span>
+                </a>
             </div>
         </section>
 

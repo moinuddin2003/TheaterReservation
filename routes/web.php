@@ -17,14 +17,6 @@ Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');
 Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])
     ->name('movies.show');
 
-Route::get('/movies/{movieSlug}/seats', function (string $movieSlug) {
-    $movie = config('cinema.movies.'.$movieSlug);
-
-    abort_if(! is_array($movie) || empty($movie['seat_map']), 404);
-
-    return view('movies.seats', ['movie' => $movie]);
-})->name('movies.seats');
-
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {

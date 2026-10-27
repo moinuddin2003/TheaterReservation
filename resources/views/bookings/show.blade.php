@@ -5,6 +5,8 @@
 @section('content')
     @php($latestPayment = $booking->payments->sortByDesc('created_at')->first())
     @php($latestRefund = $booking->refunds->sortByDesc('created_at')->first())
+    @php($activeSeatHolds = $booking->seatHolds->filter(fn ($hold) => $hold->isActive() && $hold->expires_at->isFuture()))
+    @php($canContinuePayment = $booking->isPendingPayment() && $activeSeatHolds->count() === $booking->seats_count)
 
     <div class="page-shell booking-page">
         @if (session('status'))
@@ -17,11 +19,31 @@
         </p>
         <div class="booking-detail-heading">
             <div>
-                <h1 class="booking-page__title">Your booking, all in one place</h1>
+                <h1 class="booking-page__title">Booking details</h1>
                 <x-booking-status :status="$booking->status" />
             </div>
-            <p>Reserved {{ $booking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
+            <p>Created {{ $booking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
         </div>
+
+        @if ($booking->isPendingPayment())
+            <p class="booking-notice" role="status">
+                @if ($canContinuePayment)
+                    Your seats are being held for you until
+                    {{ $booking->hold_expires_at->copy()->timezone(config('cinema.timezone'))->format('g:i A') }}.
+                    Complete payment before then to confirm your booking.
+                @else
+                    Your seat hold has expired. These seats are no longer reserved. Choose seats again to make a new booking.
+                @endif
+            </p>
+        @elseif ($booking->isFailed() || $booking->isExpired())
+            <p class="booking-notice" role="status">
+                This booking is no longer active and its seats are not reserved. Choose seats again to make a new booking.
+            </p>
+        @elseif ($booking->isRefunded())
+            <p class="booking-notice" role="status">
+                This booking was refunded. Your bank may take several business days to show the money.
+            </p>
+        @endif
 
         <div class="booking-detail-layout">
             <div class="booking-detail-main">
@@ -30,79 +52,101 @@
                 </section>
 
                 <section class="booking-panel">
-                    <h2>Your seats and tickets</h2>
+                    <h2>{{ $booking->isConfirmed() ? 'Your seats and tickets' : 'Seats in this booking' }}</h2>
                     @if ($booking->items->isNotEmpty())
                         <div class="booking-table-wrap">
                             <table class="booking-table">
                                 <thead>
                                     <tr>
                                         <th>Seat</th>
-                                        <th>Ticket</th>
-                                        <th>Ticket status</th>
-                                        <th>Price</th>
-                                        <th>Ticket page</th>
+                                        @if ($booking->isConfirmed())
+                                            <th>Ticket</th>
+                                            <th>Ticket status</th>
+                                            <th>Price</th>
+                                            <th>Ticket page</th>
+                                        @else
+                                            <th>Price</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($booking->items as $item)
                                         <tr>
                                             <td>{{ $item->seat_label }} · {{ ucfirst($item->seat_type->value) }}</td>
-                                            <td>{{ $item->ticket?->ticket_number ?? 'Not issued' }}</td>
-                                            <td>
-                                                {{ $item->ticket
-                                                    ? ucwords(str_replace('_', ' ', $item->ticket->status->value))
-                                                    : 'Awaiting confirmation' }}
-                                            </td>
-                                            <td>{{ number_format($item->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
-                                            <td>
-                                                @if ($item->ticket && $booking->isConfirmed() && ! $item->ticket->isVoid())
-                                                    <a href="{{ route('bookings.tickets.show', [$booking->reference, $item->ticket->id]) }}">
-                                                        View ticket
-                                                    </a>
-                                                @else
-                                                    —
-                                                @endif
-                                            </td>
+                                            @if ($booking->isConfirmed())
+                                                <td>{{ $item->ticket?->ticket_number ?? 'Not issued' }}</td>
+                                                <td>
+                                                    {{ $item->ticket
+                                                        ? ucwords(str_replace('_', ' ', $item->ticket->status->value))
+                                                        : 'Awaiting confirmation' }}
+                                                </td>
+                                                <td>{{ number_format($item->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
+                                                <td>
+                                                    @if ($item->ticket && ! $item->ticket->isVoid())
+                                                        <a href="{{ route('bookings.tickets.show', [$booking->reference, $item->ticket->id]) }}">
+                                                            View ticket
+                                                        </a>
+                                                    @else
+                                                        —
+                                                    @endif
+                                                </td>
+                                            @else
+                                                <td>{{ number_format($item->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}</td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
+                    @elseif ($activeSeatHolds->isNotEmpty())
+                        <ul>
+                            @foreach ($activeSeatHolds as $hold)
+                                <li>
+                                    Seat {{ $hold->seat->label }} · {{ ucfirst($hold->seat->type->value) }}
+                                    · {{ number_format($hold->price_cents / 100, 2) }} {{ strtoupper($booking->currency) }}
+                                </li>
+                            @endforeach
+                        </ul>
                     @else
-                        <p class="booking-muted">Seat details have not been recorded for this booking.</p>
+                        <p class="booking-muted">Seat details are not available because these seats are no longer held.</p>
                     @endif
-                    <p class="booking-muted">
-                        Ticket access is based on the saved ticket records for this booking.
-                    </p>
+                    @if ($booking->isConfirmed())
+                        <p class="booking-muted">Your tickets are ready to view and print.</p>
+                    @elseif ($canContinuePayment)
+                        <p class="booking-muted">
+                            These seats are reserved temporarily. They will be released if you do not finish payment before the hold expires.
+                        </p>
+                    @endif
                 </section>
 
                 <section class="booking-panel">
-                    <h2>Payment</h2>
+                    <h2>Payment summary</h2>
                     @if ($latestPayment)
                         <p>
-                            {{ ucwords(str_replace('_', ' ', $latestPayment->status->value)) }}
-                            <span aria-hidden="true">·</span>
-                            {{ strtoupper($latestPayment->currency) }}
+                            Amount: {{ strtoupper($latestPayment->currency) }}
                             {{ number_format($latestPayment->amount_cents / 100, 2) }}
                         </p>
-                        <p>Provider: {{ strtoupper($latestPayment->gateway) }}</p>
-                        @if ($latestPayment->paid_at)
-                            <p>Paid {{ $latestPayment->paid_at->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
+                        @if ($latestPayment->isSucceeded() || $latestPayment->isRefunded())
+                            <p>Payment received {{ $latestPayment->paid_at?->copy()->timezone(config('cinema.timezone'))->format('M j, Y \a\t H:i') }}</p>
+                        @elseif ($latestPayment->isPending())
+                            <p>Payment has not been completed yet.</p>
+                        @elseif ($latestPayment->isFailed())
+                            <p>Payment was not completed.</p>
+                        @elseif ($latestPayment->isExpired())
+                            <p>No payment was completed before the seat hold expired.</p>
                         @endif
                     @else
-                        <p class="booking-muted">No payment record is attached to this booking.</p>
+                        <p class="booking-muted">You have not started payment for this booking yet.</p>
                     @endif
 
-                    @forelse ($booking->refunds as $refund)
+                    @if ($latestRefund)
                         <p>
-                            Refund {{ ucwords(str_replace('_', ' ', $refund->status->value)) }}
-                            <span aria-hidden="true">·</span>
-                            {{ number_format($refund->amount_cents / 100, 2) }}
-                            {{ strtoupper($refund->currency) }}
+                            Refund:
+                            {{ $latestRefund->isSucceeded() ? 'sent' : ($latestRefund->isFailed() ? 'could not be completed' : 'being processed') }}
+                            · {{ strtoupper($latestRefund->currency) }}
+                            {{ number_format($latestRefund->amount_cents / 100, 2) }}
                         </p>
-                    @empty
-                        <p class="booking-muted">No refund record.</p>
-                    @endforelse
+                    @endif
                 </section>
             </div>
 
@@ -113,7 +157,15 @@
                         <li>Booking created · {{ $booking->created_at->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}</li>
                         @if ($latestPayment)
                             <li>
-                                Payment {{ ucwords(str_replace('_', ' ', $latestPayment->status->value)) }}
+                                @if ($latestPayment->isSucceeded() || $latestPayment->isRefunded())
+                                    Payment received
+                                @elseif ($latestPayment->isPending())
+                                    Payment in progress
+                                @elseif ($latestPayment->isFailed())
+                                    Payment failed
+                                @else
+                                    Payment window expired
+                                @endif
                                 · {{ ($latestPayment->paid_at ?? $latestPayment->created_at)->copy()->timezone(config('cinema.timezone'))->format('M j, H:i') }}
                             </li>
                         @endif
@@ -143,14 +195,28 @@
                             href="{{ route('bookings.cancel', $booking->reference) }}"
                         >Try refund again</a>
                     @elseif ($booking->isPendingPayment())
-                        <a
-                            class="button button--quiet"
-                            href="{{ route('bookings.processing', $booking->reference) }}"
-                        >Check payment status <span aria-hidden="true">→</span></a>
+                        @if ($canContinuePayment)
+                            <a
+                                class="button button--primary"
+                                href="{{ route('bookings.checkout', $booking->reference) }}"
+                            >Continue to payment <span aria-hidden="true">→</span></a>
+                            <p class="booking-muted">Finish payment to confirm your seats.</p>
+                        @else
+                            <a
+                                class="button button--primary"
+                                href="{{ route('showtimes.show', $booking->showtime) }}"
+                            >Choose seats again <span aria-hidden="true">→</span></a>
+                        @endif
                     @else
-                        <p class="booking-muted">This booking has no further customer action available here.</p>
+                        @if ($booking->isFailed() || $booking->isExpired())
+                            <a
+                                class="button button--primary"
+                                href="{{ route('showtimes.show', $booking->showtime) }}"
+                            >Choose seats again <span aria-hidden="true">→</span></a>
+                        @else
+                            <p class="booking-muted">There is no further action for this booking.</p>
+                        @endif
                     @endif
-                    <p class="booking-muted">Saved payment and refund records determine the actions shown here.</p>
                 </section>
             </aside>
         </div>
