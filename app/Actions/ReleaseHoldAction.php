@@ -10,13 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class ReleaseHoldAction
 {
-    public function execute(Booking $booking, BookingStatus $bookingStatus): void
+    public function execute(Booking $booking, BookingStatus $bookingStatus): bool
     {
-        DB::transaction(function () use ($booking, $bookingStatus): void {
+        return DB::transaction(function () use ($booking, $bookingStatus): bool {
             $booking = Booking::query()->whereKey($booking->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $booking->isPendingPayment()) {
-                return;
+                return false;
             }
 
             $booking->seatHolds()
@@ -37,6 +37,8 @@ class ReleaseHoldAction
                 ->update(['status' => $paymentStatus->value]);
 
             $booking->forceFill(['status' => $bookingStatus])->save();
+
+            return true;
         });
     }
 }

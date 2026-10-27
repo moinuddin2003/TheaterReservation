@@ -7,6 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="dark light">
     <title>@yield('title', $cinema?->name ?? config('app.name'))</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet">
     <x-theme-init />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -36,10 +38,31 @@
                 <span class="location-label"><span aria-hidden="true">⌖</span> {{ $cinema?->name ?? config('app.name') }}</span>
                 <x-theme-toggle />
                 @auth
-                    <a class="profile-label" href="{{ route('profile.edit') }}">
-                        <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
-                        {{ auth()->user()->name }}
-                    </a>
+                    <div class="site-account-menu" x-data="{ open: false }" @click.outside="open = false"
+                        @keydown.escape.window="open = false">
+                        <button class="profile-label site-account-menu__trigger" type="button" aria-haspopup="menu"
+                            :aria-expanded="open.toString()" @click="open = ! open">
+                            <span class="profile-avatar">{{ str(auth()->user()->name)->substr(0, 1)->upper() }}</span>
+                            <span class="site-account-menu__name">{{ auth()->user()->name }}</span>
+                            <svg class="site-account-menu__chevron" :class="{ 'is-open': open }" aria-hidden="true"
+                                viewBox="0 0 16 16" fill="none">
+                                <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-linecap="round"
+                                    stroke-linejoin="round" stroke-width="1.5" />
+                            </svg>
+                        </button>
+                        <div class="site-account-menu__dropdown" x-cloak x-show="open" x-transition
+                            role="menu" aria-label="Account menu">
+                            <a class="site-account-menu__item" href="{{ route('profile.edit') }}" role="menuitem">
+                                Profile
+                            </a>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button class="site-account-menu__item" type="submit" role="menuitem">
+                                    Log out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 @else
                     <a class="profile-label" href="{{ route('login') }}">Sign in</a>
                 @endauth

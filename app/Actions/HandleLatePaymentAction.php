@@ -21,17 +21,19 @@ class HandleLatePaymentAction
         private BookingCancellationService $cancellationService,
     ) {}
 
-    public function execute(Payment $payment, string $paymentIntentId): void
+    public function execute(Payment $payment, string $paymentIntentId): ?Refund
     {
         $refund = DB::transaction(function () use ($payment, $paymentIntentId): Refund {
             $payment = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
             $booking = Booking::query()->whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
 
-            $payment->forceFill([
-                'gateway_payment_intent_id' => $paymentIntentId,
-                'status' => PaymentStatus::Succeeded,
-                'paid_at' => $payment->paid_at ?? now(),
-            ])->save();
+            if (! $payment->isRefunded()) {
+                $payment->forceFill([
+                    'gateway_payment_intent_id' => $paymentIntentId,
+                    'status' => PaymentStatus::Succeeded,
+                    'paid_at' => $payment->paid_at ?? now(),
+                ])->save();
+            }
 
             if ($booking->isPendingPayment()) {
                 $booking->seatHolds()
@@ -71,7 +73,7 @@ class HandleLatePaymentAction
         });
 
         if ($refund->gateway_refund_id) {
-            return;
+            return null;
         }
 
         $payment = Payment::query()->findOrFail($refund->payment_id);
@@ -94,5 +96,7 @@ class HandleLatePaymentAction
                 'stripe_refund_id' => $stripeRefund->id,
             ]);
         }
+
+        return $refund->refresh();
     }
 }
