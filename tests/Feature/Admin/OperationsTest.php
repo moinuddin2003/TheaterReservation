@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\Movie;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\SettingsService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Queue\CallQueuedClosure;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,22 @@ test('an administrator can update reservation settings and the change is audited
         ->and(Setting::query()->whereKey('premium_surcharge_cents')->value('value'))->toBe('350');
 
     expect(AuditLog::query()->where('action', 'settings.updated')->count())->toBe(4);
+});
+
+test('reservation settings use database values before config defaults', function () {
+    config(['cinebook.hold_minutes' => 19]);
+    $settings = app(SettingsService::class);
+
+    expect($settings->get('hold_minutes'))->toBe(19);
+
+    Setting::query()->create(['key' => 'hold_minutes', 'value' => '7']);
+
+    expect($settings->get('hold_minutes'))->toBe('7');
+
+    $this->actingAs(User::factory()->create(['role' => Role::Admin]))
+        ->get(route('admin.settings.edit'))
+        ->assertOk()
+        ->assertViewHas('settings', fn (array $values): bool => $values['hold_minutes'] === '7');
 });
 
 test('an administrator can filter audit history and open its detail drawer', function () {

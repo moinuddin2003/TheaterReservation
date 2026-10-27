@@ -1,7 +1,7 @@
 <x-admin.layout title="Reservation settings" breadcrumb="Operations">
     <div class="mb-5 rounded-md bg-[#183663] px-3 py-3 text-xs leading-5 text-cine-primary">
-        ⓘ Changes apply only to new holds and bookings<br>
-        Existing holds keep their expiry. Existing bookings keep their prices and cancellation policy. Every change is audited.
+        ⓘ Changes apply immediately to new holds and cancellation decisions<br>
+        Existing holds keep their expiry and booked prices don't change. Cancellation-window updates also apply to existing bookings. Every change is audited.
     </div>
 
     @if (session('status'))

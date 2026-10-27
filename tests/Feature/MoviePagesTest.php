@@ -3,6 +3,7 @@
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Screen;
+use App\Models\Setting;
 use App\Models\Showtime;
 use Illuminate\Support\Carbon;
 
@@ -159,6 +160,24 @@ it('shows movie details and rejects unknown movie slugs', function () {
 
     $this->get('/movies/not-a-movie')
         ->assertNotFound();
+});
+
+it('uses the saved premium surcharge on movie showtime cards', function () {
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'Pricing Test Movie',
+        'slug' => 'pricing-test-movie',
+    ]);
+    $screen = Screen::factory()->create(['name' => 'Pricing Test Screen']);
+    Showtime::factory()->for($movie)->for($screen)->create([
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHours(2),
+        'base_price_cents' => 1000,
+    ]);
+    Setting::query()->create(['key' => 'premium_surcharge_cents', 'value' => '350']);
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertSee('Premium $13.50');
 });
 
 it('only shows a seat map for movies with a configured seat map', function () {

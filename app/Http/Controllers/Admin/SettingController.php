@@ -5,29 +5,25 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\AuditLogger;
+use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SettingController extends Controller
 {
-    public function edit(): View
+    public function edit(SettingsService $settingsService): View
     {
         $defaults = [
-            'hold_minutes' => config('cinebook.hold_minutes', 10),
-            'max_seats_per_booking' => config('cinebook.max_seats_per_booking', 6),
-            'cancel_window_hours' => config('cinebook.cancel_window_hours', 2),
-            'premium_surcharge_cents' => config('cinebook.premium_surcharge_cents', 200),
+            'hold_minutes' => $settingsService->get('hold_minutes'),
+            'max_seats_per_booking' => $settingsService->get('max_seats_per_booking'),
+            'cancel_window_hours' => $settingsService->get('cancel_window_hours'),
+            'premium_surcharge_cents' => $settingsService->get('premium_surcharge_cents'),
         ];
 
-        $settings = Setting::query()
-            ->whereIn('key', array_keys($defaults))
-            ->pluck('value', 'key')
-            ->all();
-
         return view('admin.settings.edit', [
-            'settings' => array_merge($defaults, $settings, [
-                'premium_surcharge_cents' => ((int) ($settings['premium_surcharge_cents'] ?? $defaults['premium_surcharge_cents'])) / 100,
+            'settings' => array_merge($defaults, [
+                'premium_surcharge_cents' => ((int) $defaults['premium_surcharge_cents']) / 100,
             ]),
         ]);
     }

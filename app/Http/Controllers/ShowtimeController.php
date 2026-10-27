@@ -7,6 +7,7 @@ use App\Models\BookingItem;
 use App\Models\Seat;
 use App\Models\SeatHold;
 use App\Models\Showtime;
+use App\Services\SettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -19,7 +20,7 @@ class ShowtimeController extends Controller
      * Blade view needs prepared here. Returns the public JSON payload
      * when the client asks for JSON instead.
      */
-    public function show(Request $request, Showtime $showtime): View|JsonResponse
+    public function show(Request $request, Showtime $showtime, SettingsService $settings): View|JsonResponse
     {
         $showtime->loadMissing(['screen', 'movie' => fn ($query) => $query->with('genres')]);
 
@@ -30,7 +31,7 @@ class ShowtimeController extends Controller
             ->get();
 
         $standardPriceCents = (int) $showtime->base_price_cents;
-        $premiumPriceCents = $standardPriceCents + (int) config('cinebook.premium_surcharge_cents', 0);
+        $premiumPriceCents = $standardPriceCents + (int) $settings->get('premium_surcharge_cents');
 
         $held = $this->heldSeatIds($showtime);
         $sold = $this->soldSeatIds($showtime);
@@ -87,9 +88,9 @@ class ShowtimeController extends Controller
                 'standard' => $standardPriceCents / 100,
                 'premium' => $premiumPriceCents / 100,
             ],
-            'maxSelection' => (int) config('cinebook.max_seats_per_booking', 6),
+            'maxSelection' => (int) $settings->get('max_seats_per_booking'),
             'availableSeats' => $withStatus('available')->count(),
-            'holdMinutes' => (int) config('cinebook.hold_minutes', 10),
+            'holdMinutes' => (int) $settings->get('hold_minutes'),
             'salesClosed' => $showtime->hasSalesClosed(),
             'salesCloseAt' => $showtime->salesCloseAt()->format('H:i'),
         ]);

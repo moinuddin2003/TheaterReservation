@@ -15,6 +15,7 @@ use App\Models\Refund;
 use App\Models\Screen;
 use App\Models\Seat;
 use App\Models\SeatHold;
+use App\Models\Setting;
 use App\Models\Showtime;
 use App\Models\Ticket;
 use App\Models\User;
@@ -180,6 +181,9 @@ test('booking status pages use saved booking and ticket details', function () {
 
 test('verified customers can hold available seats and continue to Stripe test checkout', function () {
     $user = User::factory()->create();
+    Setting::query()->create(['key' => 'hold_minutes', 'value' => '15']);
+    Setting::query()->create(['key' => 'max_seats_per_booking', 'value' => '2']);
+    Setting::query()->create(['key' => 'premium_surcharge_cents', 'value' => '350']);
     $showtime = Showtime::factory()->create(['base_price_cents' => 1000]);
     $standardSeat = Seat::factory()->for($showtime->screen)->create([
         'row_label' => 'A',
@@ -192,10 +196,10 @@ test('verified customers can hold available seats and continue to Stripe test ch
         'seat_number' => 2,
         'label' => 'A2',
     ]);
-    Seat::factory()->for($showtime->screen)->create([
+    $extraSeat = Seat::factory()->for($showtime->screen)->create([
         'row_label' => 'B',
-        'seat_number' => 2,
-        'label' => 'B2',
+        'seat_number' => 3,
+        'label' => 'B3',
     ]);
     $gateway = Mockery::mock(StripeGateway::class);
     $gateway->shouldReceive('createCheckoutSession')
@@ -214,7 +218,17 @@ test('verified customers can hold available seats and continue to Stripe test ch
         ->assertOk()
         ->assertSee('data-hold-form', false)
         ->assertSee('data-seat-id="'.$standardSeat->id.'"', false)
+        ->assertSee('data-premium-price="13.5"', false)
+        ->assertSee('data-max-selection="2"', false)
+        ->assertSee('Your 15-minute hold')
         ->assertSee('seat--spacer', false);
+
+    $this->post(route('showtimes.holds.store', $showtime), [
+        'seat_ids' => [$standardSeat->id, $premiumSeat->id, $extraSeat->id],
+    ])
+        ->assertSessionHasErrors('seat_ids');
+
+    expect(Booking::query()->exists())->toBeFalse();
 
     $this->post(route('showtimes.holds.store', $showtime), [
         'seat_ids' => [$standardSeat->id, $premiumSeat->id],
@@ -222,9 +236,10 @@ test('verified customers can hold available seats and continue to Stripe test ch
         ->assertRedirect(route('bookings.checkout', Booking::query()->firstOrFail()->reference));
 
     $booking = Booking::query()->firstOrFail();
-    expect($booking->total_cents)->toBe(2200)
+    expect($booking->total_cents)->toBe(2350)
         ->and($booking->seats_count)->toBe(2)
-        ->and($booking->seatHolds()->count())->toBe(2);
+        ->and($booking->seatHolds()->count())->toBe(2)
+        ->and($booking->hold_expires_at->betweenIncluded(now()->addMinutes(14), now()->addMinutes(16)))->toBeTrue();
 
     $this->get(route('bookings.checkout', $booking->reference))
         ->assertOk()
@@ -577,9 +592,10 @@ test('bookings inside the cancellation window cannot start a Stripe refund', fun
     $user = User::factory()->create();
     $booking = createCustomerBooking($user, BookingStatus::Confirmed);
     $booking->showtime->update([
-        'starts_at' => now()->addHour(),
-        'ends_at' => now()->addHours(3),
+        'starts_at' => now()->addHours(12),
+        'ends_at' => now()->addHours(14),
     ]);
+    Setting::query()->create(['key' => 'cancel_window_hours', 'value' => '24']);
     addSuccessfulStripePayment($booking);
     $gateway = Mockery::mock(StripeGateway::class);
     $gateway->shouldNotReceive('createRefund');
