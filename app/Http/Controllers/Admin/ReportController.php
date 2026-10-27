@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BookingItem;
 use App\Models\Movie;
@@ -23,9 +22,8 @@ class ReportController extends Controller
 
         $items = BookingItem::query()
             ->with(['showtime.movie', 'booking'])
-            ->where('status', 'active')
             ->whereHas('booking', fn ($bookings) => $bookings
-                ->where('status', BookingStatus::Confirmed)
+                ->whereNotNull('confirmed_at')
                 ->whereBetween('confirmed_at', [$from, $to])
                 ->when($movieId, fn ($bookings) => $bookings->whereHas('showtime', fn ($showtimes) => $showtimes->where('movie_id', $movieId))))
             ->get();

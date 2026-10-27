@@ -3,8 +3,13 @@
 use App\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\Booking;
+use App\Models\BookingItem;
 use App\Models\Movie;
+use App\Models\Payment;
+use App\Models\Refund;
+use App\Models\Seat;
 use App\Models\Setting;
+use App\Models\Showtime;
 use App\Models\User;
 use App\Services\SettingsService;
 use Database\Seeders\DatabaseSeeder;
@@ -12,6 +17,7 @@ use Illuminate\Queue\CallQueuedClosure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 test('an administrator can update reservation settings and the change is audited', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
@@ -166,6 +172,75 @@ test('sales reports attribute successful refunds to the selected movie and date'
         ->assertOk()
         ->assertSee('No sales in this range')
         ->assertSee('No movie sales');
+});
+
+test('sales reports include fully refunded and cancelled bookings in gross totals', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $customer = User::factory()->create();
+    $showtime = Showtime::factory()->create([
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHours(2),
+    ]);
+    $confirmedAt = now()->subDay();
+
+    foreach ([
+        ['reference' => 'CB-FULL-REFUND-001', 'status' => 'refunded', 'item_status' => 'active'],
+        ['reference' => 'CB-FULL-REFUND-002', 'status' => 'cancelled', 'item_status' => 'cancelled'],
+    ] as $case) {
+        $seat = Seat::factory()->for($showtime->screen)->create();
+        $booking = Booking::forceCreate([
+            'reference' => $case['reference'],
+            'user_id' => $customer->id,
+            'showtime_id' => $showtime->id,
+            'status' => $case['status'],
+            'seats_count' => 1,
+            'total_cents' => 2000,
+            'currency' => 'USD',
+            'hold_expires_at' => $confirmedAt,
+            'confirmed_at' => $confirmedAt,
+            'cancelled_at' => $case['status'] === 'cancelled' ? now()->subHours(12) : null,
+        ]);
+        BookingItem::forceCreate([
+            'booking_id' => $booking->id,
+            'showtime_id' => $showtime->id,
+            'seat_id' => $seat->id,
+            'seat_label' => $seat->label,
+            'seat_type' => $seat->type->value,
+            'price_cents' => 2000,
+            'status' => $case['item_status'],
+        ]);
+        $payment = Payment::forceCreate([
+            'booking_id' => $booking->id,
+            'gateway' => 'stripe',
+            'idempotency_key' => Str::random(64),
+            'amount_cents' => 2000,
+            'currency' => 'USD',
+            'status' => 'refunded',
+            'paid_at' => $confirmedAt,
+        ]);
+        Refund::forceCreate([
+            'payment_id' => $payment->id,
+            'booking_id' => $booking->id,
+            'amount_cents' => 2000,
+            'currency' => 'USD',
+            'status' => 'succeeded',
+            'reason' => 'requested_by_customer',
+            'idempotency_key' => Str::random(64),
+            'processed_at' => now()->subHours(12),
+        ]);
+    }
+
+    $this->actingAs($admin)
+        ->get(route('admin.reports.index', [
+            'from' => now()->subDays(2)->toDateString(),
+            'to' => now()->toDateString(),
+        ]))
+        ->assertOk()
+        ->assertViewHas('grossCents', 4000)
+        ->assertViewHas('refundsCents', 4000)
+        ->assertViewHas('tickets', 2)
+        ->assertSee('$40.00')
+        ->assertSee('$0.00');
 });
 
 test('sales report export includes the daily refund values', function () {
