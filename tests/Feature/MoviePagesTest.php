@@ -151,6 +151,31 @@ it('shows bookable showtimes for every now showing movie at the cinema', functio
     });
 });
 
+it('builds the home schedule from the next dates that actually have bookable showtimes', function () {
+    $this->travelTo(Carbon::parse('2026-10-27 12:00:00', 'Asia/Karachi'));
+
+    $cinema = Cinema::factory()->create(['name' => 'March Cinema']);
+    $screen = Screen::factory()->for($cinema)->create();
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'March Schedule Movie',
+        'slug' => 'march-schedule-movie',
+    ]);
+
+    $showtime = Showtime::factory()->for($movie)->for($screen)->create([
+        'starts_at' => '2027-03-03 17:30:00',
+        'ends_at' => '2027-03-03 19:30:00',
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Wed')
+        ->assertSee('Mar 3')
+        ->assertSee('March Schedule Movie')
+        ->assertSee('17:30')
+        ->assertSee(route('showtimes.show', $showtime))
+        ->assertDontSee('No bookable showtimes for this date.');
+});
+
 it('shows movie details and rejects unknown movie slugs', function () {
     $this->seed();
 

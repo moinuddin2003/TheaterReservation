@@ -8,6 +8,8 @@ use App\Models\Cinema;
 use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\Showtime;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -46,19 +48,9 @@ class HomeController extends Controller
         $featured = $nowShowing->first();
         $cinema = Cinema::query()->first();
 
-        $dates = collect(range(0, 6))->map(function (int $offset) {
-            $day = now()->addDays($offset);
-
-            return [
-                'date' => $day->toDateString(),
-                'weekday' => $offset === 0 ? 'Today' : $day->format('D'),
-                'label' => $day->format('M j'),
-            ];
-        });
-
-        $showtimesByDate = Showtime::query()
+        $scheduleQuery = Showtime::query()
             ->where('status', ShowtimeStatus::Scheduled)
-            ->whereBetween('starts_at', [now()->startOfDay(), now()->addDays(6)->endOfDay()])
+            ->where('starts_at', '>', now()->addMinutes((int) config('cinebook.sales_cutoff_minutes', 15)))
             ->whereHas('movie', fn ($query) => $query->where('status', MovieStatus::NowShowing))
             ->when(
                 $cinema,
@@ -66,7 +58,27 @@ class HomeController extends Controller
                     'screen',
                     fn ($screenQuery) => $screenQuery->where('cinema_id', $cinema->id),
                 ),
-            )
+            );
+
+        $dateValues = (clone $scheduleQuery)
+            ->selectRaw('DATE(starts_at) as show_date')
+            ->distinct()
+            ->orderBy('show_date')
+            ->limit(7)
+            ->pluck('show_date');
+
+        $dates = $dateValues->map(function (string $date) {
+            $day = Carbon::parse($date, config('cinema.timezone'));
+
+            return [
+                'date' => $day->toDateString(),
+                'weekday' => $day->isToday() ? 'Today' : $day->format('D'),
+                'label' => $day->format('M j'),
+            ];
+        });
+
+        $showtimesByDate = (clone $scheduleQuery)
+            ->whereIn(DB::raw('DATE(starts_at)'), $dates->pluck('date'))
             ->with(['movie', 'screen'])
             ->orderBy('starts_at')
             ->get()
