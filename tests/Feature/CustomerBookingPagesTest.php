@@ -27,6 +27,7 @@ use App\Models\User;
 use App\Services\BookingCancellationService;
 use App\Services\Payments\StripeGateway;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Mockery;
 use Stripe\Checkout\Session;
@@ -254,6 +255,7 @@ test('verified customers can hold available seats and continue to Stripe test ch
     $this->get(route('showtimes.show', $showtime))
         ->assertOk()
         ->assertSee('data-hold-form', false)
+        ->assertDontSee('Sign in to hold your seats')
         ->assertSee('data-seat-id="'.$standardSeat->id.'"', false)
         ->assertSee('data-premium-price="13.5"', false)
         ->assertSee('data-max-selection="2"', false)
@@ -317,11 +319,67 @@ test('unverified customers cannot hold seats', function () {
     $seat = Seat::factory()->for($showtime->screen)->create();
 
     $this->actingAs($user)
+        ->get(route('showtimes.show', $showtime))
+        ->assertOk()
+        ->assertSee('Verify your email to hold your seats');
+
+    $this->actingAs($user)
         ->post(route('showtimes.holds.store', $showtime), ['seat_ids' => [$seat->id]])
         ->assertRedirect(route('verification.notice'));
 
     expect(Booking::query()->count())->toBe(0)
         ->and(SeatHold::query()->count())->toBe(0);
+});
+
+test('guests automatically hold their selected seats after logging in', function () {
+    $user = User::factory()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create();
+    $showtimeUrl = route('showtimes.show', $showtime);
+
+    $this->get($showtimeUrl)
+        ->assertOk()
+        ->assertSee('Sign in to hold your seats')
+        ->assertSee(route('showtimes.holds.prepare', $showtime), false);
+
+    $this->post(route('showtimes.holds.prepare', $showtime), ['seat_ids' => [$seat->id]])
+        ->assertRedirect(route('login'));
+
+    $this->get(route('login'))->assertOk();
+
+    $this->post(route('login'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('showtimes.holds.resume', $showtime));
+
+    $this->get(route('showtimes.holds.resume', $showtime))
+        ->assertRedirect(route('bookings.checkout', Booking::query()->firstOrFail()->reference));
+
+    expect(Booking::query()->count())->toBe(1)
+        ->and(SeatHold::query()->where('status', HoldStatus::Active)->count())->toBe(1);
+});
+
+test('unverified customers automatically hold their selected seats after verifying their email', function () {
+    $user = User::factory()->unverified()->create();
+    $showtime = Showtime::factory()->create();
+    $seat = Seat::factory()->for($showtime->screen)->create();
+
+    $this->actingAs($user)
+        ->post(route('showtimes.holds.prepare', $showtime), ['seat_ids' => [$seat->id]])
+        ->assertRedirect(route('verification.notice'));
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $user->id, 'hash' => sha1($user->email)],
+    );
+
+    $this->get($verificationUrl)
+        ->assertRedirect(route('bookings.checkout', Booking::query()->firstOrFail()->reference));
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue()
+        ->and(Booking::query()->count())->toBe(1)
+        ->and(SeatHold::query()->where('status', HoldStatus::Active)->count())->toBe(1);
 });
 
 test('expired checkout holds release their seats and notify the customer', function () {
