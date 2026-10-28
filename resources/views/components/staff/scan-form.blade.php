@@ -26,7 +26,7 @@
     </x-staff.field>
 
     <p class="scan-focus__hint" id="scan-hint">
-        Keyboard-mode USB scanner: scan then Enter. Or type the ticket token and press Enter. Focus returns here after every result.
+        Scan the ticket’s QR code with the USB scanner and it is checked automatically. Or type the token and press Enter. Focus returns here after every result.
     </p>
 
     <button class="button button--primary" type="submit">Submit token · Enter ↵</button>

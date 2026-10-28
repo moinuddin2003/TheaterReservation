@@ -116,3 +116,48 @@ it('calculates revenue and occupancy from confirmed sales and active holds', fun
         ->assertSee('Dashboard Feature')
         ->assertSee('1 tickets sold');
 });
+
+it('does not count a same-day refunded payment as negative revenue', function () {
+    $this->travelTo(Carbon::parse('2026-10-26 14:30:00'));
+
+    $customer = User::factory()->create();
+    $booking = Booking::query()->forceCreate([
+        'reference' => 'DASHBOARD-REFUNDED',
+        'user_id' => $customer->id,
+        'showtime_id' => Showtime::factory()->create([
+            'starts_at' => now()->addDays(2),
+            'ends_at' => now()->addDays(2)->addHours(2),
+        ])->id,
+        'status' => 'refunded',
+        'seats_count' => 1,
+        'total_cents' => 6200,
+        'currency' => 'USD',
+        'hold_expires_at' => now()->addMinutes(10),
+        'confirmed_at' => now(),
+        'cancelled_at' => now(),
+    ]);
+    $payment = Payment::query()->forceCreate([
+        'booking_id' => $booking->id,
+        'gateway' => 'stripe',
+        'idempotency_key' => Str::random(64),
+        'amount_cents' => 6200,
+        'currency' => 'USD',
+        'status' => 'refunded',
+        'paid_at' => now(),
+    ]);
+    Refund::query()->forceCreate([
+        'payment_id' => $payment->id,
+        'booking_id' => $booking->id,
+        'amount_cents' => 6200,
+        'currency' => 'USD',
+        'status' => 'succeeded',
+        'reason' => 'customer_request',
+        'idempotency_key' => Str::random(64),
+        'processed_at' => now(),
+    ]);
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('$0.00');
+});

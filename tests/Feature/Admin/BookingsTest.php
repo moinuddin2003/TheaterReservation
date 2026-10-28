@@ -396,7 +396,13 @@ test('an administrator can cancel a booking and release its seats and tickets', 
         ->and($hold->fresh()->released_at)->not->toBeNull()
         ->and($booking->payments()->first()->status)->toBe(PaymentStatus::Expired);
 
-    Mail::assertSent(BookingCancelledMail::class, fn (BookingCancelledMail $mail): bool => $mail->booking->is($booking));
+    Mail::assertSent(BookingCancelledMail::class, function (BookingCancelledMail $mail) use ($booking): bool {
+        $html = $mail->render();
+
+        return $mail->booking->is($booking)
+            && str_contains($html, 'Seat D4')
+            && ! str_contains($html, 'T-CANCEL-1');
+    });
     expect(AuditLog::query()->where('action', 'booking.cancelled')->exists())->toBeTrue();
 });
 

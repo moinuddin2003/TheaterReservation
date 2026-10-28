@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\CreateCheckoutAction;
 use App\Actions\HoldSeatsAction;
 use App\Enums\BookingStatus;
+use App\Mail\BookingCancelledMail;
 use App\Models\Booking;
 use App\Models\Showtime;
 use App\Models\User;
@@ -13,8 +14,10 @@ use App\Services\QrCodeService;
 use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class BookingController extends Controller
 {
@@ -207,11 +210,32 @@ class BookingController extends Controller
         BookingCancellationService $cancellationService,
     ): RedirectResponse {
         $booking = $this->findForUser($request, $reference);
+        $wasAlreadyCancelled = $booking->isCancelled() || $booking->isRefunded();
         $refund = $cancellationService->cancel($booking, $request->user());
+        $emailSent = false;
+
+        if (! $wasAlreadyCancelled) {
+            $cancelledBooking = $booking->load([
+                'user',
+                'showtime.movie',
+                'showtime.screen.cinema',
+                'items.ticket',
+            ]);
+
+            try {
+                Mail::to($cancelledBooking->user->email)->send(new BookingCancelledMail($cancelledBooking));
+                $emailSent = true;
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        }
 
         $message = $refund->isSucceeded()
             ? 'Your booking is cancelled and the refund has been sent to your original payment method.'
             : 'Your booking is cancelled. The refund is still being processed.';
+        $message .= $emailSent
+            ? ' Cancellation email sent.'
+            : ($wasAlreadyCancelled ? '' : ' Cancellation email could not be sent; check the mail configuration.');
 
         return redirect()
             ->route('bookings.show', $booking->reference)

@@ -24,7 +24,7 @@
         @if ($lookup)
             Submit with Enter · <x-staff.link to="staff.lookup" class="scan-next__link">Reference lookup available</x-staff.link>
         @else
-            USB keyboard scanner / manual token · Press Enter to submit.
+            Scan the next QR code and it is checked automatically · Or type the token and press Enter.
         @endif
     </p>
 </form>
