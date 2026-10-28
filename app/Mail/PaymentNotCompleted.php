@@ -18,7 +18,12 @@ class PaymentNotCompleted extends Mailable implements ShouldQueue
 
     public function __construct(public Booking $booking)
     {
-        $this->booking->loadMissing(['user', 'showtime.movie']);
+        $this->booking->loadMissing([
+            'user',
+            'showtime.movie',
+            'showtime.screen.cinema',
+            'items.ticket',
+        ]);
     }
 
     public function envelope(): Envelope

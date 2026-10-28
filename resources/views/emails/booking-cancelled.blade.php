@@ -1,6 +1,13 @@
-<h1>Booking cancelled</h1>
-<p>Hello {{ $booking->user->name }},</p>
-<p>Your booking <strong>{{ $booking->reference }}</strong> for {{ $booking->showtime->movie->title }} has been cancelled.</p>
-<p>Showtime: {{ $booking->showtime->starts_at->format('D, j M Y · H:i') }}<br>
-    {{ $booking->showtime->screen->cinema->name }} · {{ $booking->showtime->screen->name }}</p>
-<p>If a refund was requested, its status will be updated separately. Contact the cinema if you need help.</p>
+@extends('emails.layout')
+
+@section('preheader', 'Your CineBook booking has been cancelled.')
+@section('eyebrow', 'Booking update')
+@section('headline', 'Your booking was cancelled.')
+@section('intro', 'Hello '.$booking->user->name.' — booking '.$booking->reference.' has been cancelled. We’ve included the reservation details below for reference.')
+
+@section('content')
+    @include('emails.partials.booking-summary', ['booking' => $booking])
+    <p style="margin:18px 0 0; color:#52627b;">
+        If a refund was requested, its status will be updated separately. If you need help, reply to this email and include your booking reference.
+    </p>
+@endsection

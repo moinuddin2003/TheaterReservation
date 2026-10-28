@@ -72,7 +72,7 @@ class DashboardController extends Controller
         $occupancy = $capacity > 0 ? (($ticketsSold + $ticketsHeld) / $capacity) * 100 : 0;
 
         $grossRevenueCents = Payment::query()
-            ->where('status', PaymentStatus::Succeeded)
+            ->whereIn('status', [PaymentStatus::Succeeded, PaymentStatus::Refunded])
             ->where('paid_at', '>=', $today)
             ->where('paid_at', '<', $tomorrow)
             ->sum('amount_cents');

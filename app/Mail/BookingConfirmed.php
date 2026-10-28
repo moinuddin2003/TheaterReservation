@@ -19,6 +19,7 @@ class BookingConfirmed extends Mailable implements ShouldQueue
     public function __construct(public Booking $booking)
     {
         $this->booking->loadMissing([
+            'user',
             'showtime.movie',
             'showtime.screen.cinema',
             'items.ticket',

@@ -5,8 +5,10 @@ use App\Enums\BookingStatus;
 use App\Enums\HoldStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
+use App\Enums\Role;
 use App\Enums\SeatType;
 use App\Enums\TicketStatus;
+use App\Mail\BookingCancelledMail;
 use App\Mail\BookingConfirmed;
 use App\Mail\LatePaymentRefund;
 use App\Mail\PaymentNotCompleted;
@@ -118,6 +120,24 @@ function createCustomerBooking(User $user, BookingStatus $status): Booking
     return $booking;
 }
 
+test('non-customers are forbidden from customer booking routes', function (Role $role) {
+    $user = User::factory()->create(['role' => $role]);
+    $showtime = Showtime::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('bookings.index'))
+        ->assertForbidden();
+
+    $this->post(route('showtimes.holds.store', $showtime), ['seat_ids' => []])
+        ->assertForbidden();
+
+    $this->post(route('bookings.checkout.start', 'CB-TEST-REFERENCE'))
+        ->assertForbidden();
+})->with([
+    'admin' => Role::Admin,
+    'staff' => Role::Staff,
+]);
+
 function addSuccessfulStripePayment(Booking $booking): Payment
 {
     $payment = new Payment([
@@ -190,7 +210,11 @@ test('booking status pages use saved booking and ticket details', function () {
     $this->get(route('bookings.confirmed', $confirmedBooking->reference))
         ->assertOk()
         ->assertSee('You’re going to the movies.')
-        ->assertSee('T-'.$confirmedBooking->id.'-01');
+        ->assertSee($confirmedBooking->showtime->movie->title)
+        ->assertSee('T-'.$confirmedBooking->id.'-01')
+        ->assertSee('View and print ticket')
+        ->assertSee(route('bookings.tickets.show', [$confirmedBooking->reference, $confirmedBooking->tickets->first()->id]))
+        ->assertDontSee('Total 12.00 USD');
 });
 
 test('verified customers can hold available seats and continue to Stripe test checkout', function () {
@@ -840,6 +864,8 @@ test('a customer cannot print another customer’s ticket', function () {
 });
 
 test('customers can cancel an eligible booking and receive a saved Stripe refund', function () {
+    config()->set('mail.default', 'smtp');
+    Mail::fake();
     $user = User::factory()->create();
     $booking = createCustomerBooking($user, BookingStatus::Confirmed);
     $payment = addSuccessfulStripePayment($booking);
@@ -870,6 +896,10 @@ test('customers can cancel an eligible booking and receive a saved Stripe refund
         ->and($payment->status)->toBe(PaymentStatus::Refunded)
         ->and($refund->status)->toBe(RefundStatus::Succeeded)
         ->and($refund->gateway_refund_id)->toBe('re_test_'.$booking->id);
+
+    Mail::assertSent(BookingCancelledMail::class, fn (BookingCancelledMail $mail): bool => $mail->hasTo($user->email)
+        && $mail->booking->is($booking)
+        && str_contains($mail->render(), $booking->reference));
 });
 
 test('pending Stripe refunds cancel the tickets and update when Stripe confirms success', function () {
@@ -934,4 +964,46 @@ test('Stripe refund requests require a test-mode secret key', function () {
 
     expect(fn () => app(StripeGateway::class)->createRefund('pi_test', 1200, 'request-key'))
         ->toThrow(RuntimeException::class);
+});
+
+test('booking confirmation email includes every seat and ticket', function () {
+    $user = User::factory()->create();
+    $booking = createCustomerBooking($user, BookingStatus::Confirmed);
+    $showtime = $booking->showtime;
+    $seat = Seat::factory()->create([
+        'screen_id' => $showtime->screen_id,
+        'row_label' => 'G',
+        'seat_number' => 8,
+        'label' => 'G8',
+        'type' => SeatType::Standard,
+    ]);
+
+    $item = new BookingItem([
+        'booking_id' => $booking->id,
+        'showtime_id' => $showtime->id,
+        'seat_id' => $seat->id,
+        'seat_label' => $seat->label,
+        'seat_type' => SeatType::Standard,
+    ]);
+    $item->forceFill(['price_cents' => 1000]);
+    $item->save();
+
+    $ticket = new Ticket([
+        'booking_item_id' => $item->id,
+        'booking_id' => $booking->id,
+        'showtime_id' => $showtime->id,
+        'ticket_number' => 'T-'.$booking->id.'-02',
+    ]);
+    $ticket->forceFill(['status' => TicketStatus::Valid]);
+    $ticket->save();
+
+    $booking->forceFill(['seats_count' => 2, 'total_cents' => 2200])->save();
+    $html = (new BookingConfirmed($booking->fresh()))->render();
+
+    expect($html)
+        ->toContain('Seat G7')
+        ->toContain('Seat G8')
+        ->toContain('T-'.$booking->id.'-01')
+        ->toContain('T-'.$booking->id.'-02')
+        ->toContain('USD 22.00');
 });

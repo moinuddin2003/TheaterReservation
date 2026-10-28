@@ -17,7 +17,16 @@ test('reset password link can be requested', function () {
 
     $this->post('/forgot-password', ['email' => $user->email]);
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
+        $mail = $notification->toMail($user);
+        $html = view($mail->view['html'], $mail->data())->render();
+
+        return $mail->subject === 'Reset your CineBook password'
+            && $mail->view['html'] === 'emails.auth.reset-password'
+            && $mail->view['text'] === 'emails.auth.reset-password-text'
+            && str_contains($html, $user->name)
+            && str_contains($html, 'Reset my password');
+    });
 });
 
 test('reset password screen can be rendered', function () {

@@ -27,8 +27,10 @@
                 <a class="site-nav__link {{ request()->routeIs('movies.*') ? 'is-active' : '' }}"
                     href="{{ route('movies.index') }}">Movies</a>
                 @auth
-                    <a class="site-nav__link {{ request()->routeIs('bookings.*') ? 'is-active' : '' }}"
-                        href="{{ route('bookings.index') }}">My bookings</a>
+                    @if (auth()->user()->isCustomer())
+                        <a class="site-nav__link {{ request()->routeIs('bookings.*') ? 'is-active' : '' }}"
+                            href="{{ route('bookings.index') }}">My bookings</a>
+                    @endif
                 @else
                     <a class="site-nav__link" href="{{ route('login') }}">My bookings</a>
                 @endauth

@@ -10,20 +10,23 @@
 @endphp
 
 <aside
-    class="fixed inset-y-0 left-0 z-50 flex w-[224px] -translate-x-full flex-col border-r border-cine-border/10 bg-[#0c1424] transition-[width,transform] duration-150 ease-out motion-reduce:transition-none lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
+    class="fixed inset-y-0 left-0 z-50 flex w-[264px] -translate-x-full flex-col border-r border-cine-border/10 bg-cine-bg/95 transition-[width,transform] duration-150 ease-out motion-reduce:transition-none lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
     :class="{
         'lg:w-[76px]': collapsed,
-        'lg:w-[224px]': !collapsed,
+        'lg:w-[264px]': !collapsed,
         'translate-x-0': mobileOpen,
         '-translate-x-full': !mobileOpen,
     }"
     aria-label="Admin sidebar"
 >
-    <div class="flex h-[76px] shrink-0 items-center gap-3 px-5">
+    <div class="flex h-[76px] shrink-0 items-center gap-3 border-b border-cine-border/10 px-5">
         <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3 rounded-xl focus-visible:shadow-cine-focus" aria-label="CineBook admin home">
-            <span class="h-1.5 w-5 shrink-0 bg-cine-accent"></span>
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-cine-accent/40 bg-gradient-to-br from-cine-selected-start to-cine-selected-end text-white shadow-cine-glow">
+                <x-admin.icon name="film" class="h-5 w-5" />
+            </span>
             <span x-show="!collapsed || mobileOpen" x-transition.opacity class="min-w-0">
-                <span class="block truncate text-base font-medium tracking-tight text-cine-primary">cinebook</span>
+                <span class="block truncate text-base font-bold tracking-tight text-cine-primary">CineBook</span>
+                <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-cine-tertiary">Admin studio</span>
             </span>
         </a>
     </div>
@@ -31,7 +34,7 @@
     <nav
         x-ref="sidebarNavigation"
         @scroll.passive="saveSidebarScroll($event.target.scrollTop)"
-        class="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-1"
+        class="min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-5"
         aria-label="Admin navigation"
     >
         @foreach ($navigationGroups as $group => $items)
