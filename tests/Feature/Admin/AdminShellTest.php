@@ -119,6 +119,11 @@ test('the admin sidebar only shows the requested sections', function () {
 
     $response
         ->assertSee('href="'.route('admin.cinema.index').'"', false)
+        ->assertSee('Toggle sidebar', false)
+        ->assertSee('Search (coming soon)', false)
+        ->assertSee('Notifications (coming soon)', false)
+        ->assertSee('Open account menu', false)
+        ->assertSee('Admin studio')
         ->assertDontSee('href="'.route('admin.screens.index').'"', false)
         ->assertDontSee('Tickets &amp; Scans')
         ->assertDontSee('Stripe Events')
