@@ -19,8 +19,7 @@ class ScanRules
     public function __construct(
         private readonly int $minutesBefore,
         private readonly int $minutesAfter,
-    ) {
-    }
+    ) {}
 
     public static function fromConfig(): self
     {
@@ -58,7 +57,7 @@ class ScanRules
     private function check(array $ticket, ?array $selected, EntryWindow $window, DateTimeImmutable $at): ScanResult
     {
         return match (true) {
-            $ticket['state'] === 'void' => ScanResult::Void,
+            in_array($ticket['state'], ['void', 'voided'], true) => ScanResult::Void,
             $ticket['state'] === 'used' => ScanResult::AlreadyUsed,
             $selected !== null && $selected['id'] !== $ticket['show']['id'] => ScanResult::WrongShowtime,
             $window->statusAt($at) === EntryWindow::NOT_OPEN => ScanResult::TooEarly,

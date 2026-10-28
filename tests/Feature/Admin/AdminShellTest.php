@@ -12,16 +12,16 @@ dataset('admin panel routes', [
     ['admin.bookings.index', 'Bookings'],
     ['admin.payments.index', 'Payments'],
     ['admin.refunds.index', 'Refunds'],
+    ['admin.reports.index', 'Sales reports'],
+    ['admin.audit-logs.index', 'Audit log'],
+    ['admin.settings.edit', 'Reservation settings'],
     ['admin.customers.index', 'Customers'],
     ['admin.staff-admins.index', 'Staff & Admin'],
-    ['admin.reports.index', 'Reports'],
-    ['admin.settings.edit', 'Settings'],
     ['admin.stripe-events.index', 'Stripe Events'],
-    ['admin.audit-logs.index', 'Audit Logs'],
     ['admin.failed-jobs.index', 'Failed jobs'],
 ]);
 
-test('an administrator can open every admin placeholder page', function (string $route, string $title) {
+test('an administrator can open every admin operations page', function (string $route, string $title) {
     $admin = User::factory()->create(['role' => Role::Admin]);
 
     $this->actingAs($admin)

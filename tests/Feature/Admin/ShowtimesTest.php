@@ -5,6 +5,7 @@ use App\Enums\HoldStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\Role;
 use App\Enums\TicketStatus;
+use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Movie;
@@ -98,6 +99,18 @@ test('an administrator can create a showtime and its end time uses movie runtime
         'base_price_cents' => 1250,
         'status' => 'scheduled',
     ]);
+    $createdShowtime = Showtime::query()->where('movie_id', $movie->id)->firstOrFail();
+    expect(AuditLog::query()->where('action', 'showtime.created')->where('auditable_id', $createdShowtime->id)->exists())->toBeTrue();
+
+    $this->put(route('admin.showtimes.update', $createdShowtime), [
+        'movie_id' => $movie->id,
+        'screen_id' => $screen->id,
+        'starts_at' => $startsAt->format('Y-m-d\TH:i'),
+        'base_price' => '13.75',
+    ])->assertRedirect(route('admin.showtimes.index'))
+        ->assertSessionHas('status');
+
+    expect(AuditLog::query()->where('action', 'showtime.updated')->where('auditable_id', $createdShowtime->id)->exists())->toBeTrue();
 });
 
 test('showtime scheduling rejects overlapping screenings on the same screen', function () {
@@ -351,7 +364,8 @@ test('cancelling a showtime closes bookings voids tickets releases seats and lea
         ->and($paidPayment->fresh()->status)->toBe(PaymentStatus::Succeeded)
         ->and($pendingPayment->fresh()->status)->toBe(PaymentStatus::Expired)
         ->and($pendingPayment->fresh()->failure_reason)->toBe('Showtime cancelled before payment completed.')
-        ->and($confirmedBooking->refunds()->count())->toBe(0);
+        ->and($confirmedBooking->refunds()->count())->toBe(0)
+        ->and(AuditLog::query()->where('action', 'showtime.cancelled')->where('auditable_id', $showtime->id)->exists())->toBeTrue();
 });
 
 test('cancellation requires a reason and explicit confirmation', function () {

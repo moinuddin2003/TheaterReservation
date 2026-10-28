@@ -56,67 +56,71 @@
                 <a class="text-link" href="{{ route('movies.index') }}">All movies <span aria-hidden="true">→</span></a>
             </div>
 
-            {{-- DATE TABS --}}
-            <div class="home-date-list" role="tablist" aria-label="Choose a show date">
+            @if ($dates->isNotEmpty())
+                {{-- DATE TABS --}}
+                <div class="home-date-list" role="tablist" aria-label="Choose a show date">
 
-                @foreach ($dates as $date)
-                    <button class="home-date {{ $loop->first ? 'is-active' : '' }}" id="date-tab-{{ $date['date'] }}"
-                        type="button" role="tab" aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                        aria-controls="schedule-{{ $date['date'] }}" data-home-date="{{ $date['date'] }}">
+                    @foreach ($dates as $date)
+                        <button class="home-date {{ $loop->first ? 'is-active' : '' }}" id="date-tab-{{ $date['date'] }}"
+                            type="button" role="tab" aria-selected="{{ $loop->first ? 'true' : 'false' }}"
+                            aria-controls="schedule-{{ $date['date'] }}" data-home-date="{{ $date['date'] }}">
 
-                        <span>{{ $date['weekday'] }}</span>
-                        <strong>{{ $date['label'] }}</strong>
-                    </button>
-                @endforeach
+                            <span>{{ $date['weekday'] }}</span>
+                            <strong>{{ $date['label'] }}</strong>
+                        </button>
+                    @endforeach
 
-            </div>
-
-            {{-- SHOWTIMES FOR EACH DATE --}}
-            @foreach ($dates as $date)
-
-                @php
-                    $dateShowtimes = $showtimesByDate->get(
-                        $date['date'],
-                        collect()
-                    );
-
-                    $bookableShowtimes = $dateShowtimes
-                        ->filter(fn($showtime) => $showtime->isBookable());
-                @endphp
-
-                <div class="home-schedule__row" id="schedule-{{ $date['date'] }}" role="tabpanel"
-                    aria-labelledby="date-tab-{{ $date['date'] }}" data-home-schedule="{{ $date['date'] }}" @if (!$loop->first)
-                    hidden @endif>
-
-                    <div class="home-schedule__details">
-                        <p class="home-schedule__movie">
-                            <strong>{{ $bookableShowtimes->count() }}</strong>
-                            <span aria-hidden="true"> · </span>
-                            {{ $bookableShowtimes->count() === 1
-                ? 'showtime available'
-                : 'showtimes available' }}
-                        </p>
-
-                        <div class="home-schedule__times">
-
-                            @forelse ($bookableShowtimes as $showtime)
-                                <a href="{{ route('showtimes.show', $showtime) }}" class="home-schedule__time">
-                                    <strong>{{ $showtime->movie->title }}</strong>
-                                    <span>{{ $showtime->starts_at->format('H:i') }}</span>
-                                    <small>{{ $showtime->screen?->name ?? 'Screen' }}</small>
-                                </a>
-                            @empty
-                                <p class="home-schedule__empty">
-                                    No bookable showtimes for this date.
-                                    Please check another day.
-                                </p>
-                            @endforelse
-
-                        </div>
-                    </div>
                 </div>
 
-            @endforeach
+                {{-- SHOWTIMES FOR EACH DATE --}}
+                @foreach ($dates as $date)
+
+                    @php
+                        $dateShowtimes = $showtimesByDate->get(
+                            $date['date'],
+                            collect()
+                        );
+
+                        $bookableShowtimes = $dateShowtimes
+                            ->filter(fn($showtime) => $showtime->isBookable());
+                    @endphp
+
+                    <div class="home-schedule__row" id="schedule-{{ $date['date'] }}" role="tabpanel"
+                        aria-labelledby="date-tab-{{ $date['date'] }}" data-home-schedule="{{ $date['date'] }}" @if (!$loop->first)
+                        hidden @endif>
+
+                        <div class="home-schedule__details">
+                            <p class="home-schedule__movie">
+                                <strong>{{ $bookableShowtimes->count() }}</strong>
+                                <span aria-hidden="true"> · </span>
+                                {{ $bookableShowtimes->count() === 1
+                    ? 'showtime available'
+                    : 'showtimes available' }}
+                            </p>
+
+                            <div class="home-schedule__times">
+
+                                @forelse ($bookableShowtimes as $showtime)
+                                    <a href="{{ route('showtimes.show', $showtime) }}" class="home-schedule__time">
+                                        <strong>{{ $showtime->movie->title }}</strong>
+                                        <span>{{ $showtime->starts_at->format('H:i') }}</span>
+                                        <small>{{ $showtime->screen?->name ?? 'Screen' }}</small>
+                                    </a>
+                                @empty
+                                    <p class="home-schedule__empty">
+                                        No bookable showtimes for this date.
+                                        Please check another day.
+                                    </p>
+                                @endforelse
+
+                            </div>
+                        </div>
+                    </div>
+
+                @endforeach
+            @else
+                <p class="home-schedule__empty">No upcoming showtimes have been scheduled yet. Please check back soon.</p>
+            @endif
 
         </section>
 

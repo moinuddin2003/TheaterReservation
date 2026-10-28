@@ -46,6 +46,10 @@ class CustomerController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $customers->getCollection()->each(
+            fn (User $customer) => $customer->setAttribute('total_spent_cents', (int) $customer->total_spent_cents),
+        );
+
         return view('admin.customers.index', [
             'customers' => $customers,
             'filters' => [

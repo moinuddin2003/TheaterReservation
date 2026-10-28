@@ -409,9 +409,10 @@ test('an administrator can cancel a booking and release its seats and tickets', 
 test('an administrator needs an override reason to cancel inside the cancellation window', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     $customer = User::factory()->create();
+    Setting::query()->create(['key' => 'cancel_window_hours', 'value' => '24']);
     $showtime = Showtime::factory()->create([
-        'starts_at' => now()->addHour(),
-        'ends_at' => now()->addHours(3),
+        'starts_at' => now()->addHours(12),
+        'ends_at' => now()->addHours(14),
     ]);
     $booking = createBookingForAdmin($customer, $showtime, BookingStatus::Confirmed->value, 'CB-CANCEL-2');
 

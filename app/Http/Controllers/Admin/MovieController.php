@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
 use App\Models\Genre;
 use App\Models\Movie;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -92,10 +93,9 @@ class MovieController extends Controller
     }
 
     /**
-     * Persist a new movie. Status is assigned explicitly (never mass assigned)
-     * so the write can be routed through audit logging once it exists.
+     * Persist a new movie. Status is assigned explicitly (never mass assigned).
      */
-    public function store(MovieRequest $request): RedirectResponse
+    public function store(MovieRequest $request, AuditLogger $auditLogger): RedirectResponse
     {
         $poster = null;
         $backdrop = null;
@@ -104,7 +104,7 @@ class MovieController extends Controller
             $poster = $this->storeImage->store($request->file('poster'));
             $backdrop = $this->storeImage->store($request->file('backdrop'));
 
-            $movie = DB::transaction(function () use ($request, $poster, $backdrop): Movie {
+            $movie = DB::transaction(function () use ($request, $poster, $backdrop, $auditLogger): Movie {
                 $movie = new Movie($this->payload($request));
 
                 if ($poster !== null) {
@@ -119,6 +119,14 @@ class MovieController extends Controller
                 $movie->save();
 
                 $movie->genres()->sync($request->validated('genres', []));
+                $auditLogger->log(
+                    $request->user(),
+                    'movie.created',
+                    $movie,
+                    [],
+                    $this->movieAuditData($movie),
+                    $request->ip(),
+                );
 
                 return $movie;
             });
@@ -151,8 +159,9 @@ class MovieController extends Controller
     /**
      * Update an existing movie.
      */
-    public function update(MovieRequest $request, Movie $movie): RedirectResponse
+    public function update(MovieRequest $request, Movie $movie, AuditLogger $auditLogger): RedirectResponse
     {
+        $before = $this->movieAuditData($movie);
         $originalPoster = $movie->getOriginal('poster_path');
         $originalBackdrop = $movie->getOriginal('backdrop_path');
         $poster = null;
@@ -162,7 +171,7 @@ class MovieController extends Controller
             $poster = $this->storeImage->store($request->file('poster'));
             $backdrop = $this->storeImage->store($request->file('backdrop'));
 
-            DB::transaction(function () use ($request, $movie, $poster, $backdrop): void {
+            DB::transaction(function () use ($request, $movie, $poster, $backdrop, $before, $auditLogger): void {
                 $movie->fill($this->payload($request));
 
                 if ($poster !== null) {
@@ -177,6 +186,14 @@ class MovieController extends Controller
                 $movie->save();
 
                 $movie->genres()->sync($request->validated('genres', []));
+                $auditLogger->log(
+                    $request->user(),
+                    'movie.updated',
+                    $movie,
+                    $before,
+                    $this->movieAuditData($movie),
+                    $request->ip(),
+                );
             });
         } catch (Throwable $exception) {
             $this->storeImage->delete($poster);
@@ -213,12 +230,26 @@ class MovieController extends Controller
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function movieAuditData(Movie $movie): array
+    {
+        return [
+            'attributes' => array_intersect_key(
+                $movie->getAttributes(),
+                array_flip(['title', 'slug', 'synopsis', 'duration_minutes', 'rating', 'release_date', 'status', 'poster_path', 'backdrop_path']),
+            ),
+            'genre_ids' => $movie->genres()->orderBy('genres.id')->pluck('genres.id')->all(),
+        ];
+    }
+
+    /**
      * Delete a movie.
      *
      * Showtimes restrict deletion at the database level, so a movie that is
      * still scheduled cannot be removed. Attached genres detach via cascade.
      */
-    public function destroy(Movie $movie): RedirectResponse
+    public function destroy(Request $request, Movie $movie, AuditLogger $auditLogger): RedirectResponse
     {
         if ($movie->showtimes()->exists()) {
             return redirect()
@@ -229,7 +260,18 @@ class MovieController extends Controller
         $title = $movie->title;
         $poster = $movie->poster_path;
         $backdrop = $movie->backdrop_path;
-        $movie->delete();
+        DB::transaction(function () use ($request, $movie, $auditLogger): void {
+            $before = $this->movieAuditData($movie);
+            $movie->delete();
+            $auditLogger->log(
+                $request->user(),
+                'movie.deleted',
+                $movie,
+                $before,
+                [],
+                $request->ip(),
+            );
+        });
 
         $this->storeImage->delete($poster);
         $this->storeImage->delete($backdrop);

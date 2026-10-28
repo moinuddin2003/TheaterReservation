@@ -1,15 +1,16 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminPlaceholderController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\CinemaController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FailedJobController;
 use App\Http\Controllers\Admin\GenreController;
 use App\Http\Controllers\Admin\MovieController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\RefundController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScreenController;
 use App\Http\Controllers\Admin\SeatController;
 use App\Http\Controllers\Admin\SettingController;
@@ -65,13 +66,19 @@ Route::prefix('admin')
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/refunds/export', [RefundController::class, 'export'])->name('refunds.export');
         Route::get('/refunds', [RefundController::class, 'index'])->name('refunds.index');
+        Route::post('/refunds/{refund}/retry', [RefundController::class, 'retry'])->name('refunds.retry');
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
         Route::get('/staff-admins', [StaffAdminController::class, 'index'])->name('staff-admins.index');
         Route::get('/staff-admins/{staff}', [StaffAdminController::class, 'show'])->name('staff-admins.show');
-        Route::get('/reports', [AdminPlaceholderController::class, 'reports'])->name('reports.index');
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
-        Route::get('/failed-jobs', [AdminPlaceholderController::class, 'failedJobs'])->name('failed-jobs.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('/failed-jobs', [FailedJobController::class, 'index'])->name('failed-jobs.index');
+        Route::get('/failed-jobs/{failedJob}', [FailedJobController::class, 'show'])->name('failed-jobs.show');
+        Route::post('/failed-jobs/{failedJob}/retry', [FailedJobController::class, 'retry'])->name('failed-jobs.retry');
+        Route::delete('/failed-jobs/{failedJob}', [FailedJobController::class, 'destroy'])->name('failed-jobs.destroy');
         Route::get('/stripe-events', [StripeEventController::class, 'index'])->name('stripe-events.index');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });

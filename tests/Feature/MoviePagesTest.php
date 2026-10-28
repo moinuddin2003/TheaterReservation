@@ -3,6 +3,7 @@
 use App\Models\Cinema;
 use App\Models\Movie;
 use App\Models\Screen;
+use App\Models\Setting;
 use App\Models\Showtime;
 use Illuminate\Support\Carbon;
 
@@ -151,6 +152,31 @@ it('shows bookable showtimes for every now showing movie at the cinema', functio
     });
 });
 
+it('builds the home schedule from the next dates that actually have bookable showtimes', function () {
+    $this->travelTo(Carbon::parse('2026-10-27 12:00:00', 'Asia/Karachi'));
+
+    $cinema = Cinema::factory()->create(['name' => 'March Cinema']);
+    $screen = Screen::factory()->for($cinema)->create();
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'March Schedule Movie',
+        'slug' => 'march-schedule-movie',
+    ]);
+
+    $showtime = Showtime::factory()->for($movie)->for($screen)->create([
+        'starts_at' => '2027-03-03 17:30:00',
+        'ends_at' => '2027-03-03 19:30:00',
+    ]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Wed')
+        ->assertSee('Mar 3')
+        ->assertSee('March Schedule Movie')
+        ->assertSee('17:30')
+        ->assertSee(route('showtimes.show', $showtime))
+        ->assertDontSee('No bookable showtimes for this date.');
+});
+
 it('shows movie details and rejects unknown movie slugs', function () {
     $this->seed();
 
@@ -160,6 +186,46 @@ it('shows movie details and rejects unknown movie slugs', function () {
 
     $this->get('/movies/not-a-movie')
         ->assertNotFound();
+});
+
+it('uses the saved premium surcharge on movie showtime cards', function () {
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'Pricing Test Movie',
+        'slug' => 'pricing-test-movie',
+    ]);
+    $screen = Screen::factory()->create(['name' => 'Pricing Test Screen']);
+    Showtime::factory()->for($movie)->for($screen)->create([
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHours(2),
+        'base_price_cents' => 1000,
+    ]);
+    Setting::query()->create(['key' => 'premium_surcharge_cents', 'value' => '350']);
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertSee('Premium $13.50');
+});
+
+it('uses the trailer URL saved for the movie and hides the link when no trailer is set', function () {
+    $trailerUrl = 'https://www.youtube.com/watch?v=admin-selected-trailer';
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'Trailer Link Movie',
+        'slug' => 'trailer-link-movie',
+        'trailer_url' => $trailerUrl,
+    ]);
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertSee('href="'.$trailerUrl.'"', false)
+        ->assertSee('Watch trailer')
+        ->assertDontSee('DDU-rZs-Ic4');
+
+    $movie->forceFill(['trailer_url' => null])->save();
+
+    $this->get(route('movies.show', $movie))
+        ->assertOk()
+        ->assertDontSee('Watch trailer')
+        ->assertDontSee($trailerUrl);
 });
 
 it('only shows a seat map for movies with a configured seat map', function () {

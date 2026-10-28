@@ -1,10 +1,10 @@
-@props(['date', 'showtimes', 'availability' => [], 'active' => false])
+@props(['date', 'showtimes', 'availability' => [], 'active' => false, 'premiumSurchargeCents' => 0])
 
 @php
     $firstShowtime = $showtimes->first();
     $screen = $firstShowtime?->screen;
     $standardPriceCents = (int) ($firstShowtime?->base_price_cents ?? 0);
-    $premiumPriceCents = $standardPriceCents + (int) config('cinebook.premium_surcharge_cents', 0);
+    $premiumPriceCents = $standardPriceCents + (int) $premiumSurchargeCents;
 @endphp
 
 <article class="showtime-card" data-day-panel="{{ $date }}" @if (! $active) hidden @endif>
