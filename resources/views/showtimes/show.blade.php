@@ -40,12 +40,37 @@
                     </div>
                 </div>
 
-                <x-movie-selection-card :prices="$prices" :max-selection="$maxSelection" :showtime="$showtime" />
+                @php
+                    $customer = auth()->user();
+                    $requiresSeatHoldPreparation = auth()->guest()
+                        || ($customer?->isCustomer() && ! $customer->hasVerifiedEmail());
+                @endphp
+                <x-movie-selection-card
+                    :prices="$prices"
+                    :max-selection="$maxSelection"
+                    :showtime="$showtime"
+                    :requires-seat-hold-preparation="$requiresSeatHoldPreparation"
+                />
 
-                <div class="sign-in-note">
-                    <strong><span aria-hidden="true">ⓘ</span> Sign in to hold seats</strong>
-                    <p>If you’re browsing as a guest, sign in first. You’ll bring your bag to this showtime. Your email must be verified.</p>
-                </div>
+                @if ($requiresSeatHoldPreparation)
+                    <div class="sign-in-note">
+                        <strong>
+                            <span aria-hidden="true">ⓘ</span>
+                            @if (auth()->guest())
+                                Sign in to continue selecting seats
+                            @else
+                                Verify your email to continue selecting seats
+                            @endif
+                        </strong>
+                        <p>
+                            @if (auth()->guest())
+                                After you sign in, your selected seats will be marked on the seat map. You can change them before choosing Hold.
+                            @else
+                                After you verify your email, your selected seats will be marked on the seat map. You can change them before choosing Hold.
+                            @endif
+                        </p>
+                    </div>
+                @endif
                 <p class="hold-note">Your {{ $holdMinutes }}-minute hold starts only after you choose Hold seats. All seats are held together or none are.</p>
             </aside>
 

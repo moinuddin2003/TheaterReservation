@@ -18,6 +18,8 @@ Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])
     ->name('movies.show');
 
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
+Route::post('/showtimes/{showtime}/holds/prepare', [BookingController::class, 'prepareSeatHold'])
+    ->name('showtimes.holds.prepare');
 
 Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::post('/showtimes/{showtime}/holds', [BookingController::class, 'holdSeats'])

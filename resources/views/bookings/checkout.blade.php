@@ -5,8 +5,8 @@
 @section('content')
     <div class="page-shell booking-page booking-page--checkout">
         <p class="booking-steps">
-            <strong>01 SELECT SEATS</strong>
-            <span aria-hidden="true">→</span> 02 CHECKOUT
+            01 SELECT SEATS
+            <span aria-hidden="true">→</span> <strong>02 CHECKOUT</strong>
             <span aria-hidden="true">→</span> 03 YOUR TICKETS
         </p>
         <h1 class="booking-page__title">Your seats are on hold</h1>

@@ -92,19 +92,54 @@ class BookingController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
+        $booking = $holdSeatsAction->execute(
+            $showtime,
+            $user,
+            $this->validatedSeatIds($request, $settings),
+        );
+
+        return redirect()->route('bookings.checkout', $booking->reference);
+    }
+
+    public function prepareSeatHold(
+        Request $request,
+        Showtime $showtime,
+        SettingsService $settings,
+    ): RedirectResponse {
+        $user = $request->user();
+        abort_if($user instanceof User && ! $user->isCustomer(), 403);
+
+        $request->session()->put('pending_seat_hold', [
+            'showtime_id' => $showtime->getKey(),
+            'seat_ids' => $this->validatedSeatIds($request, $settings),
+        ]);
+
+        $showtimeUrl = route('showtimes.show', $showtime, absolute: false);
+        redirect()->setIntendedUrl($showtimeUrl);
+
+        if (! $user instanceof User) {
+            return redirect()->route('login');
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        return redirect()->route('showtimes.show', $showtime);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function validatedSeatIds(Request $request, SettingsService $settings): array
+    {
         $maxSeats = (int) $settings->get('max_seats_per_booking');
         $validated = $request->validate([
             'seat_ids' => ['required', 'array', 'min:1', 'max:'.$maxSeats],
             'seat_ids.*' => ['required', 'integer', 'distinct:strict'],
         ]);
 
-        $booking = $holdSeatsAction->execute(
-            $showtime,
-            $user,
-            array_map('intval', $validated['seat_ids']),
-        );
-
-        return redirect()->route('bookings.checkout', $booking->reference);
+        return array_map('intval', $validated['seat_ids']);
     }
 
     public function startCheckout(
