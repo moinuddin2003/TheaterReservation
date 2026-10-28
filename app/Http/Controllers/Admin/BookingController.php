@@ -20,6 +20,7 @@ use App\Models\Booking;
 use App\Models\Movie;
 use App\Models\Payment;
 use App\Models\Refund;
+use App\Models\Setting;
 use App\Models\Ticket;
 use App\Services\AuditLogger;
 use App\Services\SettingsService;
