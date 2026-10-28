@@ -919,3 +919,45 @@ test('Stripe refund requests require a test-mode secret key', function () {
     expect(fn () => app(StripeGateway::class)->createRefund('pi_test', 1200, 'request-key'))
         ->toThrow(RuntimeException::class);
 });
+
+test('booking confirmation email includes every seat and ticket', function () {
+    $user = User::factory()->create();
+    $booking = createCustomerBooking($user, BookingStatus::Confirmed);
+    $showtime = $booking->showtime;
+    $seat = Seat::factory()->create([
+        'screen_id' => $showtime->screen_id,
+        'row_label' => 'G',
+        'seat_number' => 8,
+        'label' => 'G8',
+        'type' => SeatType::Standard,
+    ]);
+
+    $item = new BookingItem([
+        'booking_id' => $booking->id,
+        'showtime_id' => $showtime->id,
+        'seat_id' => $seat->id,
+        'seat_label' => $seat->label,
+        'seat_type' => SeatType::Standard,
+    ]);
+    $item->forceFill(['price_cents' => 1000]);
+    $item->save();
+
+    $ticket = new Ticket([
+        'booking_item_id' => $item->id,
+        'booking_id' => $booking->id,
+        'showtime_id' => $showtime->id,
+        'ticket_number' => 'T-'.$booking->id.'-02',
+    ]);
+    $ticket->forceFill(['status' => TicketStatus::Valid]);
+    $ticket->save();
+
+    $booking->forceFill(['seats_count' => 2, 'total_cents' => 2200])->save();
+    $html = (new BookingConfirmed($booking->fresh()))->render();
+
+    expect($html)
+        ->toContain('Seat G7')
+        ->toContain('Seat G8')
+        ->toContain('T-'.$booking->id.'-01')
+        ->toContain('T-'.$booking->id.'-02')
+        ->toContain('USD 22.00');
+});

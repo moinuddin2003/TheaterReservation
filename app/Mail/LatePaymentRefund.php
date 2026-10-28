@@ -18,7 +18,12 @@ class LatePaymentRefund extends Mailable implements ShouldQueue
 
     public function __construct(public Refund $refund)
     {
-        $this->refund->loadMissing(['booking.user', 'booking.showtime.movie']);
+        $this->refund->loadMissing([
+            'booking.user',
+            'booking.showtime.movie',
+            'booking.showtime.screen.cinema',
+            'booking.items.ticket',
+        ]);
     }
 
     public function envelope(): Envelope
