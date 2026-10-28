@@ -5,6 +5,7 @@ use App\Enums\BookingStatus;
 use App\Enums\HoldStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
+use App\Enums\Role;
 use App\Enums\SeatType;
 use App\Enums\TicketStatus;
 use App\Mail\BookingConfirmed;
@@ -118,6 +119,24 @@ function createCustomerBooking(User $user, BookingStatus $status): Booking
     return $booking;
 }
 
+test('non-customers are forbidden from customer booking routes', function (Role $role) {
+    $user = User::factory()->create(['role' => $role]);
+    $showtime = Showtime::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('bookings.index'))
+        ->assertForbidden();
+
+    $this->post(route('showtimes.holds.store', $showtime), ['seat_ids' => []])
+        ->assertForbidden();
+
+    $this->post(route('bookings.checkout.start', 'CB-TEST-REFERENCE'))
+        ->assertForbidden();
+})->with([
+    'admin' => Role::Admin,
+    'staff' => Role::Staff,
+]);
+
 function addSuccessfulStripePayment(Booking $booking): Payment
 {
     $payment = new Payment([
@@ -190,7 +209,11 @@ test('booking status pages use saved booking and ticket details', function () {
     $this->get(route('bookings.confirmed', $confirmedBooking->reference))
         ->assertOk()
         ->assertSee('You’re going to the movies.')
-        ->assertSee('T-'.$confirmedBooking->id.'-01');
+        ->assertSee($confirmedBooking->showtime->movie->title)
+        ->assertSee('T-'.$confirmedBooking->id.'-01')
+        ->assertSee('View and print ticket')
+        ->assertSee(route('bookings.tickets.show', [$confirmedBooking->reference, $confirmedBooking->tickets->first()->id]))
+        ->assertDontSee('Total 12.00 USD');
 });
 
 test('verified customers can hold available seats and continue to Stripe test checkout', function () {

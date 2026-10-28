@@ -2497,15 +2497,24 @@ body.cinema-app {
     margin: 0;
 }
 
-.booking-confirmed-layout {
-    margin-top: 16px;
-}
-
 .booking-confirmed-panel {
     display: grid;
     justify-items: start;
     gap: 14px;
+    margin: 16px auto 0;
     padding: clamp(18px, 4vw, 30px);
+}
+
+.booking-confirmed-panel__tickets-title {
+    margin: 4px 0 -4px;
+    font-size: 18px;
+}
+
+.booking-confirmed-panel__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
 }
 
 .booking-ticket-list {
@@ -2519,17 +2528,27 @@ body.cinema-app {
 
 .booking-ticket-list li {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(120px, auto) auto;
+    align-items: center;
     gap: 10px;
-    padding: 10px;
+    padding: 14px;
     border: 1px solid var(--line);
-    border-radius: 7px;
+    border-radius: 10px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 13px;
+}
+
+.booking-ticket-list li > div {
+    display: grid;
+    gap: 4px;
 }
 
 .booking-ticket-list strong {
     color: var(--text-soft);
+}
+
+.booking-ticket-list li > a {
+    white-space: nowrap;
 }
 
 .booking-ticket-card {
