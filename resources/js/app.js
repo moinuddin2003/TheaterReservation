@@ -1,5 +1,6 @@
 import Alpine from "alpinejs";
 import "./admin.js";
+import "./scan.js";
 
 window.Alpine = Alpine;
 

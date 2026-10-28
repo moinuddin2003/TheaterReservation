@@ -42,7 +42,7 @@
 
                 <div class="min-w-0 flex-1">
                     <x-admin.topbar :title="$title" :breadcrumb="$breadcrumb" />
-                    <main class="mx-auto w-full max-w-[1600px] px-4 py-7 sm:px-6 lg:px-9 lg:py-9">
+                    <main class="mx-auto w-full max-w-[1600px] px-4 py-7 sm:px-6 lg:px-10 lg:py-9">
                         {{ $slot }}
                     </main>
                 </div>
