@@ -18,13 +18,6 @@
         </div>
 
         <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-            <button type="button" class="flex h-10 w-10 items-center justify-center rounded-full border border-cine-border/10 bg-cine-surface text-cine-secondary transition-colors duration-150 hover:border-cine-accent/40 hover:text-cine-primary" aria-label="Search (coming soon)">
-                <x-admin.icon name="search" class="h-[18px] w-[18px]" />
-            </button>
-            <button type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full border border-cine-border/10 bg-cine-surface text-cine-secondary transition-colors duration-150 hover:border-cine-accent/40 hover:text-cine-primary" aria-label="Notifications (coming soon)">
-                <x-admin.icon name="bell" class="h-[18px] w-[18px]" />
-                <span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-cine-accent"></span>
-            </button>
             <button
                 type="button"
                 @click="toggleTheme()"
