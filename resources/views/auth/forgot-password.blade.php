@@ -1,25 +1,38 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
-    </div>
+<x-guest-layout
+    title="Forgot your password?"
+    subtitle="We’ll send you a secure link to choose a new password."
+>
+    <div class="auth-mail-icon" aria-hidden="true">✉</div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    @if (session('status'))
+        <div class="auth-notice auth-notice--card" role="status">
+            <strong>Check your inbox</strong>
+            <span>{{ session('status') }}</span>
+        </div>
+    @endif
 
-    <form method="POST" action="{{ route('password.email') }}">
+    <form class="auth-form" method="POST" action="{{ route('password.email') }}">
         @csrf
-
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="auth-field">
+            <x-input-label for="email" value="Email address" />
+            <x-text-input
+                id="email"
+                class="auth-input"
+                type="email"
+                name="email"
+                :value="old('email')"
+                placeholder="you@example.com"
+                required
+                autofocus
+                autocomplete="username"
+            />
+            <x-input-error :messages="$errors->get('email')" />
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
-        </div>
+        <button class="button button--primary auth-submit" type="submit">
+            Send reset link <span aria-hidden="true">→</span>
+        </button>
     </form>
+
+    <p class="auth-switch">Remembered your password? <a href="{{ route('login') }}">Sign in →</a></p>
 </x-guest-layout>

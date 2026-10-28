@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Notification;
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 
-    $response->assertStatus(200);
+    $response
+        ->assertOk()
+        ->assertSee('auth-layout auth-layout--compact', false);
 });
 
 test('new users can register', function () {
