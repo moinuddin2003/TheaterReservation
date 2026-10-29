@@ -1,191 +1,123 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CineBook — Movie Theater Reservation System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+CineBook is a Laravel application for browsing movies, reserving cinema seats, and managing theater operations. It includes customer booking flows, a staff ticket-admission interface, and an administration panel for cinema operations.
 
-## Movie reservation app
+## Features
 
-This project combines the customer booking experience with the CineBook admin
-panel and staff tools. Customers can browse movies, reserve seats, and manage
-their bookings; administrators manage the cinema, catalog, showtimes, payments,
-and refunds; staff use the separate `/staff` screens for admissions.
+- Browse movies, genres, showtimes, and available seats.
+- Reserve seats and complete bookings through Stripe Checkout.
+- View bookings and tickets, including QR-based ticket scanning for staff.
+- Administer movies, genres, cinemas, screens, showtimes, customers, staff, refunds, and audit records.
+- Role-aware customer, staff, and administrator experiences.
+- Prevent overlapping showtimes and manage temporary seat holds.
 
-Run `php artisan migrate --seed` to create the demo cinema and role accounts.
-The seeded accounts use `SEED_PASSWORD` from `.env` (default: `password`):
+## Technology
 
-| Role | Email | Start page |
-| --- | --- | --- |
-| Admin | `admin@cinebook.test` | `/admin` |
-| Staff | `staff@cinebook.test` | `/staff` |
-| Customer | `customer@cinebook.test` | `/dashboard` |
+- PHP 8.3+
+- Laravel 13
+- SQLite or MySQL
+- Node.js and npm for frontend assets
+- Stripe for hosted checkout and payment webhooks
 
-Use `npm run dev` while developing or `npm run build` for production assets.
+## Getting started
 
-## About Laravel
+### Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Install PHP 8.3 or later with the extensions required by Laravel, Composer, Node.js, and npm. For a MySQL setup, also enable PHP's MySQL PDO extension.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Install dependencies
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
-```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-
-
-## Commands For Project
-
-composer create-project laravel/laravel theater-reservation
-cd theater-reservation
-composer require laravel/breeze --dev
-php artisan breeze:install
-
-## Local Stripe and Mailpit Testing (Windows)
-
-This guide sets up a Stripe test webhook and a local email inbox. It does not
-make real payments or send email to real recipients. Run commands from the
-project root (`D:\Xolva\theater-reservation`) unless a step says otherwise.
-
-### 1. Start the application
-
-Install the project dependencies and prepare the local environment if this is a
-fresh checkout:
+Run these commands from the project root. The PowerShell commands below are suitable for Windows; use the equivalent copy and file-creation commands for your shell on macOS or Linux.
 
 ```powershell
 composer install
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+if (-not (Test-Path database\database.sqlite)) { New-Item -ItemType File database\database.sqlite | Out-Null }
 php artisan key:generate
+npm ci
 ```
 
-- `composer install` installs the PHP packages recorded in `composer.lock`,
-  including this project's Stripe PHP SDK.
-- `Copy-Item` creates a local `.env` file from the sample. Do not overwrite an
-  existing `.env`; it contains machine-specific settings and secrets.
-- `php artisan key:generate` creates the Laravel application key.
+The sample environment uses SQLite. To use MySQL instead, configure the `DB_*` values in `.env` and create the database before migrating.
 
-Configure the database in `.env` as required for your setup, then run:
+### Configure the environment and database
+
+Review `.env` and set the database connection, mail settings, and other local values as needed. For the default SQLite setup, run:
 
 ```powershell
-php artisan migrate
+php artisan migrate --seed
+```
+
+The seeders create sample cinema, catalog, showtime, booking, and role-account data. They are intended for local development and demos—not production. The sample accounts use `SEED_PASSWORD` from `.env`, or `password` if it is not set:
+
+| Role | Email | Start page |
+| --- | --- | --- |
+| Administrator | `admin@cinebook.test` | `/admin` |
+| Staff | `staff@cinebook.test` | `/staff` |
+| Customer | `customer@cinebook.test` | `/dashboard` |
+
+Change the sample password before use in a shared environment. Do not seed these demo accounts into a production database.
+
+### Build frontend assets and run the app
+
+For frontend development, start Vite in one terminal:
+
+```powershell
+npm run dev
+```
+
+Start Laravel in another terminal:
+
+```powershell
 php artisan serve
 ```
 
-- `php artisan migrate` creates the application tables in the configured
-  database.
-- `php artisan serve` starts Laravel at `http://127.0.0.1:8000`. Keep this
-  terminal open while testing.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). To create production-ready frontend assets, use:
 
-If the app is already installed and `php artisan serve` works, do not repeat
-the fresh-checkout commands.
+```powershell
+npm run build
+```
 
-### 2. Create/use a Stripe test account
+Mail and notifications configured to use queued delivery require a queue worker. For local development, start one in a separate terminal:
 
-Create or sign in to a Stripe account at
-[dashboard.stripe.com/register](https://dashboard.stripe.com/register). Use a
-test environment or test mode only. Never put live credentials in a local test
-setup.
+```powershell
+php artisan queue:work
+```
 
-This project already includes the `stripe/stripe-php` Composer SDK. The SDK is
-used by PHP code to call Stripe APIs; it is **not** the Stripe command-line
-program.
+## Stripe test payments
 
-The app uses Stripe-hosted Checkout, so it needs a test-mode secret key to
-create checkout sessions. Configure the keys in `.env` through
-`config/services.php`:
+Checkout requires a Stripe test-mode secret key. Add your Stripe test credentials to `.env`:
 
 ```dotenv
-STRIPE_PUBLISHABLE_KEY=pk_test_replace_with_your_test_publishable_key
 STRIPE_SECRET_KEY=sk_test_replace_with_your_test_secret_key
-STRIPE_WEBHOOK_SECRET=whsec_replace_with_the_secret_from_stripe_listen
+STRIPE_WEBHOOK_SECRET=whsec_replace_with_your_webhook_signing_secret
 ```
 
-Copy the test-mode publishable and secret keys from Stripe Dashboard. The
-secret key must begin with `sk_test_`; this app deliberately rejects live
-secret keys. The webhook signing secret is provided by the Stripe CLI below.
-Keep all keys private: `.env` should not be committed or shared.
+Never commit `.env` or share secret keys. This project uses Stripe-hosted Checkout; the Stripe PHP SDK is already included.
 
-### 3. Install and log in to the Stripe CLI
+**Payment integration status:** the current Stripe gateway explicitly accepts only `sk_test_` keys. Real payments and live Stripe refunds are not supported by this version. Do not configure live Stripe keys or use this application to collect real payments without first implementing and reviewing live-mode support.
 
-Download the latest Windows ZIP from the
-[Stripe CLI releases page](https://github.com/stripe/stripe-cli/releases/latest)
-and extract it. Open PowerShell in the extracted folder containing
-`stripe.exe`. For example:
+To receive local webhooks, install the [Stripe CLI](https://docs.stripe.com/stripe-cli) and sign in:
 
 ```powershell
-Set-Location "$env:USERPROFILE\Downloads\stripe_1.53.1_windows_x86_64"
-.\stripe.exe --version
-.\stripe.exe login
+stripe login
+stripe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.succeeded,refund.updated,refund.failed --forward-to http://127.0.0.1:8000/stripe/webhook
 ```
 
-- `Set-Location` changes to the extracted folder. Use the actual folder name
-  and path on your computer; release version numbers change.
-- `.\stripe.exe --version` confirms the CLI runs.
-- `.\stripe.exe login` opens a browser. Sign in and approve the CLI access.
-
-Using `.\stripe.exe` works without adding the folder to Windows `PATH`. If
-Stripe says CLI access is disabled, an account administrator may need to enable
-it in Stripe Dashboard under **Settings → Team and security → MCP and CLI
-access**.
-
-### 4. Install and start Mailpit
-
-Download the Windows binary ZIP from the
-[Mailpit releases page](https://github.com/axllent/mailpit/releases/latest),
-extract it, then open PowerShell in the folder containing `mailpit.exe`:
+Copy the `whsec_...` secret printed by the active listener into `STRIPE_WEBHOOK_SECRET`. If you change `.env`, refresh Laravel's cached configuration:
 
 ```powershell
-.\mailpit.exe
+php artisan config:clear
 ```
 
-Keep this terminal open. Mailpit receives local SMTP mail on port `1025` and
-shows captured messages at [http://127.0.0.1:8025](http://127.0.0.1:8025).
-It stores the messages in its local test inbox instead of delivering them to
-real recipients.
+Keep the Laravel server and Stripe listener running while testing. Complete a booking through the app's Checkout flow to generate events associated with that booking. Stripe's sample test card is `4242 4242 4242 4242`; use any future expiration date and any three-digit CVC. A generic CLI-triggered event is not a substitute for a checkout tied to a booking.
 
-In the project's `.env`, set the mail configuration:
+In production, configure a public HTTPS webhook endpoint in the Stripe Dashboard and use that endpoint's signing secret. Do not use `stripe listen` as a production webhook receiver.
+
+## Email configuration
+
+Mailpit is optional and is only useful for local testing when you want to capture email without delivering it. In normal use, configure `.env` with your SMTP provider's host, port, credentials, encryption, and sender address. Laravel sends mail through that provider; Mailpit is not required.
+
+To capture local messages with [Mailpit](https://mailpit.axllent.org/) instead of sending them to real recipients, start Mailpit and use:
 
 ```dotenv
 MAIL_MAILER=smtp
@@ -198,80 +130,70 @@ MAIL_FROM_ADDRESS="hello@example.com"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-After editing `.env`, open a project-root terminal and run:
+Open the Mailpit inbox at [http://127.0.0.1:8025](http://127.0.0.1:8025). Clear cached configuration after changing `.env`:
 
 ```powershell
 php artisan config:clear
 ```
 
-This clears cached Laravel configuration so the updated `.env` values are
-used.
+## Tests
 
-To send a test message, start Tinker from the project root:
-
-```powershell
-php artisan tinker
-```
-
-At Tinker's `>` prompt, paste this PHP expression and press Enter:
-
-```php
-\Illuminate\Support\Facades\Mail::raw('Mailpit test email', fn ($message) => $message->to('test@example.com')->subject('Mailpit test'));
-```
-
-Then type `exit` to leave Tinker and refresh the Mailpit inbox. The message
-with subject **Mailpit test** should appear. `test@example.com` is only a
-captured recipient; Mailpit does not deliver it.
-
-### 5. Forward Stripe test webhooks
-
-The app has a `POST /stripe/webhook` route. It verifies the `Stripe-Signature`
-header using `STRIPE_WEBHOOK_SECRET` and processes Checkout completion,
-expiration, and refund events. It can also confirm a paid booking from its
-matching `payment_intent.succeeded` event.
-
-Open another PowerShell window in the folder containing `stripe.exe` and
-forward webhook events to the local app:
+Run the test suite with:
 
 ```powershell
-.\stripe.exe listen --events checkout.session.completed,checkout.session.expired,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,payment_intent.succeeded,refund.updated,refund.failed --forward-to http://127.0.0.1:8000/stripe/webhook
+php artisan test --compact
 ```
 
-Keep this terminal open. The CLI displays a webhook signing secret beginning
-with `whsec_`. Copy that exact secret into `STRIPE_WEBHOOK_SECRET` in the
-project `.env` (do not use a Stripe API secret beginning with `sk_test_`).
-After saving `.env`, run `php artisan config:clear` from the project root.
+## Production deployment checklist
 
-If you changed `.env` after starting the listener, stop the listener with
-`Ctrl+C` and start it again. Copy the `whsec_` secret printed by the active
-listener so the app and CLI use the same secret.
+- Set `APP_ENV=production`, `APP_DEBUG=false`, and `APP_URL` to the HTTPS site URL.
+- Configure a production database and mail provider.
+- This version only supports Stripe test-mode keys. Do not accept real payments until live-mode payment and refund support has been implemented and reviewed.
+- Create a secure administrator account; do not use the seeded demo accounts.
+- Point the web server document root to the application's `public` directory.
+- Install PHP dependencies and build frontend assets:
 
-Complete a booking through the app's Stripe Checkout page using a Stripe test
-card, for example `4242 4242 4242 4242` with any future expiry date and any
-three-digit CVC. This creates a Checkout Session and PaymentIntent tied to the
-booking. The listener forwards the verified payment event back to the app. A
-generic `stripe trigger payment_intent.succeeded` event is still not a
-substitute because it does not contain your booking's metadata.
+  ```sh
+  composer install --no-dev --optimize-autoloader
+  npm ci
+  npm run build
+  ```
 
-The listener should show a successful HTTP response (2xx) after forwarding the
-event. To inspect Laravel's recent log entries from the project root:
+- Run database migrations without reseeding demo data:
 
-```powershell
-Get-Content .\storage\logs\laravel.log -Tail 50
-```
+  ```sh
+  php artisan migrate --force
+  ```
 
-If checkout cannot be started, check for
-`Stripe test-mode checkout requires a test-mode secret key` and verify
-`STRIPE_SECRET_KEY` is the test-mode `sk_test_` key, not a publishable key, a
-webhook secret, or a live key. If the listener shows `400`, check that
-`STRIPE_WEBHOOK_SECRET` exactly matches the active listener's `whsec_` value,
-then run `php artisan config:clear`. If the response is `419`, confirm
-`bootstrap/app.php` excludes `stripe/webhook` from request-forgery (CSRF)
-validation. After successful payment, Stripe returns to the processing page. The webhook
-verifies the payment and confirms the booking; use **Refresh status** if the
-webhook takes a moment to arrive.
+- Create the public storage link if the app needs locally stored public files:
 
-Keep the Laravel server, Mailpit, and Stripe listener terminals running while
-testing. The CLI trigger is for Stripe test data only. In production, configure
-a public HTTPS webhook endpoint in Stripe Dashboard and use that endpoint's
-signing secret; do not run `stripe listen` as the production webhook receiver.
+  ```sh
+  php artisan storage:link
+  ```
+
+- Ensure `storage` and `bootstrap/cache` are writable by the web process.
+- Run a persistent queue worker for queued mail and other background jobs. Restart workers after deploying code:
+
+  ```sh
+  php artisan queue:restart
+  ```
+- Register `https://your-domain.example/stripe/webhook` in Stripe and configure the endpoint's signing secret in `STRIPE_WEBHOOK_SECRET`.
+- Keep `.env`, credentials, and production data out of source control. Back up the database and uploaded files.
+
+php artisan serve --host=127.0.0.1 --port=8000
+
+"C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://127.0.0.1:8000
+
+## Project structure
+
+| Directory | Purpose |
+| --- | --- |
+| `app/Actions` | Booking, payment, ticket, and refund operations |
+| `app/Http` | Controllers, middleware, and form requests |
+| `app/Models` | Eloquent models |
+| `app/Services` | Application services and integrations |
+| `database/migrations` | Database schema |
+| `database/seeders` | Development and demo data |
+| `resources` | Blade views and frontend source assets |
+| `routes` | Web, authentication, staff, and admin routes |
+| `tests` | Automated tests |
