@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create(['role' => Role::Admin]);
@@ -93,4 +94,64 @@ test('customers can access their customer profile', function () {
         ->assertOk()
         ->assertSee('Your account')
         ->assertSee($customer->name);
+});
+
+test('staff can access their profile from the account menu', function () {
+    $staff = User::factory()->staff()->create();
+
+    $this->actingAs($staff)
+        ->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('Your account')
+        ->assertSee('account-layout', false)
+        ->assertSee('Profile details')
+        ->assertSee('Save password')
+        ->assertSee('Staff account')
+        ->assertDontSee('My bookings');
+});
+
+test('the staff name opens the profile and logout account menu', function () {
+    $staff = User::factory()->staff()->create(['name' => 'Jamie Okafor']);
+
+    $this->actingAs($staff)
+        ->get(route('staff.today'))
+        ->assertOk()
+        ->assertSee('Jamie Okafor')
+        ->assertSee('site-account-menu__trigger', false)
+        ->assertSee(route('profile.edit'), false)
+        ->assertSee(route('logout'), false);
+});
+
+test('staff can update their profile information', function () {
+    $staff = User::factory()->staff()->create();
+
+    $this->actingAs($staff)
+        ->patch(route('profile.update'), [
+            'name' => 'Jamie Okafor',
+            'email' => 'jamie.okafor@example.com',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $staff->refresh();
+
+    $this->assertSame('Jamie Okafor', $staff->name);
+    $this->assertSame('jamie.okafor@example.com', $staff->email);
+    $this->assertNull($staff->email_verified_at);
+});
+
+test('staff can update their password', function () {
+    $staff = User::factory()->staff()->create();
+
+    $this->actingAs($staff)
+        ->from(route('profile.edit'))
+        ->put(route('password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('profile.edit'));
+
+    $this->assertTrue(Hash::check('new-password', $staff->refresh()->password));
 });
