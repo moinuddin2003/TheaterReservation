@@ -28,11 +28,31 @@
         </nav>
 
         <div class="staff-header__account">
-            <span>{{ $user }}</span>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="staff-header__signout" type="submit">Sign out</button>
-            </form>
+            <div class="site-account-menu" x-data="{ open: false }" @click.outside="open = false"
+                @keydown.escape.window="open = false">
+                <button class="profile-label site-account-menu__trigger" type="button" aria-haspopup="menu"
+                    :aria-expanded="open.toString()" @click="open = ! open">
+                    <span class="profile-avatar">{{ str($user)->substr(0, 1)->upper() }}</span>
+                    <span class="site-account-menu__name">{{ $user }}</span>
+                    <svg class="site-account-menu__chevron" :class="{ 'is-open': open }" aria-hidden="true"
+                        viewBox="0 0 16 16" fill="none">
+                        <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-linecap="round"
+                            stroke-linejoin="round" stroke-width="1.5" />
+                    </svg>
+                </button>
+                <div class="site-account-menu__dropdown" x-cloak x-show="open" x-transition
+                    role="menu" aria-label="Account menu">
+                    <a class="site-account-menu__item" href="{{ route('profile.edit') }}" role="menuitem">
+                        Profile
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="site-account-menu__item" type="submit" role="menuitem">
+                            Log out
+                        </button>
+                    </form>
+                </div>
+            </div>
             <x-theme-toggle />
         </div>
     </div>
