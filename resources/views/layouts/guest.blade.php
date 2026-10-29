@@ -1,6 +1,7 @@
 @props([
     'title' => 'Your next great escape',
     'subtitle' => 'Secure account access for your next movie night.',
+    'compact' => false,
 ])
 
 <!DOCTYPE html>
@@ -19,7 +20,7 @@
 </head>
 
 <body class="auth-page">
-    <main class="auth-layout">
+    <main @class(['auth-layout', 'auth-layout--compact' => $compact])>
         <section class="auth-story" aria-label="CineBook">
             <a class="brand auth-story__brand" href="{{ route('home') }}">
                 <span class="brand__mark" aria-hidden="true"></span>

@@ -16,10 +16,15 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $view = $request->user()->isAdmin() ? 'profile.admin-edit' : 'profile.edit';
+        $user = $request->user();
+        $view = match (true) {
+            $user->isAdmin() => 'profile.admin-edit',
+            $user->isStaff() => 'profile.staff-edit',
+            default => 'profile.edit',
+        };
 
         return view($view, [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 
