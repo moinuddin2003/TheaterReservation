@@ -1,4 +1,4 @@
-@props(['prices', 'maxSelection', 'showtime'])
+@props(['prices', 'maxSelection', 'showtime', 'requiresSeatHoldPreparation' => false])
 
 <section
     class="selection-card"
@@ -14,7 +14,11 @@
         Standard ${{ $prices['standard'] }} <span aria-hidden="true">·</span>
         Premium ${{ $prices['premium'] }}. Select 1–{{ $maxSelection }} seats. Not held yet.
     </p>
-    <form action="{{ route('showtimes.holds.store', $showtime) }}" method="POST" data-hold-form>
+    <form
+        action="{{ $requiresSeatHoldPreparation ? route('showtimes.holds.prepare', $showtime) : route('showtimes.holds.store', $showtime) }}"
+        method="POST"
+        data-hold-form
+    >
         @csrf
         <div data-hold-inputs hidden></div>
         <button class="button button--primary button--full" type="submit" data-hold-submit disabled>

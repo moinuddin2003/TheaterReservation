@@ -18,8 +18,10 @@ Route::get('/movies/{movie:slug}', [MovieController::class, 'show'])
     ->name('movies.show');
 
 Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('showtimes.show');
+Route::post('/showtimes/{showtime}/holds/prepare', [BookingController::class, 'prepareSeatHold'])
+    ->name('showtimes.holds.prepare');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
     Route::post('/showtimes/{showtime}/holds', [BookingController::class, 'holdSeats'])
         ->name('showtimes.holds.store');
     Route::post('/bookings/{reference}/checkout', [BookingController::class, 'startCheckout'])
@@ -38,7 +40,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{reference}/checkout', [BookingController::class, 'checkout'])->name('bookings.checkout');
     Route::get('/bookings/{reference}/processing', [BookingController::class, 'processing'])->name('bookings.processing');
@@ -51,7 +53,9 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('ticketId')
         ->name('bookings.tickets.show');
     Route::get('/bookings/{reference}', [BookingController::class, 'show'])->name('bookings.show');
+});
 
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

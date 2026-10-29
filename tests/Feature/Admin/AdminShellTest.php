@@ -53,6 +53,15 @@ test('customers and staff are forbidden from the admin panel', function (Role $r
     'staff' => [Role::Staff],
 ]);
 
+test('administrators do not see customer booking navigation', function () {
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($admin)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('My bookings');
+});
+
 test('guests are redirected to login instead of seeing the admin panel', function () {
     $this->get(route('admin.dashboard'))
         ->assertRedirect(route('login'));

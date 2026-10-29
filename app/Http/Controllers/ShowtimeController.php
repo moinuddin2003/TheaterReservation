@@ -46,10 +46,30 @@ class ShowtimeController extends Controller
                 'screen' => $showtime->screen->name,
                 'currency' => strtoupper((string) config('cinebook.currency', 'usd')),
                 'rows' => $seats->pluck('row_label')->unique()->count(),
-                'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
+                'seats_per_row' => (int) ($seats->max('seat_number') ?? 0),
                 'seat_count' => $seats->count(),
                 'seats' => $seatStates,
             ]);
+        }
+
+        $pendingSeatHold = $request->session()->get('pending_seat_hold');
+        $selectedSeatIds = [];
+
+        if (
+            is_array($pendingSeatHold)
+            && (int) ($pendingSeatHold['showtime_id'] ?? 0) === (int) $showtime->getKey()
+            && is_array($pendingSeatHold['seat_ids'] ?? null)
+        ) {
+            $selectedSeatIds = array_map('intval', $pendingSeatHold['seat_ids']);
+            $request->session()->forget('pending_seat_hold');
+
+            $seatStates = $seatStates->map(function (array $seat) use ($selectedSeatIds): array {
+                if ($seat['status'] === 'available' && in_array($seat['id'], $selectedSeatIds, true)) {
+                    $seat['status'] = 'selected';
+                }
+
+                return $seat;
+            });
         }
 
         $statuses = $seatStates->mapWithKeys(fn (array $seat) => [$seat['label'] => $seat['status']]);
@@ -72,7 +92,7 @@ class ShowtimeController extends Controller
                     ])->all(),
                 ],
             )->all(),
-            'seats_per_row' => (int) ($seats->groupBy('row_label')->map->count()->max() ?? 0),
+            'seats_per_row' => (int) ($seats->max('seat_number') ?? 0),
             'held' => $withStatus('held')->all(),
             'sold' => $withStatus('sold')->all(),
             'disabled' => $withStatus('disabled')->all(),
@@ -89,7 +109,7 @@ class ShowtimeController extends Controller
                 'premium' => $premiumPriceCents / 100,
             ],
             'maxSelection' => (int) $settings->get('max_seats_per_booking'),
-            'availableSeats' => $withStatus('available')->count(),
+            'availableSeats' => $withStatus('available')->count() + $withStatus('selected')->count(),
             'holdMinutes' => (int) $settings->get('hold_minutes'),
             'salesClosed' => $showtime->hasSalesClosed(),
             'salesCloseAt' => $showtime->salesCloseAt()->format('H:i'),

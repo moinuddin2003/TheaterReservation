@@ -913,6 +913,37 @@ body.cinema-app {
     grid-template-columns: minmax(320px, 46%) minmax(0, 54%);
 }
 
+.auth-layout--compact {
+    min-height: 100svh;
+}
+
+.auth-layout--compact .auth-main {
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+
+.auth-layout--compact .auth-main__inner > h1 {
+    margin-top: 14px;
+}
+
+.auth-layout--compact .auth-subtitle {
+    margin-bottom: 14px;
+}
+
+.auth-layout--compact .auth-content,
+.auth-layout--compact .auth-form {
+    gap: 10px;
+}
+
+.auth-layout--compact .auth-field .auth-input {
+    min-height: 44px;
+}
+
+.auth-layout--compact .auth-notice--card {
+    gap: 8px;
+    padding: 12px;
+}
+
 .auth-story {
     position: relative;
     display: flex;
@@ -1169,6 +1200,11 @@ body.cinema-app {
     .auth-story {
         padding: 24px;
     }
+
+    .auth-layout--compact .auth-main {
+        padding-top: 24px;
+        padding-bottom: 24px;
+    }
 }
 
 @media (max-width: 560px) {
@@ -1213,6 +1249,21 @@ body.cinema-app {
         padding: 18px 22px;
     }
 
+    .auth-layout--compact {
+        min-height: 100svh;
+        grid-template-rows: auto 1fr;
+    }
+
+    .auth-layout--compact .auth-story {
+        min-height: 0;
+        padding: 14px 22px;
+    }
+
+    .auth-layout--compact .auth-story__image,
+    .auth-layout--compact .auth-story__copy {
+        display: none;
+    }
+
     .auth-story__copy h2 {
         max-width: 360px;
         font-size: 28px;
@@ -1227,9 +1278,80 @@ body.cinema-app {
         padding: 28px 22px 40px;
     }
 
+    .auth-layout--compact .auth-main {
+        padding: 18px 22px 24px;
+    }
+
+    .auth-layout--compact .auth-main__inner > h1 {
+        margin-top: 12px;
+        font-size: 30px;
+    }
+
+    .auth-layout--compact .auth-subtitle {
+        margin-bottom: 12px;
+    }
+
+    .auth-layout--compact .auth-mail-icon,
+    .auth-layout--compact .auth-footer {
+        display: none;
+    }
+
+    .auth-layout--compact .auth-field .auth-input {
+        min-height: 42px;
+    }
+
     .theme-toggle--floating {
         top: 12px;
         right: 12px;
+    }
+}
+
+@media (max-width: 560px) and (max-height: 700px) {
+    .auth-layout--compact {
+        grid-template-rows: 1fr;
+    }
+
+    .auth-layout--compact .auth-story {
+        display: none;
+    }
+
+    .auth-layout--compact .auth-main {
+        padding-top: 12px;
+        padding-bottom: 14px;
+    }
+
+    .auth-layout--compact .auth-main__inner > h1 {
+        margin-top: 8px;
+        font-size: 27px;
+    }
+
+    .auth-layout--compact .auth-subtitle {
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .auth-layout--compact .auth-content,
+    .auth-layout--compact .auth-form {
+        gap: 7px;
+    }
+
+    .auth-layout--compact .auth-field {
+        gap: 3px;
+    }
+
+    .auth-layout--compact .auth-field .auth-input {
+        min-height: 38px;
+        padding-top: 7px;
+        padding-bottom: 7px;
+    }
+
+    .auth-layout--compact .auth-help {
+        font-size: 11px;
+    }
+
+    .auth-layout--compact .auth-terms,
+    .auth-layout--compact .auth-notice--card {
+        display: none;
     }
 }
 
@@ -2497,15 +2619,24 @@ body.cinema-app {
     margin: 0;
 }
 
-.booking-confirmed-layout {
-    margin-top: 16px;
-}
-
 .booking-confirmed-panel {
     display: grid;
     justify-items: start;
     gap: 14px;
+    margin: 16px auto 0;
     padding: clamp(18px, 4vw, 30px);
+}
+
+.booking-confirmed-panel__tickets-title {
+    margin: 4px 0 -4px;
+    font-size: 18px;
+}
+
+.booking-confirmed-panel__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
 }
 
 .booking-ticket-list {
@@ -2519,17 +2650,27 @@ body.cinema-app {
 
 .booking-ticket-list li {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(120px, auto) auto;
+    align-items: center;
     gap: 10px;
-    padding: 10px;
+    padding: 14px;
     border: 1px solid var(--line);
-    border-radius: 7px;
+    border-radius: 10px;
     color: var(--muted);
-    font-size: 10px;
+    font-size: 13px;
+}
+
+.booking-ticket-list li > div {
+    display: grid;
+    gap: 4px;
 }
 
 .booking-ticket-list strong {
     color: var(--text-soft);
+}
+
+.booking-ticket-list li > a {
+    white-space: nowrap;
 }
 
 .booking-ticket-card {

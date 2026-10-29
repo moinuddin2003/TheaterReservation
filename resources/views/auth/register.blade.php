@@ -1,4 +1,4 @@
-<x-guest-layout title="Your seat in the story" subtitle="Create your customer account. Verify your email to hold seats and check out.">
+<x-guest-layout title="Your seat in the story" subtitle="Create your customer account. Verify your email to hold seats and check out." compact>
     <form class="auth-form" method="POST" action="{{ route('register') }}">
         @csrf
         <div class="auth-field">
