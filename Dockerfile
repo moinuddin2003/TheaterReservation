@@ -1,3 +1,4 @@
+
 # Stage 1: Build frontend assets
 FROM node:24-alpine AS frontend
 
@@ -49,6 +50,9 @@ WORKDIR /var/www/html
 # Copy Laravel application
 COPY . .
 
+# Copy TiDB SSL certificate
+COPY docker/certs/ca.pem /etc/ssl/certs/tidb-ca.pem
+
 # Copy built frontend assets
 COPY --from=frontend /app/public/build ./public/build
 
@@ -69,9 +73,12 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' \
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# TiDB SSL certificate path
+ENV MYSQL_ATTR_SSL_CA=/etc/ssl/certs/tidb-ca.pem
+
 # Render port
 ENV PORT=10000
 EXPOSE 10000
 
-# Start Apache on Render's assigned port
-CMD ["bash", "-lc", "sed -i \"s/Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+# Start Apache
+CMD ["bash", "-lc", "sed -i \"s/Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s|<VirtualHost \\*:80>|<VirtualHost *:${PORT}>|\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
