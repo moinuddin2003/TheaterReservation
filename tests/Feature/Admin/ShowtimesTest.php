@@ -28,7 +28,7 @@ test('the showtime schedule paginates ten showtimes and keeps week filters', fun
     $weekStart = now()->addWeek()->startOfWeek();
 
     foreach (range(0, 11) as $index) {
-        $startsAt = $weekStart->copy()->addHours(9 + $index * 2);
+        $startsAt = $weekStart->copy()->addHours(9)->addMinutes($index * 10);
         Showtime::factory()->create([
             'movie_id' => $movie->id,
             'screen_id' => $screen->id,
@@ -148,7 +148,7 @@ test('the schedule date filter defaults invalid input to today in the configured
         ->assertSee('value="'.Carbon::now('America/Los_Angeles')->toDateString().'"', false);
 });
 
-test('the selected date shows showtimes on that date and all future dates only', function () {
+test('the selected date table only shows showtimes on that date', function () {
     $admin = User::factory()->create(['role' => Role::Admin]);
     $screen = Screen::factory()->create();
     $selectedDate = Carbon::parse('2027-04-15 00:00:00', 'UTC');
@@ -173,12 +173,44 @@ test('the selected date shows showtimes on that date and all future dates only',
         ->get(route('admin.showtimes.index', ['date' => $selectedDate->toDateString()]))
         ->assertOk()
         ->assertSee('Selected Day Screening')
-        ->assertSee('Future Screening')
+        ->assertDontSee('Future Screening')
         ->assertDontSee('Earlier Screening')
+        ->assertSee('Showing 1 showtimes for Apr 15, 2027')
         ->assertSee('Weekly view · Apr 12 - Apr 18, 2027')
         ->assertSee('date='.$selectedDate->copy()->subWeek()->toDateString(), false)
         ->assertSee('date='.$selectedDate->copy()->addWeek()->toDateString(), false)
         ->assertViewHas('showtimeCounts', fn ($counts) => (int) $counts->get(3) === 1 && (int) $counts->get(4) === 1);
+});
+
+test('the weekly schedule counts and filters showtimes by their local calendar date', function () {
+    $admin = User::factory()->create(['role' => Role::Admin]);
+    $screen = Screen::factory()->create();
+    $previousMovie = Movie::factory()->create(['title' => 'Previous Local Day Screening']);
+    $selectedMovie = Movie::factory()->create(['title' => 'Selected Local Day Screening']);
+    $nextMovie = Movie::factory()->create(['title' => 'Next Local Day Screening']);
+
+    foreach ([
+        [$previousMovie, Carbon::parse('2026-11-01 19:00:00', 'Asia/Karachi')],
+        [$selectedMovie, Carbon::parse('2026-11-02 11:00:00', 'Asia/Karachi')],
+        [$selectedMovie, Carbon::parse('2026-11-02 15:00:00', 'Asia/Karachi')],
+        [$selectedMovie, Carbon::parse('2026-11-02 19:00:00', 'Asia/Karachi')],
+        [$nextMovie, Carbon::parse('2026-11-03 11:00:00', 'Asia/Karachi')],
+    ] as [$movie, $startsAt]) {
+        Showtime::factory()->create([
+            'movie_id' => $movie->id,
+            'screen_id' => $screen->id,
+            'starts_at' => $startsAt,
+            'ends_at' => $startsAt->copy()->addHours(2),
+        ]);
+    }
+
+    $this->actingAs($admin)
+        ->get(route('admin.showtimes.index', ['date' => '2026-11-02']))
+        ->assertOk()
+        ->assertSee('Selected Local Day Screening')
+        ->assertDontSee('Next Local Day Screening')
+        ->assertDontSee('Previous Local Day Screening')
+        ->assertViewHas('showtimeCounts', fn ($counts) => (int) $counts->get(0) === 3 && (int) $counts->get(1) === 1);
 });
 
 test('the selected date boundary uses the configured cinema timezone', function () {
@@ -189,8 +221,14 @@ test('the selected date boundary uses the configured cinema timezone', function 
     $atMidnightMovie = Movie::factory()->create(['title' => 'At Local Midnight']);
 
     foreach ([
-        [$beforeMidnightMovie, Carbon::parse('2027-04-15 06:59:00', 'UTC')],
-        [$atMidnightMovie, Carbon::parse('2027-04-15 07:00:00', 'UTC')],
+        [
+            $beforeMidnightMovie,
+            Carbon::parse('2027-04-15 06:59:00', 'UTC')->setTimezone(config('app.timezone')),
+        ],
+        [
+            $atMidnightMovie,
+            Carbon::parse('2027-04-15 07:00:00', 'UTC')->setTimezone(config('app.timezone')),
+        ],
     ] as [$movie, $startsAt]) {
         Showtime::factory()->create([
             'movie_id' => $movie->id,
@@ -218,7 +256,7 @@ test('showtime status follows the cinema clock and movie runtime', function () {
         ['Future screening', '2027-04-15 13:00:00', 'Scheduled'],
     ] as [$title, $start, $status]) {
         $movie = Movie::factory()->create(['title' => $title, 'duration_minutes' => 90]);
-        $startsAt = Carbon::parse($start, 'UTC');
+        $startsAt = Carbon::parse($start, 'UTC')->setTimezone(config('app.timezone'));
         Showtime::factory()->create([
             'movie_id' => $movie->id,
             'screen_id' => $screen->id,
@@ -231,8 +269,8 @@ test('showtime status follows the cinema clock and movie runtime', function () {
     Showtime::factory()->cancelled()->create([
         'movie_id' => $cancelledMovie->id,
         'screen_id' => $screen->id,
-        'starts_at' => Carbon::parse('2027-04-15 13:00:00', 'UTC'),
-        'ends_at' => Carbon::parse('2027-04-15 14:45:00', 'UTC'),
+        'starts_at' => Carbon::parse('2027-04-15 13:00:00', 'UTC')->setTimezone(config('app.timezone')),
+        'ends_at' => Carbon::parse('2027-04-15 14:45:00', 'UTC')->setTimezone(config('app.timezone')),
     ]);
 
     try {

@@ -123,7 +123,7 @@
         <div class="flex flex-col gap-3 border-b border-cine-border/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div>
                 <h3 class="text-sm font-bold text-cine-primary">Scheduled showtimes</h3>
-                <p class="mt-1 text-[10px] text-cine-tertiary">Showing {{ $showtimes->total() }} showtimes from {{ $selectedDate->format('M j, Y') }} onward</p>
+                <p class="mt-1 text-[10px] text-cine-tertiary">Showing {{ $showtimes->total() }} showtimes for {{ $selectedDate->format('M j, Y') }}</p>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-[10px] text-cine-tertiary">{{ number_format($showtimes->total()) }} matching</span>

@@ -32,14 +32,15 @@ class ShowtimeController extends Controller
         $weekStart = $request->weekStart();
         $weekEnd = $request->weekEnd();
         $weekEndExclusive = $weekEnd->copy()->addDay()->startOfDay();
+        $storageTimezone = (string) config('app.timezone');
         $weekDays = collect(range(0, 6))
             ->map(fn (int $offset) => $weekStart->copy()->addDays($offset));
-        $dayRanges = $weekDays->map(function (Carbon $day): array {
+        $dayRanges = $weekDays->map(function (Carbon $day) use ($storageTimezone): array {
             $start = $day->copy()->startOfDay();
 
             return [
-                'start' => $start->copy()->utc(),
-                'end' => $start->copy()->addDay()->startOfDay()->utc(),
+                'start' => $start->copy()->setTimezone($storageTimezone),
+                'end' => $start->copy()->addDay()->startOfDay()->setTimezone($storageTimezone),
             ];
         });
         $caseClauses = [];
@@ -52,15 +53,17 @@ class ShowtimeController extends Controller
         }
 
         $showtimeCounts = $this->applyFilters(Showtime::query(), $request)
-            ->where('starts_at', '>=', $weekStart->copy()->startOfDay()->utc())
-            ->where('starts_at', '<', $weekEndExclusive->copy()->setTimezone($request->timezone())->utc())
+            ->where('starts_at', '>=', $weekStart->copy()->startOfDay()->setTimezone($storageTimezone))
+            ->where('starts_at', '<', $weekEndExclusive->copy()->setTimezone($storageTimezone))
             ->selectRaw('CASE '.implode(' ', $caseClauses).' ELSE NULL END AS local_day, COUNT(*) AS total', $caseBindings)
             ->groupBy('local_day')
             ->pluck('total', 'local_day');
 
-        $selectedDayStartUtc = $selectedDate->copy()->startOfDay()->utc();
+        $selectedDayStart = $selectedDate->copy()->startOfDay()->setTimezone($storageTimezone);
+        $selectedDayEnd = $selectedDate->copy()->addDay()->startOfDay()->setTimezone($storageTimezone);
         $showtimes = $this->applyFilters(Showtime::query()->with(['movie', 'screen.cinema']), $request)
-            ->where('starts_at', '>=', $selectedDayStartUtc)
+            ->where('starts_at', '>=', $selectedDayStart)
+            ->where('starts_at', '<', $selectedDayEnd)
             ->orderBy('starts_at')
             ->orderBy(Screen::query()->select('name')->whereColumn('screens.id', 'showtimes.screen_id'))
             ->paginate(10)
