@@ -99,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
             genreSelect.value = query.get("genre").toLowerCase();
         }
 
-        const filterMovies = () => {
+        const filterMovies = (updateSummary = true) => {
             const searchTerm = searchInput.value.trim().toLowerCase();
             const selectedGenre = genreSelect.value;
             let visibleCount = 0;
@@ -124,9 +124,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 tab.setAttribute("aria-selected", String(isActive));
             });
 
-            emptyMessage.hidden = visibleCount > 0;
-            resultCount.textContent = `Showing ${visibleCount} ${visibleCount === 1 ? "movie" : "movies"}`;
-            summary.textContent = `${visibleCount} ${selectedStatus === "now-showing" ? "movies now showing" : "movies coming soon"}`;
+            if (emptyMessage) {
+                emptyMessage.hidden = visibleCount > 0;
+            }
+
+            if (resultCount) {
+                resultCount.textContent = `Showing ${visibleCount} ${visibleCount === 1 ? "movie" : "movies"}`;
+            }
+
+            if (summary && updateSummary) {
+                summary.textContent = `${visibleCount} ${selectedStatus === "now-showing" ? "movies now showing" : "movies coming soon"}`;
+            }
         };
 
         statusTabs.forEach((tab) => {
@@ -138,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         searchInput.addEventListener("input", filterMovies);
         genreSelect.addEventListener("change", filterMovies);
-        filterMovies();
+        filterMovies(false);
     }
 
     const seatButtons = [...document.querySelectorAll("[data-seat]")];

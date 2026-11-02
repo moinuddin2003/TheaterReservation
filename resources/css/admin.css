@@ -33,10 +33,14 @@
     .admin-shell {
         @apply min-h-screen font-admin text-cine-primary antialiased;
         color-scheme: dark;
-        background: linear-gradient(180deg, rgb(var(--cine-bg)) 0%, rgb(var(--cine-deep)) 100%);
+        background: linear-gradient(
+            180deg,
+            rgb(var(--cine-bg)) 0%,
+            rgb(var(--cine-deep)) 100%
+        );
     }
 
-    .admin-shell[data-theme='light'] {
+    .admin-shell[data-theme="light"] {
         --cine-bg: 244 247 252;
         --cine-deep: 237 243 251;
         --cine-surface: 255 255 255;
@@ -44,8 +48,8 @@
         --cine-border: 24 43 70;
         --cine-accent: 24 112 218;
         --cine-primary: 19 32 51;
-        --cine-secondary: 74 91 116;
-        --cine-tertiary: 105 121 145;
+        --cine-secondary: 255 255 255;
+        --cine-tertiary: 255 255 255;
         --cine-disabled-bg: 229 235 244;
         --cine-disabled: 104 119 143;
         color-scheme: light;
@@ -59,7 +63,7 @@
         @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cine-accent focus-visible:ring-offset-2 focus-visible:ring-offset-cine-bg;
     }
 
-    .admin-shell [aria-invalid='true'] {
+    .admin-shell [aria-invalid="true"] {
         border-color: rgb(var(--cine-danger) / 0.65);
     }
 }

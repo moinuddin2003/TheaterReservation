@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Cinema;
+use App\Models\Genre;
 use App\Models\Movie;
 use App\Models\Screen;
 use App\Models\Setting;
@@ -20,6 +21,22 @@ it('shows the home page and movie catalog', function () {
         ->assertSee('Find your next escape')
         ->assertSee('Search movies')
         ->assertSee('Night Circuit');
+});
+
+it('renders catalog filters with matching genre slugs and an initially hidden empty state', function () {
+    $genre = Genre::factory()->create([
+        'name' => 'Science Fiction',
+        'slug' => 'science-fiction',
+    ]);
+    $movie = Movie::factory()->nowShowing()->create([
+        'title' => 'Orbit Seven',
+    ]);
+    $movie->genres()->attach($genre);
+
+    $this->get(route('movies.index'))
+        ->assertOk()
+        ->assertSee('data-movie-genres="science-fiction"', false)
+        ->assertSeeInOrder(['data-catalog-empty', 'hidden'], false);
 });
 
 it('shows each movie latest upcoming showtime and its date', function () {

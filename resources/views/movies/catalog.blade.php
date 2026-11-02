@@ -34,9 +34,7 @@
                 <x-movie-card :movie="$movie" />
             @endforeach
         </div>
-        @if ($movies->isEmpty())
-            <p class="catalog-empty" data-catalog-empty>No movies match your filters.</p>
-        @endif
+        <p class="catalog-empty" data-catalog-empty @if ($movies->isNotEmpty()) hidden @endif>No movies match your filters.</p>
 
         <div class="catalog-pagination">
             {{ $movies->links() }}
