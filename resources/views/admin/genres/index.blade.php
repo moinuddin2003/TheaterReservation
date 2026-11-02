@@ -1,5 +1,8 @@
 @php($fieldClass = 'min-h-10 w-full rounded-lg border border-cine-border/10 bg-cine-bg px-3 py-2 text-sm text-cine-primary placeholder:text-cine-tertiary focus:border-cine-accent/50 focus:outline-none focus:ring-2 focus:ring-cine-accent/20')
 @php($labelClass = 'mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-cine-tertiary')
+@php($genreFormBag = $editingGenre ? 'editGenre' : 'createGenre')
+@php($genreNameId = $editingGenre ? 'edit-name' : 'create-name')
+@php($genreSlugId = $editingGenre ? 'edit-slug' : 'create-slug')
 
 <x-admin.layout title="Genres" breadcrumb="CineBook / Admin / Catalog">
     <x-admin.page-header
@@ -121,45 +124,61 @@
             @endif
         </div>
 
-        <div class="space-y-5">
-            @if ($editingGenre)
-                <x-admin.card title="Edit genre" subtitle="Update the genre name and URL slug.">
-                    <form method="POST" action="{{ route('admin.genres.update', $editingGenre) }}" class="space-y-3" novalidate>
-                        @csrf
-                        @method('PUT')
-                        <div>
-                            <label for="edit-name" class="{{ $labelClass }}">Name <span class="text-cine-danger">*</span></label>
-                            <input id="edit-name" name="name" value="{{ old('name', $editingGenre->name) }}" required maxlength="60" class="{{ $fieldClass }}" @if ($errors->getBag('editGenre')->has('name')) aria-invalid="true" aria-describedby="edit-name-error" @endif>
-                            <x-admin.field-error field="name" bag="editGenre" id="edit-name-error" />
-                        </div>
-                        <div>
-                            <label for="edit-slug" class="{{ $labelClass }}">Slug <span class="text-cine-danger">*</span></label>
-                            <input id="edit-slug" name="slug" value="{{ old('slug', $editingGenre->slug) }}" required maxlength="80" class="{{ $fieldClass }}" @if ($errors->getBag('editGenre')->has('slug')) aria-invalid="true" aria-describedby="edit-slug-error" @endif>
-                            <x-admin.field-error field="slug" bag="editGenre" id="edit-slug-error" />
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Save genre</x-admin.button>
-                            <x-admin.button :href="route('admin.genres.index')" variant="secondary" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Cancel</x-admin.button>
-                        </div>
-                    </form>
-                </x-admin.card>
-            @endif
-
-            <x-admin.card title="Create genre" subtitle="Add a genre for movie discovery and filtering.">
-                <form method="POST" action="{{ route('admin.genres.store') }}" class="space-y-3" novalidate>
+        <div>
+            <x-admin.card
+                :title="$editingGenre ? 'Edit genre' : 'Create genre'"
+                :subtitle="$editingGenre ? 'Update the genre name and URL slug.' : 'Add a genre for movie discovery and filtering.'"
+            >
+                <form
+                    method="POST"
+                    action="{{ $editingGenre ? route('admin.genres.update', $editingGenre) : route('admin.genres.store') }}"
+                    class="space-y-3"
+                    novalidate
+                >
                     @csrf
+                    @if ($editingGenre)
+                        @method('PUT')
+                    @endif
                     <div>
-                        <label for="create-name" class="{{ $labelClass }}">Name <span class="text-cine-danger">*</span></label>
-                        <input id="create-name" name="name" value="{{ old('name') }}" required maxlength="60" class="{{ $fieldClass }}" placeholder="Enter genre name" @if ($errors->getBag('createGenre')->has('name')) aria-invalid="true" aria-describedby="create-name-error" @endif>
-                        <x-admin.field-error field="name" bag="createGenre" id="create-name-error" />
+                        <label for="{{ $genreNameId }}" class="{{ $labelClass }}">Name <span class="text-cine-danger">*</span></label>
+                        <input
+                            id="{{ $genreNameId }}"
+                            name="name"
+                            value="{{ old('name', $editingGenre?->name) }}"
+                            required
+                            maxlength="60"
+                            class="{{ $fieldClass }}"
+                            @if ($errors->getBag($genreFormBag)->has('name')) aria-invalid="true" aria-describedby="{{ $genreNameId }}-error" @endif
+                        >
+                        <x-admin.field-error field="name" :bag="$genreFormBag" :id="$genreNameId.'-error'" />
                     </div>
                     <div>
-                        <label for="create-slug" class="{{ $labelClass }}">Slug <span class="text-cine-danger">*</span></label>
-                        <input id="create-slug" name="slug" value="{{ old('slug') }}" maxlength="80" class="{{ $fieldClass }}" placeholder="generated-from-name" @if ($errors->getBag('createGenre')->has('slug')) aria-invalid="true" aria-describedby="create-slug-error" @endif>
-                        <p class="mt-1 text-[11px] text-cine-tertiary">Leave blank to generate it from the name.</p>
-                        <x-admin.field-error field="slug" bag="createGenre" id="create-slug-error" />
+                        <label for="{{ $genreSlugId }}" class="{{ $labelClass }}">Slug <span class="text-cine-danger">*</span></label>
+                        <input
+                            id="{{ $genreSlugId }}"
+                            name="slug"
+                            value="{{ old('slug', $editingGenre?->slug) }}"
+                            @required($editingGenre)
+                            maxlength="80"
+                            class="{{ $fieldClass }}"
+                            placeholder="{{ $editingGenre ? '' : 'generated-from-name' }}"
+                            @if ($errors->getBag($genreFormBag)->has('slug')) aria-invalid="true" aria-describedby="{{ $genreSlugId }}-error" @endif
+                        >
+                        @unless ($editingGenre)
+                            <p class="mt-1 text-[11px] text-cine-tertiary">Leave blank to generate it from the name.</p>
+                        @endunless
+                        <x-admin.field-error field="slug" :bag="$genreFormBag" :id="$genreSlugId.'-error'" />
                     </div>
-                    <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">Add genre</x-admin.button>
+                    <div class="flex gap-2 pt-1">
+                        <x-admin.button type="submit" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">
+                            {{ $editingGenre ? 'Save genre' : 'Add genre' }}
+                        </x-admin.button>
+                        @if ($editingGenre)
+                            <x-admin.button :href="route('admin.genres.index')" variant="secondary" class="!min-h-9 !rounded-lg !px-3 !py-1 !text-xs">
+                                Cancel
+                            </x-admin.button>
+                        @endif
+                    </div>
                 </form>
             </x-admin.card>
         </div>

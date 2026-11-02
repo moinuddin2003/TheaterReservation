@@ -56,7 +56,13 @@ test('an administrator can create, edit, and delete genres', function () {
     $this->get(route('admin.genres.index', ['edit' => $genre->id]))
         ->assertOk()
         ->assertSee('Edit genre')
-        ->assertSee('Science Fiction');
+        ->assertSee('Science Fiction')
+        ->assertSee('value="Science Fiction"', false)
+        ->assertSee('value="science-fiction"', false)
+        ->assertSee('Save genre')
+        ->assertDontSee('Create genre')
+        ->assertDontSee('Add genre');
+
 
     $this->put(route('admin.genres.update', $genre), [
         'name' => 'Sci-Fi',

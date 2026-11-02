@@ -16,8 +16,8 @@
     --cine-selected-start: 29 79 168;
     --cine-selected-end: 15 47 102;
     --cine-primary: 255 255 255;
-    --cine-secondary: 154 169 192;
-    --cine-tertiary: 111 127 153;
+    --cine-secondary: 255 255 255;
+    --cine-tertiary: 255 255 255;
     --cine-disabled-bg: 26 36 56;
     --cine-disabled: 74 88 115;
     --cine-success: 34 197 94;
