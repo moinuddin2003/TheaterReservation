@@ -21,7 +21,7 @@
     </div>
 
     <div class="flex items-center gap-4">
-        <button type="submit" class="rounded-xl bg-cine-accent px-4 py-2 text-sm font-semibold text-white">
+        <button type="submit" class="button button--primary rounded-xl bg-cine-accent px-4 py-2 text-sm font-semibold text-white">
             Save password
         </button>
         @if (session('status') === 'password-updated')

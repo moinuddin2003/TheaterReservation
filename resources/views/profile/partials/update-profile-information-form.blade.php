@@ -39,7 +39,7 @@
             />
             <x-input-error :messages="$errors->get('email')" />
             <p class="account-notice">
-                Changing your email requires verifying the new address before booking.
+                Verify your email to confirm this address. Email verification is optional for booking.
             </p>
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())

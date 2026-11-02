@@ -18,4 +18,12 @@ class EmailVerificationPromptController extends Controller
                     ? redirect()->intended(route('dashboard', absolute: false))
                     : view('auth.verify-email');
     }
+
+    /**
+     * Continue without verifying the user's email address.
+     */
+    public function continue(Request $request): RedirectResponse
+    {
+        return redirect()->intended(route('dashboard', absolute: false));
+    }
 }

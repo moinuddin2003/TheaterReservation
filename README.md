@@ -9,6 +9,7 @@ CineBook is a Laravel application for browsing movies, reserving cinema seats, a
 - View bookings and tickets, including QR-based ticket scanning for staff.
 - Administer movies, genres, cinemas, screens, showtimes, customers, staff, refunds, and audit records.
 - Role-aware customer, staff, and administrator experiences.
+- After registration, users can send a verification email or continue without verifying; verification can also be requested later from the profile.
 - Prevent overlapping showtimes and manage temporary seat holds.
 
 ## Technology

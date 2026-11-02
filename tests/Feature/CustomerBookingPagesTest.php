@@ -315,7 +315,7 @@ test('a customer cannot hold a seat already held by another customer', function 
         ->and(SeatHold::query()->where('status', HoldStatus::Active)->count())->toBe(1);
 });
 
-test('unverified customers cannot hold seats', function () {
+test('unverified customers can hold seats without verifying their email', function () {
     $user = User::factory()->unverified()->create();
     $showtime = Showtime::factory()->create();
     $seat = Seat::factory()->for($showtime->screen)->create();
@@ -323,14 +323,16 @@ test('unverified customers cannot hold seats', function () {
     $this->actingAs($user)
         ->get(route('showtimes.show', $showtime))
         ->assertOk()
-        ->assertSee('Verify your email to continue selecting seats');
+        ->assertDontSee('Verify your email to continue selecting seats')
+        ->assertSee('data-hold-form', false);
 
     $this->actingAs($user)
         ->post(route('showtimes.holds.store', $showtime), ['seat_ids' => [$seat->id]])
-        ->assertRedirect(route('verification.notice'));
+        ->assertRedirect(route('bookings.checkout', Booking::query()->firstOrFail()->reference));
 
-    expect(Booking::query()->count())->toBe(0)
-        ->and(SeatHold::query()->count())->toBe(0);
+    expect($user->fresh()->hasVerifiedEmail())->toBeFalse()
+        ->and(Booking::query()->count())->toBe(1)
+        ->and(SeatHold::query()->where('status', HoldStatus::Active)->count())->toBe(1);
 });
 
 test('guests return to seat selection with their choices after logging in', function () {
@@ -372,7 +374,7 @@ test('guests return to seat selection with their choices after logging in', func
         ->and(SeatHold::query()->where('status', HoldStatus::Active)->count())->toBe(1);
 });
 
-test('unverified customers return to seat selection with their choices after verifying their email', function () {
+test('email verification remains available after an unverified customer selects seats', function () {
     $user = User::factory()->unverified()->create();
     $showtime = Showtime::factory()->create();
     $seat = Seat::factory()->for($showtime->screen)->create([
@@ -383,7 +385,7 @@ test('unverified customers return to seat selection with their choices after ver
 
     $this->actingAs($user)
         ->post(route('showtimes.holds.prepare', $showtime), ['seat_ids' => [$seat->id]])
-        ->assertRedirect(route('verification.notice'));
+        ->assertRedirect(route('showtimes.show', $showtime));
 
     $verificationUrl = URL::temporarySignedRoute(
         'verification.verify',
