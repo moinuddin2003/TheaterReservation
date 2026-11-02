@@ -124,10 +124,6 @@ class BookingController extends Controller
             return redirect()->route('login');
         }
 
-        if (! $user->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
-        }
-
         return redirect()->route('showtimes.show', $showtime);
     }
 

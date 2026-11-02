@@ -7,7 +7,7 @@
 
 .staff-header__inner,
 .staff-page {
-    width: min(100% - 32px, 1344px);
+    width: min(100% - 32px, 1440px);
     margin: 0 auto;
 }
 

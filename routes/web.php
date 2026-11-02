@@ -21,7 +21,7 @@ Route::get('/showtimes/{showtime}', [ShowtimeController::class, 'show'])->name('
 Route::post('/showtimes/{showtime}/holds/prepare', [BookingController::class, 'prepareSeatHold'])
     ->name('showtimes.holds.prepare');
 
-Route::middleware(['auth', 'verified', 'role:customer'])->group(function () {
+Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::post('/showtimes/{showtime}/holds', [BookingController::class, 'holdSeats'])
         ->name('showtimes.holds.store');
     Route::post('/bookings/{reference}/checkout', [BookingController::class, 'startCheckout'])
@@ -38,7 +38,7 @@ Route::get('/dashboard', function () {
     }
 
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware('auth')->name('dashboard');
 
 Route::middleware(['auth', 'role:customer'])->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');

@@ -83,7 +83,7 @@ body.cinema-app {
 .site-header__inner,
 .site-footer__inner {
     display: flex;
-    width: min(100% - 40px, 1180px);
+    width: min(100% - 40px, 1440px);
     min-height: 68px;
     margin: 0 auto;
     align-items: center;
@@ -259,7 +259,7 @@ body.cinema-app {
 }
 
 .page-shell {
-    width: min(100% - 40px, 1120px);
+    width: min(100% - 40px, 1440px);
     margin: 0 auto;
 }
 
@@ -2018,7 +2018,7 @@ body.cinema-app {
     .site-header__inner,
     .site-footer__inner,
     .page-shell {
-        width: min(100% - 28px, 1120px);
+        width: min(100% - 28px, 1440px);
     }
 
     .site-footer__inner {

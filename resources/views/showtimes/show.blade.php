@@ -42,8 +42,7 @@
 
                 @php
                     $customer = auth()->user();
-                    $requiresSeatHoldPreparation = auth()->guest()
-                        || ($customer?->isCustomer() && ! $customer->hasVerifiedEmail());
+                    $requiresSeatHoldPreparation = auth()->guest();
                 @endphp
                 <x-movie-selection-card
                     :prices="$prices"
@@ -56,18 +55,10 @@
                     <div class="sign-in-note">
                         <strong>
                             <span aria-hidden="true">ⓘ</span>
-                            @if (auth()->guest())
-                                Sign in to continue selecting seats
-                            @else
-                                Verify your email to continue selecting seats
-                            @endif
+                            Sign in to continue selecting seats
                         </strong>
                         <p>
-                            @if (auth()->guest())
-                                After you sign in, your selected seats will be marked on the seat map. You can change them before choosing Hold.
-                            @else
-                                After you verify your email, your selected seats will be marked on the seat map. You can change them before choosing Hold.
-                            @endif
+                            After you sign in, your selected seats will be marked on the seat map. You can change them before choosing Hold.
                         </p>
                     </div>
                 @endif

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
 
 test('registration screen can be rendered', function () {
@@ -23,17 +22,34 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('verification.notice'));
 
     $user = User::query()->where('email', 'test@example.com')->firstOrFail();
-    Notification::assertSentTo($user, VerifyEmail::class, function (VerifyEmail $notification) use ($user): bool {
-        $mail = $notification->toMail($user);
-        $html = view($mail->view['html'], $mail->data())->render();
+    expect($user->hasVerifiedEmail())->toBeFalse();
 
-        return $mail->subject === 'Welcome to CineBook — verify your email'
-            && $mail->view['html'] === 'emails.auth.verify-email'
-            && $mail->view['text'] === 'emails.auth.verify-email-text'
-            && str_contains($html, 'Test User')
-            && str_contains($html, 'Verify my email');
-    });
+    Notification::assertNothingSent();
+
+    $this->get(route('verification.notice'))
+        ->assertOk()
+        ->assertSee('Continue without verifying')
+        ->assertSee('Send verification email');
+
+    $this->post(route('verification.continue'))
+        ->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('continuing without verification returns to the intended destination', function () {
+    Notification::fake();
+
+    $this->withSession(['url.intended' => route('movies.index')])
+        ->post('/register', [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
+        ->assertRedirect(route('verification.notice'));
+
+    $this->post(route('verification.continue'))
+        ->assertRedirect(route('movies.index'));
 });

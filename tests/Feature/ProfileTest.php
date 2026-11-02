@@ -93,7 +93,9 @@ test('customers can access their customer profile', function () {
         ->get('/profile')
         ->assertOk()
         ->assertSee('Your account')
-        ->assertSee($customer->name);
+        ->assertSee($customer->name)
+        ->assertSee('Save password')
+        ->assertSee('button button--primary', false);
 });
 
 test('staff can access their profile from the account menu', function () {

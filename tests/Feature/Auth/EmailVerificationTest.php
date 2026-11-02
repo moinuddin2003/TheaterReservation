@@ -2,7 +2,9 @@
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 
 test('email verification screen can be rendered', function () {
@@ -11,6 +13,20 @@ test('email verification screen can be rendered', function () {
     $response = $this->actingAs($user)->get('/verify-email');
 
     $response->assertStatus(200);
+});
+
+test('unverified users can request a verification email when they choose', function () {
+    $user = User::factory()->unverified()->create();
+
+    Notification::fake();
+
+    $this->actingAs($user)
+        ->from(route('profile.edit'))
+        ->post(route('verification.send'))
+        ->assertRedirect(route('profile.edit'))
+        ->assertSessionHas('status', 'verification-link-sent');
+
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('email can be verified', function () {
